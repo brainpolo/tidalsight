@@ -27,7 +27,7 @@ def eager_user_middleware(get_response):
             # Force the lazy SimpleLazyObject to evaluate now (sync context).
             # After this, request.user._wrapped is set and subsequent access
             # from async views proxies without triggering another DB query.
-            request.user.is_authenticated
+            _ = request.user.is_authenticated
             return get_response(request)
 
     return middleware

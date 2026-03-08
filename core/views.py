@@ -261,7 +261,7 @@ async def asset_detail(request, ticker):
     else:
         cooldown_key = f"view:{asset.pk}:{ip}:{hash(user_agent)}"
 
-    if cache.add(cooldown_key, True, VIEW_COOLDOWN_H * 3600):
+    if await cache.aadd(cooldown_key, True, VIEW_COOLDOWN_H * 3600):
         await AssetView.objects.acreate(
             asset=asset, user=user, ip_address=ip, user_agent=user_agent
         )
@@ -313,8 +313,8 @@ async def toggle_watchlist(request, ticker):
     ticker = ticker.upper()
     try:
         asset = await Asset.objects.aget(ticker=ticker)
-    except Asset.DoesNotExist:
-        raise Http404
+    except Asset.DoesNotExist as err:
+        raise Http404 from err
 
     if await request.user.watchlist.filter(pk=asset.pk).aexists():
         await request.user.watchlist.aremove(asset)
