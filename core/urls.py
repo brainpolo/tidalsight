@@ -38,6 +38,16 @@ urlpatterns = [
         views.asset_chart_data,
         name="asset_chart_data",
     ),
+    path(
+        "assets/<str:ticker>/price-target/",
+        views.set_price_target,
+        name="set_price_target",
+    ),
+    path(
+        "assets/<str:ticker>/note/",
+        views.save_note,
+        name="save_note",
+    ),
     path("market-digest/", views.market_digest, name="market_digest"),
     path("trending/", views.trending_banner, name="trending_banner"),
     # Auth

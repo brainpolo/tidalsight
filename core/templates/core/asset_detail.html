@@ -110,6 +110,63 @@
                         <canvas id="priceChart" class="hidden"></canvas>
                         {% include "core/components/chart_skeleton.html" %}
                     </div>
+                    <!-- Price Target -->
+                    {% if request.user.is_authenticated %}
+                    <div class="mt-3 flex items-center gap-2">
+                        <label for="priceTargetInput" class="text-[0.6rem] font-semibold tracking-[0.1em] uppercase text-[#5c5750] shrink-0">Target</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2 text-[0.7rem] text-[#5c5750] pointer-events-none">$</span>
+                            <input id="priceTargetInput" type="number" step="0.01" min="0"
+                                   value="{% if price_target %}{{ price_target }}{% endif %}"
+                                   placeholder="—"
+                                   class="w-[100px] pl-5 pr-2 py-1 text-[0.7rem] tabular-nums bg-white/[0.03] border border-white/[0.06] rounded-sm text-[#e8e4df] placeholder-[#3d3a36] focus:outline-none focus:border-copper/30 transition-colors">
+                        </div>
+                        <button id="priceTargetSave" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors">Set</button>
+                        {% if price_target %}<button id="priceTargetClear" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2 py-1 rounded-sm bg-white/[0.03] text-[#5c5750] hover:text-[#a09a93] transition-colors">Clear</button>{% endif %}
+                    </div>
+                    <script>
+                    (function() {
+                        const url = '{% url "core:set_price_target" asset.ticker %}';
+                        const csrf = '{{ csrf_token }}';
+                        const input = document.getElementById('priceTargetInput');
+                        const saveBtn = document.getElementById('priceTargetSave');
+                        const clearBtn = document.getElementById('priceTargetClear');
+
+                        function send(val) {
+                            const body = new URLSearchParams();
+                            body.set('price_target', val);
+                            body.set('csrfmiddlewaretoken', csrf);
+                            return fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                                .then(r => r.json());
+                        }
+
+                        saveBtn.addEventListener('click', () => {
+                            const v = input.value.trim();
+                            if (!v || parseFloat(v) <= 0) return;
+                            send(v).then(d => {
+                                window.chartPriceTarget = d.price_target;
+                                document.body.dispatchEvent(new CustomEvent('price-target-changed'));
+                                if (!clearBtn) location.reload();
+                            });
+                        });
+
+                        input.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); }
+                        });
+
+                        if (clearBtn) {
+                            clearBtn.addEventListener('click', () => {
+                                send('').then(() => {
+                                    input.value = '';
+                                    window.chartPriceTarget = null;
+                                    document.body.dispatchEvent(new CustomEvent('price-target-changed'));
+                                    clearBtn.remove();
+                                });
+                            });
+                        }
+                    })();
+                    </script>
+                    {% endif %}
                     <!-- RSI Gauge -->
                     <div id="rsiGauge" class="hidden mt-4">
                         <div class="flex items-center justify-between mb-1.5">
@@ -155,6 +212,8 @@
                         const rangeCache = {};
                         rangeCache['1W'] = parseData(initialData);
 
+                        window.chartPriceTarget = {{ price_target|default:"null" }};
+
                         if (!initialData.length) return;
 
                         const canvas = document.getElementById('priceChart');
@@ -196,8 +255,14 @@
                             prices = filtered.map(d => d.close);
                             labels = filtered.map(d => d.label);
                             timestamps = filtered.map(d => d.ts);
-                            min = Math.min(...prices) * 0.998;
-                            max = Math.max(...prices) * 1.002;
+                            min = Math.min(...prices);
+                            max = Math.max(...prices);
+                            if (window.chartPriceTarget != null) {
+                                min = Math.min(min, window.chartPriceTarget);
+                                max = Math.max(max, window.chartPriceTarget);
+                            }
+                            min *= 0.998;
+                            max *= 1.002;
                             xStep = (w - pad.left - pad.right) / (prices.length - 1);
                             drawChart();
                             updateRSI();
@@ -327,6 +392,19 @@
                             ctx.beginPath(); ctx.moveTo(xPos(0), yPos(prices[0]));
                             for (let i = 1; i < prices.length; i++) ctx.lineTo(xPos(i), yPos(prices[i]));
                             ctx.strokeStyle = lineColor; ctx.lineWidth = 1.5; ctx.stroke();
+                            // Price target line
+                            if (window.chartPriceTarget != null) {
+                                const ty = yPos(window.chartPriceTarget);
+                                ctx.beginPath(); ctx.moveTo(pad.left, ty); ctx.lineTo(w - pad.right, ty);
+                                ctx.strokeStyle = '#c87941'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+                                ctx.fillStyle = 'rgba(13, 12, 10, 0.85)'; ctx.font = '600 9px Inter, sans-serif'; ctx.textAlign = 'right';
+                                const label = 'Target $' + window.chartPriceTarget.toFixed(2);
+                                const lw = ctx.measureText(label).width + 8;
+                                ctx.fillRect(w - pad.right - lw - 2, ty - 8, lw + 4, 16);
+                                ctx.fillStyle = '#c87941';
+                                ctx.fillText(label, w - pad.right - 4, ty + 3);
+                                ctx.textAlign = 'start';
+                            }
                         }
 
                         // ── Measure tool ──
@@ -463,6 +541,10 @@
                         initCanvas();
                         switchRange('{{ default_chart_range }}');
 
+                        document.body.addEventListener('price-target-changed', () => {
+                            if (rangeCache[currentRange]) renderData(rangeCache[currentRange]);
+                        });
+
                         // ── Interactions ──
                         let rafPending = false;
                         canvas.addEventListener('mousemove', (e) => {
@@ -510,7 +592,64 @@
         </section>
     </div>
 
-    {% if not request.user.is_authenticated %}
+    {% if request.user.is_authenticated %}
+    <!-- Personal Notes -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pb-2 pt-2">
+        <div class="border border-white/[0.04] rounded-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase text-[#5c5750]">Your Notes</span>
+                    <span class="text-[0.55rem] text-[#3d3a36]">&mdash; private to you</span>
+                </div>
+                <div id="noteSaveStatus" class="text-[0.55rem] text-[#3d3a36] transition-opacity"></div>
+            </div>
+            <textarea id="userNote" rows="3"
+                      placeholder="Why are you watching {{ asset.ticker }}? Jot down your investment thesis, key levels, or anything you'd like the AI to consider when generating analysis tailored to your perspective."
+                      class="w-full bg-white/[0.02] border border-white/[0.05] rounded-sm px-3 py-2.5 text-[0.75rem] leading-relaxed text-[#e8e4df] placeholder-[#3d3a36] resize-y focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
+            <div class="flex items-center justify-between mt-2.5">
+                <span class="text-[0.5rem] text-[#3d3a36]">Your notes help shape AI-generated briefs and analysis around your investment reasoning.</span>
+                <button id="noteSaveBtn" class="text-[0.6rem] font-semibold tracking-[0.08em] uppercase px-3 py-1.5 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-3">Save</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function() {
+        const url = '{% url "core:save_note" asset.ticker %}';
+        const csrf = '{{ csrf_token }}';
+        const textarea = document.getElementById('userNote');
+        const btn = document.getElementById('noteSaveBtn');
+        const status = document.getElementById('noteSaveStatus');
+        let saveTimeout;
+
+        function save() {
+            const body = new URLSearchParams();
+            body.set('note', textarea.value);
+            body.set('csrfmiddlewaretoken', csrf);
+            btn.textContent = 'Saving\u2026';
+            btn.disabled = true;
+            fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+                .then(() => {
+                    btn.textContent = 'Saved';
+                    status.textContent = 'Saved just now';
+                    status.style.opacity = '1';
+                    setTimeout(() => { btn.textContent = 'Save'; btn.disabled = false; status.style.opacity = '0'; }, 2000);
+                })
+                .catch(() => {
+                    btn.textContent = 'Save';
+                    btn.disabled = false;
+                    status.textContent = 'Failed to save';
+                    status.style.opacity = '1';
+                });
+        }
+
+        btn.addEventListener('click', save);
+        textarea.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save(); }
+        });
+    })();
+    </script>
+    {% else %}
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pb-6">
         <div class="bg-copper/[0.03] border border-copper/[0.08] rounded-lg px-4 sm:px-5 py-3 flex items-center gap-3 text-[0.75rem] text-[#a09a93]">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-copper shrink-0">

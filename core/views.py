@@ -65,6 +65,7 @@ from scraper.managers.asset_manager import (
     sync_fundamentals,
     sync_quick_prices,
 )
+from core.models import UserAsset
 from scraper.models import Asset, AssetView, PriceHistory
 from scraper.tasks import backfill_full_prices, fetch_asset_news
 
@@ -93,9 +94,15 @@ async def home(request):
 @login_required
 async def home_watchlist(request):
     """HTMX partial: watchlist widget for the homepage."""
+    watched_asset_ids = [
+        ua.asset_id
+        async for ua in UserAsset.objects.filter(
+            user=request.user, in_watchlist=True
+        ).only("asset_id")
+    ]
     watched = [
         a
-        async for a in request.user.watchlist.filter(is_active=True)
+        async for a in Asset.objects.filter(pk__in=watched_asset_ids, is_active=True)
         .annotate(
             latest_close=Subquery(
                 PriceHistory.objects.filter(asset=OuterRef("pk"))
@@ -270,10 +277,18 @@ async def asset_detail(request, ticker):
     weekly_views = await asset.asset_views.filter(viewed_at__gte=weekly_cutoff).acount()
     all_time_views = await asset.asset_views.acount()
 
-    is_watched = (
-        request.user.is_authenticated
-        and await request.user.watchlist.filter(pk=asset.pk).aexists()
-    )
+    is_watched = False
+    price_target = None
+    user_note = ""
+    if request.user.is_authenticated:
+        user_asset = await UserAsset.objects.filter(
+            user=request.user, asset=asset
+        ).afirst()
+        if user_asset:
+            is_watched = user_asset.in_watchlist
+            user_note = user_asset.note
+            if user_asset.price_target is not None:
+                price_target = float(user_asset.price_target)
 
     # Inline 1W hourly data for instant chart render (no HTMX round-trip)
     hourly_cutoff = timezone.now() - timedelta(days=7)
@@ -302,6 +317,8 @@ async def asset_detail(request, ticker):
             "chart_data_json": chart_data_json,
             "weekly_views": weekly_views,
             "all_time_views": all_time_views,
+            "price_target": price_target,
+            "user_note": user_note,
         },
     )
 
@@ -316,12 +333,15 @@ async def toggle_watchlist(request, ticker):
     except Asset.DoesNotExist as err:
         raise Http404 from err
 
-    if await request.user.watchlist.filter(pk=asset.pk).aexists():
-        await request.user.watchlist.aremove(asset)
-        is_watched = False
-    else:
-        await request.user.watchlist.aadd(asset)
+    user_asset, created = await UserAsset.objects.aget_or_create(
+        user=request.user, asset=asset
+    )
+    if created:
         is_watched = True
+    else:
+        user_asset.in_watchlist = not user_asset.in_watchlist
+        await user_asset.asave(update_fields=["in_watchlist"])
+        is_watched = user_asset.in_watchlist
 
     return render(
         request,
@@ -590,6 +610,57 @@ async def asset_chart_data(request, ticker):
         ]
 
     return JsonResponse(data, safe=False)
+
+
+@login_required
+@require_POST
+async def set_price_target(request, ticker):
+    """HTMX endpoint: set or clear the user's price target for an asset."""
+    ticker = ticker.upper()
+    try:
+        asset = await Asset.objects.aget(ticker=ticker)
+    except Asset.DoesNotExist as err:
+        raise Http404 from err
+
+    raw = request.POST.get("price_target", "").strip()
+    if raw:
+        try:
+            price_target = round(float(raw), 2)
+            if price_target <= 0:
+                raise ValueError
+        except ValueError:
+            return JsonResponse({"error": "Invalid price"}, status=400)
+    else:
+        price_target = None
+
+    user_asset, _ = await UserAsset.objects.aget_or_create(
+        user=request.user, asset=asset
+    )
+    user_asset.price_target = price_target
+    await user_asset.asave(update_fields=["price_target"])
+
+    return JsonResponse({"price_target": price_target})
+
+
+@login_required
+@require_POST
+async def save_note(request, ticker):
+    """HTMX endpoint: save the user's note for an asset."""
+    ticker = ticker.upper()
+    try:
+        asset = await Asset.objects.aget(ticker=ticker)
+    except Asset.DoesNotExist as err:
+        raise Http404 from err
+
+    note = request.POST.get("note", "").strip()
+
+    user_asset, _ = await UserAsset.objects.aget_or_create(
+        user=request.user, asset=asset
+    )
+    user_asset.note = note
+    await user_asset.asave(update_fields=["note"])
+
+    return JsonResponse({"ok": True})
 
 
 async def asset_search(request):
