@@ -5,78 +5,87 @@ from datetime import datetime, timedelta
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.db.models import Case, IntegerField, Q, Subquery, OuterRef, Value, When
+from django.db.models import Case, IntegerField, OuterRef, Q, Subquery, Value, When
 from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.cache import cache_page
-from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_POST
 
 from analyst.app_behaviour import DIGEST_REFRESH_INTERVAL
 from analyst.managers.digest_manager import get_market_digest
 from analyst.managers.peer_manager import sync_peers
 from core.app_behaviour import (
     ASSET_DETAIL_FAVICON_SIZE,
+    ASSET_DETAIL_HN_POSTS,
     ASSET_DETAIL_NEWS_ARTICLES,
     ASSET_DETAIL_RECENT_PRICES_DAYS,
-    ASSET_DETAIL_HN_POSTS,
     ASSET_DETAIL_REDDIT_POSTS,
     CHART_DATA_CACHE_TTL,
-    COMMUNITY_CACHE_TTL,
+    DEFAULT_CHART_RANGE,
     HOME_COUNTS_CACHE_TTL,
     PEERS_CACHE_TTL,
     PRICES_CACHE_TTL,
-    DEFAULT_CHART_RANGE,
     RSI_PERIOD,
     SEARCH_MAX_RESULTS,
     SEARCH_MIN_QUERY_LENGTH,
     SPARKLINE_DATA_POINTS,
 )
 from core.forms import ProfileForm, SignInForm, SignUpForm, TidalPasswordChangeForm
-from core.utils import pct_change
-from core.managers.user_manager import create_user, sign_in_user, sign_out_user, update_profile
 from core.managers.fundamental_manager import build_fundamental_cards
+from core.managers.user_manager import (
+    create_user,
+    sign_in_user,
+    sign_out_user,
+    update_profile,
+)
 from core.managers.valuation_manager import compute_valuations
 from core.sparkline import build_sparkline_svg
-from scraper.managers.asset_manager import get_or_create_asset, sync_all_prices, sync_fundamentals
+from core.utils import pct_change, total_post_count
+from scraper.managers.asset_manager import (
+    get_or_create_asset,
+    sync_all_prices,
+    sync_fundamentals,
+)
 from scraper.managers.brave_news_manager import sync_asset_news_async
-from scraper.models import Asset, PriceHistory, RedditPost
+from scraper.models import Asset, PriceHistory
 
 
-def _cached_count(key, queryset):
-    count = cache.get(key)
-    if count is None:
-        count = queryset.count()
-        cache.set(key, count, HOME_COUNTS_CACHE_TTL)
-    return count
+def _cached(key: str, compute, ttl: int = HOME_COUNTS_CACHE_TTL):
+    value = cache.get(key)
+    if value is None:
+        value = compute()
+        cache.set(key, value, ttl)
+    return value
 
 
 def home(request):
-    return render(request, "core/home.html", {
-        "asset_count": _cached_count("home:asset_count", Asset.objects),
-        "post_count": _cached_count("home:post_count", RedditPost.objects),
-        "digest_refresh_interval": DIGEST_REFRESH_INTERVAL,
-        "digest_date": timezone.now(),
-    })
+    return render(
+        request,
+        "core/home.html",
+        {
+            "asset_count": _cached("home:asset_count", Asset.objects.count),
+            "post_count": _cached("home:post_count", total_post_count),
+            "digest_refresh_interval": DIGEST_REFRESH_INTERVAL,
+            "digest_date": timezone.now(),
+        },
+    )
 
 
 @login_required
 def home_watchlist(request):
     """HTMX partial: watchlist widget for the homepage."""
     watched = list(
-        request.user.watchlist
-        .filter(is_active=True)
+        request.user.watchlist.filter(is_active=True)
         .annotate(
             latest_close=Subquery(
-                PriceHistory.objects
-                .filter(asset=OuterRef("pk"))
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
                 .order_by("-timestamp")
                 .values("close")[:1]
             ),
             prev_close=Subquery(
-                PriceHistory.objects
-                .filter(asset=OuterRef("pk"))
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
                 .order_by("-timestamp")
                 .values("close")[1:2]
             ),
@@ -89,8 +98,7 @@ def home_watchlist(request):
 
     if asset_ids:
         sparkline_qs = (
-            PriceHistory.objects
-            .filter(asset_id__in=asset_ids)
+            PriceHistory.objects.filter(asset_id__in=asset_ids)
             .annotate(date=TruncDate("timestamp"))
             .order_by("asset_id", "-date", "-timestamp")
             .distinct("asset_id", "date")
@@ -107,12 +115,16 @@ def home_watchlist(request):
     for asset in watched:
         closes = sparkline_map.get(asset.id, [])
         change_pct = pct_change(asset.latest_close, asset.prev_close)
-        items.append({
-            "asset": asset,
-            "latest_close": asset.latest_close,
-            "price_change_pct": round(change_pct, 2) if change_pct is not None else None,
-            "sparkline_svg": build_sparkline_svg(closes),
-        })
+        items.append(
+            {
+                "asset": asset,
+                "latest_close": asset.latest_close,
+                "price_change_pct": round(change_pct, 2)
+                if change_pct is not None
+                else None,
+                "sparkline_svg": build_sparkline_svg(closes),
+            }
+        )
 
     return render(request, "core/partials/home_watchlist.html", {"items": items})
 
@@ -134,21 +146,27 @@ def asset_detail(request, ticker):
 
     try:
         asset = get_or_create_asset(ticker)
-    except (ValueError, ConnectionError):
-        return render(request, "core/asset_unavailable.html", {"ticker": ticker}, status=503)
+    except ValueError, ConnectionError:
+        return render(
+            request, "core/asset_unavailable.html", {"ticker": ticker}, status=503
+        )
 
     is_watched = (
         request.user.is_authenticated
         and request.user.watchlist.filter(pk=asset.pk).exists()
     )
 
-    return render(request, "core/asset_detail.html", {
-        "asset": asset,
-        "is_watched": is_watched,
-        "favicon_size": ASSET_DETAIL_FAVICON_SIZE,
-        "default_chart_range": DEFAULT_CHART_RANGE,
-        "rsi_period": RSI_PERIOD,
-    })
+    return render(
+        request,
+        "core/asset_detail.html",
+        {
+            "asset": asset,
+            "is_watched": is_watched,
+            "favicon_size": ASSET_DETAIL_FAVICON_SIZE,
+            "default_chart_range": DEFAULT_CHART_RANGE,
+            "rsi_period": RSI_PERIOD,
+        },
+    )
 
 
 @login_required
@@ -165,10 +183,14 @@ def toggle_watchlist(request, ticker):
         request.user.watchlist.add(asset)
         is_watched = True
 
-    return render(request, "core/partials/watchlist_star.html", {
-        "asset": asset,
-        "is_watched": is_watched,
-    })
+    return render(
+        request,
+        "core/partials/watchlist_star.html",
+        {
+            "asset": asset,
+            "is_watched": is_watched,
+        },
+    )
 
 
 def asset_header(request, ticker):
@@ -193,12 +215,16 @@ def asset_header(request, ticker):
     fundamental = asset.fundamentals.first()
     valuations = compute_valuations(asset, fundamental, latest_price)
 
-    return render(request, "core/partials/asset_header.html", {
-        "latest_price": latest_price,
-        "price_change": price_change,
-        "price_change_pct": price_change_pct,
-        "valuations": valuations,
-    })
+    return render(
+        request,
+        "core/partials/asset_header.html",
+        {
+            "latest_price": latest_price,
+            "price_change": price_change,
+            "price_change_pct": price_change_pct,
+            "valuations": valuations,
+        },
+    )
 
 
 def asset_fundamentals(request, ticker):
@@ -214,12 +240,15 @@ def asset_fundamentals(request, ticker):
     latest_price = asset.prices.first()
     fundamental_cards = build_fundamental_cards(fundamental, latest_price)
 
-    return render(request, "core/partials/asset_fundamentals.html", {
-        "fundamental_cards": fundamental_cards,
-    })
+    return render(
+        request,
+        "core/partials/asset_fundamentals.html",
+        {
+            "fundamental_cards": fundamental_cards,
+        },
+    )
 
 
-@cache_page(PEERS_CACHE_TTL)
 def asset_peers(request, ticker):
     """Partial: peer/competitor cards. Triggers peer discovery if needed."""
     ticker = ticker.upper()
@@ -227,20 +256,22 @@ def asset_peers(request, ticker):
     if not asset:
         return render(request, "core/partials/asset_peers.html", {})
 
+    cache_key = f"asset_peers:{ticker}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return render(request, "core/partials/asset_peers.html", {"peers": cached})
+
     sync_peers(asset)
 
     peers = list(
-        asset.peers
-        .annotate(
+        asset.peers.annotate(
             latest_close=Subquery(
-                PriceHistory.objects
-                .filter(asset=OuterRef("pk"))
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
                 .order_by("-timestamp")
                 .values("close")[:1]
             ),
             prev_close=Subquery(
-                PriceHistory.objects
-                .filter(asset=OuterRef("pk"))
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
                 .order_by("-timestamp")
                 .values("close")[1:2]
             ),
@@ -250,16 +281,22 @@ def asset_peers(request, ticker):
     peer_data = []
     for peer in peers:
         change_pct = pct_change(peer.latest_close, peer.prev_close)
-        peer_data.append({
-            "asset": peer,
-            "latest_close": peer.latest_close,
-            "price_change_pct": round(change_pct, 2) if change_pct is not None else None,
-        })
+        peer_data.append(
+            {
+                "asset": peer,
+                "latest_close": peer.latest_close,
+                "price_change_pct": round(change_pct, 2)
+                if change_pct is not None
+                else None,
+            }
+        )
+
+    if peer_data:
+        cache.set(cache_key, peer_data, PEERS_CACHE_TTL)
 
     return render(request, "core/partials/asset_peers.html", {"peers": peer_data})
 
 
-@cache_page(COMMUNITY_CACHE_TTL)
 def asset_community(request, ticker):
     """Partial: reddit + HN + news articles. Fires background news sync."""
     ticker = ticker.upper()
@@ -273,11 +310,15 @@ def asset_community(request, ticker):
     hn_posts = asset.hn_posts.all()[:ASSET_DETAIL_HN_POSTS]
     news_articles = asset.news_articles.all()[:ASSET_DETAIL_NEWS_ARTICLES]
 
-    return render(request, "core/partials/asset_community.html", {
-        "reddit_posts": reddit_posts,
-        "hn_posts": hn_posts,
-        "news_articles": news_articles,
-    })
+    return render(
+        request,
+        "core/partials/asset_community.html",
+        {
+            "reddit_posts": reddit_posts,
+            "hn_posts": hn_posts,
+            "news_articles": news_articles,
+        },
+    )
 
 
 @cache_page(PRICES_CACHE_TTL)
@@ -290,8 +331,7 @@ def asset_prices(request, ticker):
 
     cutoff = timezone.now() - timedelta(days=ASSET_DETAIL_RECENT_PRICES_DAYS)
     recent_prices_qs = list(
-        asset.prices
-        .filter(timestamp__gte=cutoff)
+        asset.prices.filter(timestamp__gte=cutoff)
         .annotate(date=TruncDate("timestamp"))
         .order_by("-date", "-timestamp")
         .distinct("date")
@@ -301,19 +341,27 @@ def asset_prices(request, ticker):
         prev = recent_prices_qs[i + 1] if i + 1 < len(recent_prices_qs) else None
         if prev and prev.close:
             p.daily_change = float(p.close - prev.close)
-            p.daily_change_pct = round(float((p.close - prev.close) / prev.close * 100), 2)
+            p.daily_change_pct = round(
+                float((p.close - prev.close) / prev.close * 100), 2
+            )
         else:
             p.daily_change = None
             p.daily_change_pct = None
         recent_prices.append(p)
     days_with_change = [p for p in recent_prices if p.daily_change is not None]
     positive_days = sum(1 for p in days_with_change if p.daily_change >= 0)
-    positive_day_pct = round(positive_days / len(days_with_change) * 100) if days_with_change else None
+    positive_day_pct = (
+        round(positive_days / len(days_with_change) * 100) if days_with_change else None
+    )
 
-    return render(request, "core/partials/asset_prices.html", {
-        "recent_prices": recent_prices,
-        "positive_day_pct": positive_day_pct,
-    })
+    return render(
+        request,
+        "core/partials/asset_prices.html",
+        {
+            "recent_prices": recent_prices,
+            "positive_day_pct": positive_day_pct,
+        },
+    )
 
 
 @cache_page(CHART_DATA_CACHE_TTL)
@@ -327,30 +375,38 @@ def asset_chart_data(request, ticker):
     # Hourly data for the last 7 days (covers 1D and 1W ranges)
     hourly_cutoff = timezone.now() - timedelta(days=7)
     hourly_qs = (
-        asset.prices
-        .filter(timestamp__gte=hourly_cutoff)
+        asset.prices.filter(timestamp__gte=hourly_cutoff)
         .only("close", "timestamp")
         .order_by("timestamp")
     )
     # Daily data for everything older (covers 1M, 1Y, 5Y, ALL)
     daily_qs = (
-        asset.prices
-        .filter(timestamp__lt=hourly_cutoff)
+        asset.prices.filter(timestamp__lt=hourly_cutoff)
         .only("close", "timestamp")
         .annotate(date=TruncDate("timestamp"))
         .order_by("date", "-timestamp")
         .distinct("date")
     )
     prices_json = json.dumps(
-        [{"close": float(p.close), "ts": int(p.timestamp.timestamp() * 1000)} for p in daily_qs]
-        + [{"close": float(p.close), "ts": int(p.timestamp.timestamp() * 1000)} for p in hourly_qs]
+        [
+            {"close": float(p.close), "ts": int(p.timestamp.timestamp() * 1000)}
+            for p in daily_qs
+        ]
+        + [
+            {"close": float(p.close), "ts": int(p.timestamp.timestamp() * 1000)}
+            for p in hourly_qs
+        ]
     )
 
-    return render(request, "core/partials/chart_data.html", {
-        "prices_json": prices_json,
-        "rsi_period": RSI_PERIOD,
-        "default_chart_range": DEFAULT_CHART_RANGE,
-    })
+    return render(
+        request,
+        "core/partials/chart_data.html",
+        {
+            "prices_json": prices_json,
+            "rsi_period": RSI_PERIOD,
+            "default_chart_range": DEFAULT_CHART_RANGE,
+        },
+    )
 
 
 def asset_search(request):
@@ -359,21 +415,20 @@ def asset_search(request):
         return render(request, "core/partials/search_results.html", {"results": []})
 
     latest_close_sq = (
-        PriceHistory.objects
-        .filter(asset=OuterRef("pk"))
+        PriceHistory.objects.filter(asset=OuterRef("pk"))
         .order_by("-timestamp")
         .values("close")[:1]
     )
     prev_close_sq = (
-        PriceHistory.objects
-        .filter(asset=OuterRef("pk"))
+        PriceHistory.objects.filter(asset=OuterRef("pk"))
         .order_by("-timestamp")
         .values("close")[1:2]
     )
 
     assets = list(
-        Asset.objects
-        .filter(Q(ticker__icontains=query) | Q(name__icontains=query), is_active=True)
+        Asset.objects.filter(
+            Q(ticker__icontains=query) | Q(name__icontains=query), is_active=True
+        )
         .annotate(
             relevance=Case(
                 When(ticker__iexact=query, then=Value(0)),
@@ -385,8 +440,7 @@ def asset_search(request):
             latest_close=Subquery(latest_close_sq),
             prev_close=Subquery(prev_close_sq),
         )
-        .order_by("relevance", "ticker")
-        [:SEARCH_MAX_RESULTS]
+        .order_by("relevance", "ticker")[:SEARCH_MAX_RESULTS]
     )
 
     # Batch-fetch sparkline data for all matched assets in one query
@@ -395,8 +449,7 @@ def asset_search(request):
 
     if asset_ids:
         sparkline_qs = (
-            PriceHistory.objects
-            .filter(asset_id__in=asset_ids)
+            PriceHistory.objects.filter(asset_id__in=asset_ids)
             .annotate(date=TruncDate("timestamp"))
             .order_by("asset_id", "-date", "-timestamp")
             .distinct("asset_id", "date")
@@ -414,12 +467,16 @@ def asset_search(request):
         closes = sparkline_map.get(asset.id, [])
         change_pct = pct_change(asset.latest_close, asset.prev_close)
 
-        results.append({
-            "asset": asset,
-            "latest_close": asset.latest_close,
-            "price_change_pct": round(change_pct, 2) if change_pct is not None else None,
-            "sparkline_svg": build_sparkline_svg(closes),
-        })
+        results.append(
+            {
+                "asset": asset,
+                "latest_close": asset.latest_close,
+                "price_change_pct": round(change_pct, 2)
+                if change_pct is not None
+                else None,
+                "sparkline_svg": build_sparkline_svg(closes),
+            }
+        )
 
     return render(request, "core/partials/search_results.html", {"results": results})
 
@@ -460,7 +517,9 @@ def sign_in(request):
                 password=form.cleaned_data["password"],
             )
             next_url = request.POST.get("next") or request.GET.get("next") or ""
-            if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+            if not url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}
+            ):
                 next_url = "core:home"
             return redirect(next_url)
     else:
@@ -481,8 +540,12 @@ def profile(request):
     password_changed = False
 
     is_post = request.method == "POST"
-    profile_data = request.POST if is_post and "update_profile" in request.POST else None
-    password_data = request.POST if is_post and "change_password" in request.POST else None
+    profile_data = (
+        request.POST if is_post and "update_profile" in request.POST else None
+    )
+    password_data = (
+        request.POST if is_post and "change_password" in request.POST else None
+    )
 
     profile_form = ProfileForm(profile_data, instance=request.user)
     password_form = TidalPasswordChangeForm(request.user, password_data)
@@ -503,9 +566,13 @@ def profile(request):
         password_changed = True
         password_form = TidalPasswordChangeForm(request.user)
 
-    return render(request, "core/auth/profile.html", {
-        "profile_form": profile_form,
-        "password_form": password_form,
-        "profile_saved": profile_saved,
-        "password_changed": password_changed,
-    })
+    return render(
+        request,
+        "core/auth/profile.html",
+        {
+            "profile_form": profile_form,
+            "password_form": password_form,
+            "profile_saved": profile_saved,
+            "password_changed": password_changed,
+        },
+    )

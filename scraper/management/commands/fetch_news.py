@@ -1,6 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from scraper.constants import BRAVE_NEWS_DEFAULT_COUNT, BRAVE_NEWS_DEFAULT_FRESHNESS, BRAVE_NEWS_DEFAULT_QUERY
+from scraper.constants import (
+    BRAVE_NEWS_DEFAULT_COUNT,
+    BRAVE_NEWS_DEFAULT_FRESHNESS,
+    BRAVE_NEWS_DEFAULT_QUERY,
+)
 from scraper.managers.brave_news_manager import sync_asset_news, sync_news
 from scraper.models import Asset
 
@@ -45,7 +49,9 @@ class Command(BaseCommand):
             self.stdout.write(f"Fetching news for {asset.ticker} ({asset.name})...")
             count = sync_asset_news(asset, freshness=options["freshness"])
         else:
-            self.stdout.write(f"Fetching general news: query='{options['query']}', freshness={options['freshness']}...")
+            self.stdout.write(
+                f"Fetching general news: query='{options['query']}', freshness={options['freshness']}..."
+            )
             count = sync_news(
                 query=options["query"],
                 freshness=options["freshness"],

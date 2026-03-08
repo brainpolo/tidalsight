@@ -11,7 +11,12 @@ class Command(BaseCommand):
     help = "Re-fetch fundamentals for all active assets to backfill new fields"
 
     def add_arguments(self, parser):
-        parser.add_argument("--delay", type=float, default=1.0, help="Seconds between API calls (default: 1.0)")
+        parser.add_argument(
+            "--delay",
+            type=float,
+            default=1.0,
+            help="Seconds between API calls (default: 1.0)",
+        )
 
     def handle(self, *args, **options):
         assets = Asset.objects.filter(is_active=True).order_by("ticker")
@@ -47,4 +52,6 @@ class Command(BaseCommand):
             if i < total:
                 time.sleep(options["delay"])
 
-        self.stdout.write(self.style.SUCCESS(f"\nDone: {success} updated, {skipped} skipped"))
+        self.stdout.write(
+            self.style.SUCCESS(f"\nDone: {success} updated, {skipped} skipped")
+        )

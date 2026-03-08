@@ -11,7 +11,11 @@ from scraper.constants import (
     HN_TOP_STORIES_LIMIT,
 )
 from scraper.embeddings import gen_text_embedding
-from scraper.managers.keyword_matcher import build_asset_keyword_map, compile_keyword_pattern, match_assets
+from scraper.managers.keyword_matcher import (
+    build_asset_keyword_map,
+    compile_keyword_pattern,
+    match_assets,
+)
 from scraper.models import HNComment, HNPost
 
 logger = logging.getLogger(__name__)
@@ -21,7 +25,7 @@ def _store_comments(post: HNPost) -> list[dict]:
     """Fetch and store top-level comments for a post. Returns the raw comment data."""
     try:
         comment_data_list = fetch_comments(post.hn_id, limit=HN_DEFAULT_COMMENT_LIMIT)
-    except (httpx.HTTPStatusError, httpx.RequestError):
+    except httpx.HTTPStatusError, httpx.RequestError:
         logger.exception("Failed to fetch comments for HN post %d", post.hn_id)
         return []
 
@@ -47,9 +51,11 @@ def _generate_embedding(post: HNPost, comment_data_list: list[dict]) -> None:
     # HN API returns comments in ranked order, so we take them as-is
     top_bodies = [c["text"] for c in comment_data_list[:EMBEDDING_MAX_COMMENTS]]
     try:
-        post.embedding = gen_text_embedding(post.get_embedding_text(comment_bodies=top_bodies))
+        post.embedding = gen_text_embedding(
+            post.get_embedding_text(comment_bodies=top_bodies)
+        )
         post.save(update_fields=["embedding"])
-    except (httpx.HTTPStatusError, httpx.RequestError, ValueError):
+    except httpx.HTTPStatusError, httpx.RequestError, ValueError:
         logger.exception("Failed to generate embedding for HN post %d", post.hn_id)
 
 
@@ -92,5 +98,9 @@ def sync_hn_posts() -> int:
             comment_data_list = _store_comments(post)
             _generate_embedding(post, comment_data_list)
 
-    logger.info("HN sync complete: %d new posts (from %d stories scanned)", created_count, len(stories))
+    logger.info(
+        "HN sync complete: %d new posts (from %d stories scanned)",
+        created_count,
+        len(stories),
+    )
     return created_count

@@ -5,7 +5,11 @@ from django.core.cache import cache
 from django.utils import timezone
 from requests.exceptions import RequestException
 
-from scraper.clients.yfinance_client import fetch_asset_info, fetch_fundamentals, fetch_price_history
+from scraper.clients.yfinance_client import (
+    fetch_asset_info,
+    fetch_fundamentals,
+    fetch_price_history,
+)
 from scraper.constants import (
     DAILY_PRICE_INTERVAL,
     DAILY_PRICE_PERIOD,
@@ -30,11 +34,15 @@ def get_or_create_asset(ticker: str) -> Asset:
     lock_key = f"sync:asset_create:{ticker}"
     if not cache.add(lock_key, True, SYNC_LOCK_TTL):
         # Another request is already creating this asset — wait for it to appear
-        logger.info("Asset creation for %s already in progress, retrying DB lookup", ticker)
+        logger.info(
+            "Asset creation for %s already in progress, retrying DB lookup", ticker
+        )
         try:
             return Asset.objects.get(ticker=ticker)
-        except Asset.DoesNotExist:
-            raise ValueError(f"Asset creation for {ticker} in progress but not yet available")
+        except Asset.DoesNotExist as err:
+            raise ValueError(
+                f"Asset creation for {ticker} in progress but not yet available"
+            ) from err
 
     try:
         info = fetch_asset_info(ticker)
@@ -50,7 +58,11 @@ def get_or_create_asset(ticker: str) -> Asset:
 
 
 def _sync_prices(asset: Asset, ticker: str, period: str, interval: str) -> int:
-    staleness = DAILY_PRICES_STALENESS_SECONDS if interval == "1d" else HOURLY_PRICES_STALENESS_SECONDS
+    staleness = (
+        DAILY_PRICES_STALENESS_SECONDS
+        if interval == "1d"
+        else HOURLY_PRICES_STALENESS_SECONDS
+    )
 
     latest = asset.prices.first()
     if latest and (timezone.now() - latest.timestamp).total_seconds() < staleness:
@@ -59,7 +71,9 @@ def _sync_prices(asset: Asset, ticker: str, period: str, interval: str) -> int:
 
     lock_key = f"sync:prices:{ticker}:{interval}"
     if not cache.add(lock_key, True, SYNC_LOCK_TTL):
-        logger.info("Price sync for %s (%s) already in progress, skipping", ticker, interval)
+        logger.info(
+            "Price sync for %s (%s) already in progress, skipping", ticker, interval
+        )
         return 0
 
     try:
@@ -71,9 +85,13 @@ def _sync_prices(asset: Asset, ticker: str, period: str, interval: str) -> int:
             start = latest.timestamp if latest else None
 
         try:
-            rows = fetch_price_history(ticker, period=period, interval=interval, start=start)
-        except (RequestException, ValueError):
-            logger.exception("Failed to fetch price history for %s (%s)", ticker, interval)
+            rows = fetch_price_history(
+                ticker, period=period, interval=interval, start=start
+            )
+        except RequestException, ValueError:
+            logger.exception(
+                "Failed to fetch price history for %s (%s)", ticker, interval
+            )
             return 0
 
         if not rows:
@@ -95,13 +113,23 @@ def _sync_prices(asset: Asset, ticker: str, period: str, interval: str) -> int:
 
         created = PriceHistory.objects.bulk_create(objects, ignore_conflicts=True)
 
-        logger.info("Synced %d %s prices for %s (%d new)", len(rows), interval, ticker, len(created))
+        logger.info(
+            "Synced %d %s prices for %s (%d new)",
+            len(rows),
+            interval,
+            ticker,
+            len(created),
+        )
         return len(created)
     finally:
         cache.delete(lock_key)
 
 
-def sync_price_history(ticker: str, period: str = DEFAULT_PRICE_PERIOD, interval: str = DEFAULT_PRICE_INTERVAL) -> int:
+def sync_price_history(
+    ticker: str,
+    period: str = DEFAULT_PRICE_PERIOD,
+    interval: str = DEFAULT_PRICE_INTERVAL,
+) -> int:
     asset = get_or_create_asset(ticker)
     return _sync_prices(asset, ticker, period, interval)
 
@@ -117,7 +145,11 @@ def sync_fundamentals(ticker: str) -> Fundamental | None:
     asset = get_or_create_asset(ticker)
 
     latest = asset.fundamentals.first()
-    if latest and (timezone.now() - latest.fetched_at).total_seconds() < FUNDAMENTALS_STALENESS_SECONDS:
+    if (
+        latest
+        and (timezone.now() - latest.fetched_at).total_seconds()
+        < FUNDAMENTALS_STALENESS_SECONDS
+    ):
         logger.info("Fundamentals for %s still fresh, skipping", ticker)
         return latest
 
@@ -129,7 +161,7 @@ def sync_fundamentals(ticker: str) -> Fundamental | None:
     try:
         try:
             data = fetch_fundamentals(ticker)
-        except (RequestException, ValueError):
+        except RequestException, ValueError:
             logger.exception("Failed to fetch fundamentals for %s", ticker)
             return latest
 

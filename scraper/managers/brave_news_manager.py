@@ -14,7 +14,11 @@ from scraper.constants import (
     SYNC_LOCK_TTL,
 )
 from scraper.embeddings import gen_text_embedding
-from scraper.managers.keyword_matcher import build_asset_keyword_map, compile_keyword_pattern, match_assets
+from scraper.managers.keyword_matcher import (
+    build_asset_keyword_map,
+    compile_keyword_pattern,
+    match_assets,
+)
 from scraper.models import Asset, NewsArticle
 
 logger = logging.getLogger(__name__)
@@ -42,7 +46,7 @@ def _store_article(article_data: dict, matched_assets: list[Asset]) -> bool:
     try:
         article.embedding = gen_text_embedding(article.get_embedding_text())
         article.save(update_fields=["embedding"])
-    except (httpx.HTTPStatusError, httpx.RequestError, ValueError):
+    except httpx.HTTPStatusError, httpx.RequestError, ValueError:
         logger.exception("Failed to generate embedding for article: %s", article.url)
 
     return True
@@ -63,7 +67,7 @@ def sync_news(
 
     try:
         articles = news_search(query, count=count, freshness=freshness)
-    except (httpx.HTTPStatusError, httpx.RequestError):
+    except httpx.HTTPStatusError, httpx.RequestError:
         logger.exception("Brave news search failed for query: %s", query)
         return 0
 
@@ -76,9 +80,15 @@ def sync_news(
             created_count += 1
             if matched_assets:
                 tickers = ", ".join(a.ticker for a in matched_assets)
-                logger.info("News matched: '%s' → [%s]", article_data["title"][:60], tickers)
+                logger.info(
+                    "News matched: '%s' → [%s]", article_data["title"][:60], tickers
+                )
 
-    logger.info("News sync complete: %d new articles (from %d fetched)", created_count, len(articles))
+    logger.info(
+        "News sync complete: %d new articles (from %d fetched)",
+        created_count,
+        len(articles),
+    )
     return created_count
 
 
@@ -102,7 +112,7 @@ def sync_asset_news(asset: Asset, freshness: str = BRAVE_NEWS_DEFAULT_FRESHNESS)
 
         try:
             articles = news_search(query, freshness=freshness)
-        except (httpx.HTTPStatusError, httpx.RequestError):
+        except httpx.HTTPStatusError, httpx.RequestError:
             logger.exception("Brave news search failed for asset: %s", asset.ticker)
             return 0
 
@@ -112,7 +122,9 @@ def sync_asset_news(asset: Asset, freshness: str = BRAVE_NEWS_DEFAULT_FRESHNESS)
                 created_count += 1
 
         cache.set(cache_key, True, BRAVE_NEWS_TICKER_STALENESS_SECONDS)
-        logger.info("Asset news sync for %s: %d new articles", asset.ticker, created_count)
+        logger.info(
+            "Asset news sync for %s: %d new articles", asset.ticker, created_count
+        )
         return created_count
     finally:
         cache.delete(lock_key)

@@ -19,7 +19,7 @@ def abbreviate(value):
         return ""
     try:
         value = Decimal(str(value))
-    except (ValueError, TypeError, InvalidOperation):
+    except ValueError, TypeError, InvalidOperation:
         return value
 
     negative = value < 0

@@ -5,9 +5,8 @@ Settings common to all environments.
 """
 
 import os
-
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 from django.utils.csp import CSP
 from dotenv import load_dotenv
@@ -44,6 +43,7 @@ INSTALLED_APPS: list[str] = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_celery_results",
     "core",
     "scraper",
     "analyst",
@@ -83,7 +83,9 @@ WSGI_APPLICATION = "tidalsight.wsgi.application"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -99,7 +101,6 @@ USE_TZ = True
 STATIC_URL: str = "static/"
 STATIC_ROOT: Path = BASE_DIR / "staticfiles"
 STATICFILES_DIRS: list[Path] = [BASE_DIR / "static"]
-
 
 
 # Logging

@@ -6,21 +6,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0003_redditpost'),
+        ("scraper", "0003_redditpost"),
     ]
 
     operations = [
         VectorExtension(),
         migrations.AddField(
-            model_name='redditpost',
-            name='embedding',
-            field=pgvector.django.vector.VectorField(blank=True, dimensions=2048, null=True),
+            model_name="redditpost",
+            name="embedding",
+            field=pgvector.django.vector.VectorField(
+                blank=True, dimensions=2048, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='pricehistory',
-            name='timestamp',
+            model_name="pricehistory",
+            name="timestamp",
             field=models.DateTimeField(db_index=True),
         ),
     ]

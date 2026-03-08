@@ -33,7 +33,9 @@ def sign_in_user(request, username: str, password: str) -> User | None:
     return user
 
 
-def update_profile(user, first_name: str, last_name: str, currency: str, timezone: str) -> User:
+def update_profile(
+    user, first_name: str, last_name: str, currency: str, timezone: str
+) -> User:
     user.first_name = first_name
     user.last_name = last_name
     user.currency = currency

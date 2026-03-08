@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 from django.conf import settings
@@ -49,11 +49,13 @@ def web_search(
 
     results = []
     for item in data.get("web", {}).get("results", []):
-        results.append({
-            "title": item.get("title", ""),
-            "url": item.get("url", ""),
-            "description": item.get("description", ""),
-        })
+        results.append(
+            {
+                "title": item.get("title", ""),
+                "url": item.get("url", ""),
+                "description": item.get("description", ""),
+            }
+        )
 
     logger.info("Brave web search for %r returned %d results", query, len(results))
     return results
@@ -97,19 +99,25 @@ def news_search(
                 try:
                     published_at = datetime.fromisoformat(raw)
                     if published_at.tzinfo is None:
-                        published_at = published_at.replace(tzinfo=timezone.utc)
+                        published_at = published_at.replace(tzinfo=UTC)
                     break
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     continue
 
-        results.append({
-            "title": item.get("title", ""),
-            "url": item.get("url", ""),
-            "description": item.get("description", ""),
-            "source": meta_url.get("hostname", "") if isinstance(meta_url, dict) else "",
-            "published_at": published_at,
-            "thumbnail": item.get("thumbnail", {}).get("src", "") if isinstance(item.get("thumbnail"), dict) else "",
-        })
+        results.append(
+            {
+                "title": item.get("title", ""),
+                "url": item.get("url", ""),
+                "description": item.get("description", ""),
+                "source": meta_url.get("hostname", "")
+                if isinstance(meta_url, dict)
+                else "",
+                "published_at": published_at,
+                "thumbnail": item.get("thumbnail", {}).get("src", "")
+                if isinstance(item.get("thumbnail"), dict)
+                else "",
+            }
+        )
 
     logger.info("Brave news search for %r returned %d results", query, len(results))
     return results

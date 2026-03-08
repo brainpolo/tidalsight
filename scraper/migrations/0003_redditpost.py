@@ -4,31 +4,43 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0002_news_newsassetimpact_news_assets'),
+        ("scraper", "0002_news_newsassetimpact_news_assets"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='RedditPost',
+            name="RedditPost",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('reddit_id', models.CharField(max_length=20, unique=True)),
-                ('subreddit', models.CharField(max_length=50)),
-                ('title', models.CharField(max_length=500)),
-                ('body', models.TextField(blank=True)),
-                ('author', models.CharField(max_length=50)),
-                ('score', models.IntegerField()),
-                ('upvote_ratio', models.FloatField()),
-                ('num_comments', models.IntegerField()),
-                ('url', models.URLField(max_length=500)),
-                ('posted_at', models.DateTimeField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('assets', models.ManyToManyField(blank=True, related_name='reddit_posts', to='scraper.asset')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("reddit_id", models.CharField(max_length=20, unique=True)),
+                ("subreddit", models.CharField(max_length=50)),
+                ("title", models.CharField(max_length=500)),
+                ("body", models.TextField(blank=True)),
+                ("author", models.CharField(max_length=50)),
+                ("score", models.IntegerField()),
+                ("upvote_ratio", models.FloatField()),
+                ("num_comments", models.IntegerField()),
+                ("url", models.URLField(max_length=500)),
+                ("posted_at", models.DateTimeField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "assets",
+                    models.ManyToManyField(
+                        blank=True, related_name="reddit_posts", to="scraper.asset"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-posted_at'],
+                "ordering": ["-posted_at"],
             },
         ),
     ]

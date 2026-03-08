@@ -20,4 +20,33 @@ dependencies = [
     "distro",
     "openai-agents>=0.10.5",
     "pgvector>=0.4.2",
+    "celery>=5.6.2",
+    "django-celery-results>=2.6.0",
 ]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "F",      # Pyflakes
+    "E", "W", # pycodestyle
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
+    "RUF",    # Ruff-specific rules
+]
+ignore = [
+    "E501",    # line length handled by formatter
+    "RUF001",  # ambiguous unicode — intentional in descriptions
+    "RUF012",  # mutable class attrs — every Django model Meta triggers this
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/migrations/*.py" = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "scraper", "analyst", "tidalsight"]

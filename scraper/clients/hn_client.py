@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -35,18 +35,25 @@ def fetch_top_stories(limit: int = 200) -> list[dict]:
                 if r.status_code != 200:
                     continue
                 item = r.json()
-                if not item or item.get("type") != "story" or item.get("dead") or item.get("deleted"):
+                if (
+                    not item
+                    or item.get("type") != "story"
+                    or item.get("dead")
+                    or item.get("deleted")
+                ):
                     continue
-                stories.append({
-                    "hn_id": item["id"],
-                    "title": item.get("title", ""),
-                    "url": item.get("url", ""),
-                    "author": item.get("by", ""),
-                    "score": item.get("score", 0),
-                    "num_comments": item.get("descendants", 0),
-                    "posted_at": datetime.fromtimestamp(item["time"], tz=timezone.utc),
-                })
-            except (httpx.HTTPStatusError, httpx.RequestError, KeyError, ValueError):
+                stories.append(
+                    {
+                        "hn_id": item["id"],
+                        "title": item.get("title", ""),
+                        "url": item.get("url", ""),
+                        "author": item.get("by", ""),
+                        "score": item.get("score", 0),
+                        "num_comments": item.get("descendants", 0),
+                        "posted_at": datetime.fromtimestamp(item["time"], tz=UTC),
+                    }
+                )
+            except httpx.HTTPStatusError, httpx.RequestError, KeyError, ValueError:
                 logger.debug("Failed to fetch HN item %d", item_id)
                 continue
 
@@ -68,15 +75,22 @@ def fetch_comments(item_id: int, limit: int = 10) -> list[dict]:
                 if r.status_code != 200:
                     continue
                 item = r.json()
-                if not item or item.get("type") != "comment" or item.get("dead") or item.get("deleted"):
+                if (
+                    not item
+                    or item.get("type") != "comment"
+                    or item.get("dead")
+                    or item.get("deleted")
+                ):
                     continue
-                comments.append({
-                    "hn_id": item["id"],
-                    "author": item.get("by", ""),
-                    "text": item.get("text", ""),
-                    "posted_at": datetime.fromtimestamp(item["time"], tz=timezone.utc),
-                })
-            except (httpx.HTTPStatusError, httpx.RequestError, KeyError, ValueError):
+                comments.append(
+                    {
+                        "hn_id": item["id"],
+                        "author": item.get("by", ""),
+                        "text": item.get("text", ""),
+                        "posted_at": datetime.fromtimestamp(item["time"], tz=UTC),
+                    }
+                )
+            except httpx.HTTPStatusError, httpx.RequestError, KeyError, ValueError:
                 logger.debug("Failed to fetch HN comment %d", kid_id)
                 continue
 

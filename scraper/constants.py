@@ -49,6 +49,9 @@ REDDIT_DEFAULT_SUBREDDITS = [
     "SecurityAnalysis",
     "Daytrading",
     "algotrading",
+    "thetagang",
+    "smallstreetbets",
+    "swingtrading",
     "cryptocurrency",
     "bitcoin",
     "ethereum",
@@ -74,18 +77,41 @@ HN_DEFAULT_COMMENT_LIMIT = 25
 HN_STALENESS_SECONDS = 3600
 
 # Asset keyword matching — words to ignore when building keyword map from asset names
-ASSET_NAME_STOP_WORDS = frozenset({
-    "inc", "corp", "corporation", "ltd", "limited", "co", "company",
-    "group", "holdings", "plc", "sa", "ag", "nv", "se",
-    "the", "and", "of", "usd", "etf", "fund", "trust", "class",
-})
+ASSET_NAME_STOP_WORDS = frozenset(
+    {
+        "inc",
+        "corp",
+        "corporation",
+        "ltd",
+        "limited",
+        "co",
+        "company",
+        "group",
+        "holdings",
+        "plc",
+        "sa",
+        "ag",
+        "nv",
+        "se",
+        "the",
+        "and",
+        "of",
+        "usd",
+        "etf",
+        "fund",
+        "trust",
+        "class",
+    }
+)
 ASSET_KEYWORD_MIN_LENGTH = 3
 
 # Brave News
 BRAVE_NEWS_DEFAULT_QUERY = "stock market finance"
 BRAVE_NEWS_DEFAULT_COUNT = 20
 BRAVE_NEWS_DEFAULT_FRESHNESS = "pm"  # past month (max supported by Brave News API)
-BRAVE_NEWS_TICKER_STALENESS_SECONDS = 3600  # 1 hour — per-asset news freshness on page visit
+BRAVE_NEWS_TICKER_STALENESS_SECONDS = (
+    3600  # 1 hour — per-asset news freshness on page visit
+)
 
 # Embeddings
 VECTOR_EMBEDDING_DIMENSIONS = 2048

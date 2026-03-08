@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0007_fundamental_debt_to_equity_and_more'),
+        ("scraper", "0007_fundamental_debt_to_equity_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='asset',
-            name='peers',
-            field=models.ManyToManyField(blank=True, related_name='peer_of', to='scraper.asset'),
+            model_name="asset",
+            name="peers",
+            field=models.ManyToManyField(
+                blank=True, related_name="peer_of", to="scraper.asset"
+            ),
         ),
     ]

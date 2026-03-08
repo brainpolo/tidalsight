@@ -5,77 +5,199 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Asset',
+            name="Asset",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('ticker', models.CharField(max_length=20, unique=True)),
-                ('asset_class', models.CharField(choices=[('crypto', 'Cryptocurrency'), ('equity', 'Equity'), ('commodity', 'Commodity'), ('currency', 'Currency')], max_length=10)),
-                ('is_active', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("ticker", models.CharField(max_length=20, unique=True)),
+                (
+                    "asset_class",
+                    models.CharField(
+                        choices=[
+                            ("crypto", "Cryptocurrency"),
+                            ("equity", "Equity"),
+                            ("commodity", "Commodity"),
+                            ("currency", "Currency"),
+                        ],
+                        max_length=10,
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'ordering': ['asset_class', 'name'],
+                "ordering": ["asset_class", "name"],
             },
         ),
         migrations.CreateModel(
-            name='Analysis',
+            name="Analysis",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('summary', models.TextField()),
-                ('sentiment', models.CharField(choices=[('bullish', 'Bullish'), ('bearish', 'Bearish'), ('neutral', 'Neutral')], max_length=10)),
-                ('trend_prediction', models.TextField()),
-                ('sources_used', models.JSONField(default=list)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('asset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='analyses', to='scraper.asset')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("summary", models.TextField()),
+                (
+                    "sentiment",
+                    models.CharField(
+                        choices=[
+                            ("bullish", "Bullish"),
+                            ("bearish", "Bearish"),
+                            ("neutral", "Neutral"),
+                        ],
+                        max_length=10,
+                    ),
+                ),
+                ("trend_prediction", models.TextField()),
+                ("sources_used", models.JSONField(default=list)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "asset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="analyses",
+                        to="scraper.asset",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Fundamental',
+            name="Fundamental",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('market_cap', models.DecimalField(blank=True, decimal_places=2, max_digits=24, null=True)),
-                ('pe_ratio', models.DecimalField(blank=True, decimal_places=4, max_digits=12, null=True)),
-                ('eps', models.DecimalField(blank=True, decimal_places=4, max_digits=12, null=True)),
-                ('dividend_yield', models.DecimalField(blank=True, decimal_places=6, max_digits=8, null=True)),
-                ('revenue', models.DecimalField(blank=True, decimal_places=2, max_digits=24, null=True)),
-                ('profit_margin', models.DecimalField(blank=True, decimal_places=6, max_digits=8, null=True)),
-                ('beta', models.DecimalField(blank=True, decimal_places=6, max_digits=8, null=True)),
-                ('fifty_two_week_high', models.DecimalField(blank=True, decimal_places=8, max_digits=20, null=True)),
-                ('fifty_two_week_low', models.DecimalField(blank=True, decimal_places=8, max_digits=20, null=True)),
-                ('fetched_at', models.DateTimeField(auto_now_add=True)),
-                ('asset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fundamentals', to='scraper.asset')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "market_cap",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=24, null=True
+                    ),
+                ),
+                (
+                    "pe_ratio",
+                    models.DecimalField(
+                        blank=True, decimal_places=4, max_digits=12, null=True
+                    ),
+                ),
+                (
+                    "eps",
+                    models.DecimalField(
+                        blank=True, decimal_places=4, max_digits=12, null=True
+                    ),
+                ),
+                (
+                    "dividend_yield",
+                    models.DecimalField(
+                        blank=True, decimal_places=6, max_digits=8, null=True
+                    ),
+                ),
+                (
+                    "revenue",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=24, null=True
+                    ),
+                ),
+                (
+                    "profit_margin",
+                    models.DecimalField(
+                        blank=True, decimal_places=6, max_digits=8, null=True
+                    ),
+                ),
+                (
+                    "beta",
+                    models.DecimalField(
+                        blank=True, decimal_places=6, max_digits=8, null=True
+                    ),
+                ),
+                (
+                    "fifty_two_week_high",
+                    models.DecimalField(
+                        blank=True, decimal_places=8, max_digits=20, null=True
+                    ),
+                ),
+                (
+                    "fifty_two_week_low",
+                    models.DecimalField(
+                        blank=True, decimal_places=8, max_digits=20, null=True
+                    ),
+                ),
+                ("fetched_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "asset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="fundamentals",
+                        to="scraper.asset",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-fetched_at'],
+                "ordering": ["-fetched_at"],
             },
         ),
         migrations.CreateModel(
-            name='PriceHistory',
+            name="PriceHistory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('open', models.DecimalField(decimal_places=8, max_digits=20)),
-                ('high', models.DecimalField(decimal_places=8, max_digits=20)),
-                ('low', models.DecimalField(decimal_places=8, max_digits=20)),
-                ('close', models.DecimalField(decimal_places=8, max_digits=20)),
-                ('volume', models.DecimalField(blank=True, decimal_places=2, max_digits=20, null=True)),
-                ('timestamp', models.DateTimeField()),
-                ('asset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='prices', to='scraper.asset')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("open", models.DecimalField(decimal_places=8, max_digits=20)),
+                ("high", models.DecimalField(decimal_places=8, max_digits=20)),
+                ("low", models.DecimalField(decimal_places=8, max_digits=20)),
+                ("close", models.DecimalField(decimal_places=8, max_digits=20)),
+                (
+                    "volume",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=20, null=True
+                    ),
+                ),
+                ("timestamp", models.DateTimeField()),
+                (
+                    "asset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="prices",
+                        to="scraper.asset",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-timestamp'],
-                'unique_together': {('asset', 'timestamp')},
+                "ordering": ["-timestamp"],
+                "unique_together": {("asset", "timestamp")},
             },
         ),
     ]

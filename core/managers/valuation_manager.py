@@ -3,9 +3,9 @@ GRAHAM_BASE_PE = 8.5
 GRAHAM_GROWTH_MULTIPLIER = 2
 
 # Gordon Growth Model (DDM) assumptions
-DDM_GROWTH_RATE = 0.05       # 5% dividend growth
-DDM_DISCOUNT_RATE = 0.10     # 10% required return
-DDM_MIN_YIELD = 2            # minimum dividend yield % to apply DDM
+DDM_GROWTH_RATE = 0.05  # 5% dividend growth
+DDM_DISCOUNT_RATE = 0.10  # 10% required return
+DDM_MIN_YIELD = 2  # minimum dividend yield % to apply DDM
 
 # Annualized growth requires at least this many days of price history
 MIN_GROWTH_DAYS = 30
@@ -22,33 +22,42 @@ def compute_valuations(asset, fundamental, latest_price):
 
     current = float(latest_price.close)
     eps = float(fundamental.eps) if fundamental.eps else None
-    pe = float(fundamental.pe_ratio) if fundamental.pe_ratio else None
-    dividend_yield = float(fundamental.dividend_yield) if fundamental.dividend_yield else None
+    dividend_yield = (
+        float(fundamental.dividend_yield) if fundamental.dividend_yield else None
+    )
 
     valuations = []
 
-    # 1. Graham Growth: EPS × (8.5 + 2g) where g = annualized growth %
+    # 1. Graham Growth: EPS x (8.5 + 2g) where g = annualized growth %
     if eps and eps > 0:
         growth = _annualized_growth(asset)
         if growth is not None:
             graham = eps * (GRAHAM_BASE_PE + GRAHAM_GROWTH_MULTIPLIER * growth)
             if graham > 0:
-                valuations.append(_build(
-                    "Graham Growth", graham, current,
-                    "Benjamin Graham's growth formula: EPS × (8.5 + 2g), where g is the annualized "
-                    "historical growth rate. Estimates intrinsic value based on earnings and growth.",
-                ))
+                valuations.append(
+                    _build(
+                        "Graham Growth",
+                        graham,
+                        current,
+                        "Benjamin Graham's growth formula: EPS × (8.5 + 2g), where g is the annualized "
+                        "historical growth rate. Estimates intrinsic value based on earnings and growth.",
+                    )
+                )
 
-    # 2. P/E Fair Value: EPS × sector average P/E
+    # 2. P/E Fair Value: EPS x sector average P/E
     if eps and eps > 0:
         sector_pe = _sector_avg_pe(asset)
         pe_fair = eps * sector_pe
         if pe_fair > 0:
-            valuations.append(_build(
-                "P/E Fair Value", pe_fair, current,
-                f"EPS × sector average P/E ratio ({sector_pe}). Shows what the stock would be "
-                "worth if it traded at the typical valuation multiple for its sector.",
-            ))
+            valuations.append(
+                _build(
+                    "P/E Fair Value",
+                    pe_fair,
+                    current,
+                    f"EPS × sector average P/E ratio ({sector_pe}). Shows what the stock would be "
+                    "worth if it traded at the typical valuation multiple for its sector.",
+                )
+            )
 
     # 3. DDM (Gordon Growth): only for meaningful dividend stocks (yield > 2%)
     if dividend_yield and dividend_yield > DDM_MIN_YIELD and current > 0:
@@ -56,11 +65,15 @@ def compute_valuations(asset, fundamental, latest_price):
         if DDM_DISCOUNT_RATE > DDM_GROWTH_RATE:
             ddm = annual_dividend / (DDM_DISCOUNT_RATE - DDM_GROWTH_RATE)
             if ddm > 0:
-                valuations.append(_build(
-                    "Dividend (DDM)", ddm, current,
-                    "Gordon Growth Model: annual dividend ÷ (required return − dividend growth rate). "
-                    f"Assumes {DDM_DISCOUNT_RATE:.0%} required return and {DDM_GROWTH_RATE:.0%} dividend growth. Best suited for stable dividend-paying stocks.",
-                ))
+                valuations.append(
+                    _build(
+                        "Dividend (DDM)",
+                        ddm,
+                        current,
+                        "Gordon Growth Model: annual dividend ÷ (required return − dividend growth rate). "
+                        f"Assumes {DDM_DISCOUNT_RATE:.0%} required return and {DDM_GROWTH_RATE:.0%} dividend growth. Best suited for stable dividend-paying stocks.",
+                    )
+                )
 
     # 4. Price/Sales: fair value if stock traded at sector avg P/S ratio
     market_cap = float(fundamental.market_cap) if fundamental.market_cap else None
@@ -71,22 +84,38 @@ def compute_valuations(asset, fundamental, latest_price):
         # Fair value = current price adjusted by how far P/S is from sector avg
         ps_fair = current * (sector_ps / current_ps)
         if ps_fair > 0:
-            valuations.append(_build(
-                "Price/Sales", ps_fair, current,
-                f"Adjusts current price based on how the stock's Price/Sales ratio compares to the "
-                f"sector average ({sector_ps}x). Useful for valuing companies with low or negative earnings.",
-            ))
+            valuations.append(
+                _build(
+                    "Price/Sales",
+                    ps_fair,
+                    current,
+                    f"Adjusts current price based on how the stock's Price/Sales ratio compares to the "
+                    f"sector average ({sector_ps}x). Useful for valuing companies with low or negative earnings.",
+                )
+            )
 
     # 5. 52-Week Midpoint: simple mean of 52W high and low
-    high = float(fundamental.fifty_two_week_high) if fundamental.fifty_two_week_high else None
-    low = float(fundamental.fifty_two_week_low) if fundamental.fifty_two_week_low else None
+    high = (
+        float(fundamental.fifty_two_week_high)
+        if fundamental.fifty_two_week_high
+        else None
+    )
+    low = (
+        float(fundamental.fifty_two_week_low)
+        if fundamental.fifty_two_week_low
+        else None
+    )
     if high and low:
         midpoint = (high + low) / 2
-        valuations.append(_build(
-            "52W Midpoint", midpoint, current,
-            "Simple average of the 52-week high and low. A rough gauge of where the stock "
-            "sits within its annual trading range.",
-        ))
+        valuations.append(
+            _build(
+                "52W Midpoint",
+                midpoint,
+                current,
+                "Simple average of the 52-week high and low. A rough gauge of where the stock "
+                "sits within its annual trading range.",
+            )
+        )
 
     return valuations
 

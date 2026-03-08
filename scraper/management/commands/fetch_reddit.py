@@ -15,8 +15,18 @@ class Command(BaseCommand):
             default=REDDIT_DEFAULT_SUBREDDITS,
             help=f"Subreddits to scrape (default: {', '.join(REDDIT_DEFAULT_SUBREDDITS)})",
         )
-        parser.add_argument("--sort", default="hot", choices=["hot", "new", "top", "rising"], help="Sort order")
-        parser.add_argument("--limit", type=int, default=REDDIT_DEFAULT_LIMIT, help=f"Posts per subreddit (default: {REDDIT_DEFAULT_LIMIT})")
+        parser.add_argument(
+            "--sort",
+            default="hot",
+            choices=["hot", "new", "top", "rising"],
+            help="Sort order",
+        )
+        parser.add_argument(
+            "--limit",
+            type=int,
+            default=REDDIT_DEFAULT_LIMIT,
+            help=f"Posts per subreddit (default: {REDDIT_DEFAULT_LIMIT})",
+        )
 
     def handle(self, *args, **options):
         subreddits = options["subreddits"]

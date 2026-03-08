@@ -124,9 +124,19 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
 GAUGE_FIELDS = {"pe_ratio", "fifty_two_week_high", "fifty_two_week_low"}
 
 FUNDAMENTAL_FIELD_ORDER = [
-    "market_cap", "eps", "dividend_yield", "beta", "revenue",
-    "profit_margin", "debt_to_equity", "free_cash_flow", "return_on_equity", "price_to_book",
-    "pe_ratio", "fifty_two_week_high", "fifty_two_week_low",
+    "market_cap",
+    "eps",
+    "dividend_yield",
+    "beta",
+    "revenue",
+    "profit_margin",
+    "debt_to_equity",
+    "free_cash_flow",
+    "return_on_equity",
+    "price_to_book",
+    "pe_ratio",
+    "fifty_two_week_high",
+    "fifty_two_week_low",
 ]
 
 
@@ -152,34 +162,46 @@ def build_fundamental_cards(fundamental, latest_price):
             display = abbreviate(raw)
         else:
             val = float(raw)
-            display = f"{meta.prefix}{val:,.2f}{meta.suffix}" if meta.prefix else f"{val:,.2f}{meta.suffix}"
+            display = (
+                f"{meta.prefix}{val:,.2f}{meta.suffix}"
+                if meta.prefix
+                else f"{val:,.2f}{meta.suffix}"
+            )
 
-        cards.append({
-            "label": meta.label,
-            "value": display,
-            "description": meta.description,
-            "benchmark": meta.benchmark,
-            "field": field,
-        })
+        cards.append(
+            {
+                "label": meta.label,
+                "value": display,
+                "description": meta.description,
+                "benchmark": meta.benchmark,
+                "field": field,
+            }
+        )
 
     range_gauge = _build_range_gauge(fundamental, latest_price)
     pe_gauge = _build_pe_gauge(fundamental)
 
-    return {"cards": cards, "range_gauge": range_gauge, "pe_gauge": pe_gauge, "fetched_at": fundamental.fetched_at}
+    return {
+        "cards": cards,
+        "range_gauge": range_gauge,
+        "pe_gauge": pe_gauge,
+        "fetched_at": fundamental.fetched_at,
+    }
 
 
 def _build_range_gauge(fundamental, latest_price):
-    if not (latest_price and fundamental.fifty_two_week_low and fundamental.fifty_two_week_high):
+    if not (
+        latest_price
+        and fundamental.fifty_two_week_low
+        and fundamental.fifty_two_week_high
+    ):
         return None
 
     low = float(fundamental.fifty_two_week_low)
     high = float(fundamental.fifty_two_week_high)
     current = float(latest_price.close)
 
-    if high > low:
-        pct = max(0, min(100, ((current - low) / (high - low)) * 100))
-    else:
-        pct = 50
+    pct = max(0, min(100, ((current - low) / (high - low)) * 100)) if high > low else 50
 
     return {
         "low": f"${low:,.2f}",

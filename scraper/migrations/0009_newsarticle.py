@@ -5,28 +5,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0008_asset_peers'),
+        ("scraper", "0008_asset_peers"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NewsArticle',
+            name="NewsArticle",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('url', models.URLField(max_length=500, unique=True)),
-                ('title', models.CharField(max_length=300)),
-                ('description', models.TextField(blank=True)),
-                ('source', models.CharField(blank=True, max_length=100)),
-                ('thumbnail', models.URLField(blank=True, max_length=500)),
-                ('published_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('embedding', pgvector.django.vector.VectorField(blank=True, dimensions=2048, null=True)),
-                ('assets', models.ManyToManyField(blank=True, related_name='news_articles', to='scraper.asset')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("url", models.URLField(max_length=500, unique=True)),
+                ("title", models.CharField(max_length=300)),
+                ("description", models.TextField(blank=True)),
+                ("source", models.CharField(blank=True, max_length=100)),
+                ("thumbnail", models.URLField(blank=True, max_length=500)),
+                ("published_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "embedding",
+                    pgvector.django.vector.VectorField(
+                        blank=True, dimensions=2048, null=True
+                    ),
+                ),
+                (
+                    "assets",
+                    models.ManyToManyField(
+                        blank=True, related_name="news_articles", to="scraper.asset"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-published_at'],
+                "ordering": ["-published_at"],
             },
         ),
     ]

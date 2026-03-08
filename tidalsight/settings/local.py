@@ -18,6 +18,10 @@ DATABASES = {
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# Celery
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "django-db"
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",

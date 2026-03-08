@@ -6,7 +6,7 @@ import os
 
 from tidalsight.settings.base import *  # noqa: F403
 
-ALLOWED_HOSTS: list[str] = ["tidalsight.com"]
+ALLOWED_HOSTS: list[str] = ["tidalsight.com", "healthcheck.railway.app"]
 CSRF_TRUSTED_ORIGINS: list[str] = ["https://tidalsight.com"]
 
 # Database — Railway provides these env vars when you add a PostgreSQL service
@@ -31,6 +31,10 @@ CACHES = {
         },
     }
 }
+
+# Celery — uses the same Redis
+CELERY_BROKER_URL = os.environ["REDIS_URL"]
+CELERY_RESULT_BACKEND = "django-db"
 
 STORAGES: dict[str, dict[str, str]] = {
     "staticfiles": {

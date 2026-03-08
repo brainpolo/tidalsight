@@ -8,8 +8,14 @@ class Command(BaseCommand):
     help = "Discover and backfill peer/competitor assets for all active assets that don't have any"
 
     def add_arguments(self, parser):
-        parser.add_argument("--ticker", type=str, help="Only backfill a specific ticker")
-        parser.add_argument("--force", action="store_true", help="Re-discover peers even if they already exist")
+        parser.add_argument(
+            "--ticker", type=str, help="Only backfill a specific ticker"
+        )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Re-discover peers even if they already exist",
+        )
 
     def handle(self, *args, **options):
         qs = Asset.objects.filter(is_active=True).order_by("ticker")
@@ -53,4 +59,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING("no peers found"))
                 skipped += 1
 
-        self.stdout.write(self.style.SUCCESS(f"\nDone: {success} backfilled, {skipped} skipped"))
+        self.stdout.write(
+            self.style.SUCCESS(f"\nDone: {success} backfilled, {skipped} skipped")
+        )

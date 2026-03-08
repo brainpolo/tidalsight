@@ -5,6 +5,12 @@ from core.constants import CURRENCY_MAX_LENGTH, TIMEZONE_MAX_LENGTH, Currency, T
 
 
 class User(AbstractUser):
-    watchlist = models.ManyToManyField("scraper.Asset", blank=True, related_name="watchers")
-    currency = models.CharField(max_length=CURRENCY_MAX_LENGTH, choices=Currency.choices, default=Currency.USD)
-    timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, choices=Timezone.choices, default=Timezone.UTC)
+    watchlist = models.ManyToManyField(
+        "scraper.Asset", blank=True, related_name="watchers"
+    )
+    currency = models.CharField(
+        max_length=CURRENCY_MAX_LENGTH, choices=Currency.choices, default=Currency.USD
+    )
+    timezone = models.CharField(
+        max_length=TIMEZONE_MAX_LENGTH, choices=Timezone.choices, default=Timezone.UTC
+    )

@@ -1,6 +1,17 @@
 from django.contrib import admin
 
-from scraper.models import Asset, Fundamental, HNComment, HNPost, News, NewsArticle, NewsAssetImpact, PriceHistory, RedditComment, RedditPost
+from scraper.models import (
+    Asset,
+    Fundamental,
+    HNComment,
+    HNPost,
+    News,
+    NewsArticle,
+    NewsAssetImpact,
+    PriceHistory,
+    RedditComment,
+    RedditPost,
+)
 
 
 @admin.register(Asset)

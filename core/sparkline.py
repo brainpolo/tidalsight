@@ -28,5 +28,5 @@ def build_sparkline_svg(closes: list[float], width: int = 80, height: int = 24) 
         f'fill="none" xmlns="http://www.w3.org/2000/svg">'
         f'<path d="{path_d}" stroke="{color}" stroke-width="1.5" '
         f'stroke-linecap="round" stroke-linejoin="round"/>'
-        f'</svg>'
+        f"</svg>"
     )

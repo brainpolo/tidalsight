@@ -45,7 +45,9 @@ class Asset(models.Model):
     ticker = models.CharField(max_length=20, unique=True)
     asset_class = models.CharField(max_length=10, choices=AssetClass.choices)
     website = models.URLField(max_length=200, blank=True)
-    peers = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="peer_of")
+    peers = models.ManyToManyField(
+        "self", symmetrical=False, blank=True, related_name="peer_of"
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -58,12 +60,23 @@ class Asset(models.Model):
 
 class PriceHistory(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="prices")
-    open = models.DecimalField(max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES)
-    high = models.DecimalField(max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES)
-    low = models.DecimalField(max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES)
-    close = models.DecimalField(max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES)
+    open = models.DecimalField(
+        max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES
+    )
+    high = models.DecimalField(
+        max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES
+    )
+    low = models.DecimalField(
+        max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES
+    )
+    close = models.DecimalField(
+        max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES
+    )
     volume = models.DecimalField(
-        max_digits=VOLUME_MAX_DIGITS, decimal_places=VOLUME_DECIMAL_PLACES, null=True, blank=True
+        max_digits=VOLUME_MAX_DIGITS,
+        decimal_places=VOLUME_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     timestamp = models.DateTimeField(db_index=True)
 
@@ -76,45 +89,86 @@ class PriceHistory(models.Model):
 
 
 class Fundamental(models.Model):
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="fundamentals")
+    asset = models.ForeignKey(
+        Asset, on_delete=models.CASCADE, related_name="fundamentals"
+    )
     market_cap = models.DecimalField(
-        max_digits=LARGE_VALUE_MAX_DIGITS, decimal_places=LARGE_VALUE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=LARGE_VALUE_MAX_DIGITS,
+        decimal_places=LARGE_VALUE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     pe_ratio = models.DecimalField(
-        max_digits=RATIO_MAX_DIGITS, decimal_places=RATIO_DECIMAL_PLACES, null=True, blank=True
+        max_digits=RATIO_MAX_DIGITS,
+        decimal_places=RATIO_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     eps = models.DecimalField(
-        max_digits=RATIO_MAX_DIGITS, decimal_places=RATIO_DECIMAL_PLACES, null=True, blank=True
+        max_digits=RATIO_MAX_DIGITS,
+        decimal_places=RATIO_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     dividend_yield = models.DecimalField(
-        max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=PERCENTAGE_MAX_DIGITS,
+        decimal_places=PERCENTAGE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     revenue = models.DecimalField(
-        max_digits=LARGE_VALUE_MAX_DIGITS, decimal_places=LARGE_VALUE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=LARGE_VALUE_MAX_DIGITS,
+        decimal_places=LARGE_VALUE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     profit_margin = models.DecimalField(
-        max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=PERCENTAGE_MAX_DIGITS,
+        decimal_places=PERCENTAGE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     beta = models.DecimalField(
-        max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=PERCENTAGE_MAX_DIGITS,
+        decimal_places=PERCENTAGE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     debt_to_equity = models.DecimalField(
-        max_digits=RATIO_MAX_DIGITS, decimal_places=RATIO_DECIMAL_PLACES, null=True, blank=True
+        max_digits=RATIO_MAX_DIGITS,
+        decimal_places=RATIO_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     free_cash_flow = models.DecimalField(
-        max_digits=LARGE_VALUE_MAX_DIGITS, decimal_places=LARGE_VALUE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=LARGE_VALUE_MAX_DIGITS,
+        decimal_places=LARGE_VALUE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     return_on_equity = models.DecimalField(
-        max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=PERCENTAGE_MAX_DIGITS,
+        decimal_places=PERCENTAGE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     price_to_book = models.DecimalField(
-        max_digits=RATIO_MAX_DIGITS, decimal_places=RATIO_DECIMAL_PLACES, null=True, blank=True
+        max_digits=RATIO_MAX_DIGITS,
+        decimal_places=RATIO_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     fifty_two_week_high = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     fifty_two_week_low = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS, decimal_places=PRICE_DECIMAL_PLACES, null=True, blank=True
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
     )
     fetched_at = models.DateTimeField(auto_now_add=True)
 
@@ -138,11 +192,17 @@ class News(models.Model):
     headline = models.CharField(max_length=NEWS_HEADLINE_MAX_LENGTH)
     summary = models.TextField(blank=True)
     source = models.CharField(max_length=NEWS_SOURCE_MAX_LENGTH, blank=True)
-    url = models.URLField(max_length=NEWS_URL_MAX_LENGTH, unique=True, null=True, blank=True)
-    category = models.CharField(max_length=NEWS_CATEGORY_MAX_LENGTH, choices=Category.choices, blank=True)
+    url = models.URLField(
+        max_length=NEWS_URL_MAX_LENGTH, unique=True, null=True, blank=True
+    )
+    category = models.CharField(
+        max_length=NEWS_CATEGORY_MAX_LENGTH, choices=Category.choices, blank=True
+    )
     published_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
-    assets = models.ManyToManyField(Asset, through="NewsAssetImpact", related_name="news")
+    assets = models.ManyToManyField(
+        Asset, through="NewsAssetImpact", related_name="news"
+    )
 
     class Meta:
         ordering = ["-published_at"]
@@ -164,10 +224,16 @@ class NewsAssetImpact(models.Model):
         LOW = "low", "Low"
 
     news = models.ForeignKey(News, on_delete=models.CASCADE, related_name="impacts")
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="news_impacts")
-    direction = models.CharField(max_length=IMPACT_DIRECTION_MAX_LENGTH, choices=Direction.choices)
+    asset = models.ForeignKey(
+        Asset, on_delete=models.CASCADE, related_name="news_impacts"
+    )
+    direction = models.CharField(
+        max_length=IMPACT_DIRECTION_MAX_LENGTH, choices=Direction.choices
+    )
     magnitude = models.CharField(
-        max_length=IMPACT_MAGNITUDE_MAX_LENGTH, choices=Magnitude.choices, default=Magnitude.MEDIUM,
+        max_length=IMPACT_MAGNITUDE_MAX_LENGTH,
+        choices=Magnitude.choices,
+        default=Magnitude.MEDIUM,
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -192,7 +258,9 @@ class RedditPost(models.Model):
     posted_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     assets = models.ManyToManyField(Asset, blank=True, related_name="reddit_posts")
-    embedding = VectorField(dimensions=VECTOR_EMBEDDING_DIMENSIONS, null=True, blank=True)
+    embedding = VectorField(
+        dimensions=VECTOR_EMBEDDING_DIMENSIONS, null=True, blank=True
+    )
 
     class Meta:
         ordering = ["-posted_at"]
@@ -212,7 +280,9 @@ class RedditPost(models.Model):
             parts.append(self.body)
         if comment_bodies is None:
             comment_bodies = list(
-                self.comments.order_by("-score").values_list("body", flat=True)[:EMBEDDING_MAX_COMMENTS]
+                self.comments.order_by("-score").values_list("body", flat=True)[
+                    :EMBEDDING_MAX_COMMENTS
+                ]
             )
         parts.extend(comment_bodies)
         return "\n".join(parts)
@@ -220,7 +290,9 @@ class RedditPost(models.Model):
 
 class RedditComment(models.Model):
     reddit_id = models.CharField(max_length=REDDIT_COMMENT_ID_MAX_LENGTH, unique=True)
-    post = models.ForeignKey(RedditPost, on_delete=models.CASCADE, related_name="comments")
+    post = models.ForeignKey(
+        RedditPost, on_delete=models.CASCADE, related_name="comments"
+    )
     author = models.CharField(max_length=REDDIT_COMMENT_AUTHOR_MAX_LENGTH)
     body = models.TextField()
     score = models.IntegerField()
@@ -243,7 +315,9 @@ class HNPost(models.Model):
     posted_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     assets = models.ManyToManyField(Asset, blank=True, related_name="hn_posts")
-    embedding = VectorField(dimensions=VECTOR_EMBEDDING_DIMENSIONS, null=True, blank=True)
+    embedding = VectorField(
+        dimensions=VECTOR_EMBEDDING_DIMENSIONS, null=True, blank=True
+    )
 
     class Meta:
         ordering = ["-posted_at"]
@@ -284,7 +358,9 @@ class NewsArticle(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     assets = models.ManyToManyField(Asset, blank=True, related_name="news_articles")
-    embedding = VectorField(dimensions=VECTOR_EMBEDDING_DIMENSIONS, null=True, blank=True)
+    embedding = VectorField(
+        dimensions=VECTOR_EMBEDDING_DIMENSIONS, null=True, blank=True
+    )
 
     class Meta:
         ordering = ["-published_at"]

@@ -5,9 +5,17 @@ import httpx
 from django.db import IntegrityError
 
 from scraper.clients.reddit_client import fetch_comments, fetch_posts
-from scraper.constants import EMBEDDING_MAX_COMMENTS, REDDIT_DEFAULT_LIMIT, REDDIT_DEFAULT_SUBREDDITS
+from scraper.constants import (
+    EMBEDDING_MAX_COMMENTS,
+    REDDIT_DEFAULT_LIMIT,
+    REDDIT_DEFAULT_SUBREDDITS,
+)
 from scraper.embeddings import gen_text_embedding
-from scraper.managers.asset_manager import get_or_create_asset, sync_fundamentals, sync_price_history
+from scraper.managers.asset_manager import (
+    get_or_create_asset,
+    sync_fundamentals,
+    sync_price_history,
+)
 from scraper.models import Asset, RedditComment, RedditPost
 
 logger = logging.getLogger(__name__)
@@ -32,7 +40,7 @@ def _resolve_assets(title: str, body: str) -> list[Asset]:
             sync_fundamentals(ticker)
             assets.append(asset)
             logger.info("Resolved ticker '%s' -> %s", ticker, asset)
-        except (ValueError, ConnectionError):
+        except ValueError, ConnectionError:
             logger.info("Could not resolve ticker '%s', skipping", ticker)
 
     return assets
@@ -43,7 +51,7 @@ def _store_comments(post: RedditPost, subreddit: str, reddit_id: str) -> list[di
     comment_data_list = []
     try:
         comment_data_list = fetch_comments(subreddit, reddit_id)
-    except (httpx.HTTPStatusError, httpx.RequestError):
+    except httpx.HTTPStatusError, httpx.RequestError:
         logger.exception("Failed to fetch comments for post %s", reddit_id)
         return comment_data_list
 
@@ -60,7 +68,9 @@ def _store_comments(post: RedditPost, subreddit: str, reddit_id: str) -> list[di
                 },
             )
         except IntegrityError:
-            logger.exception("Failed to store comment %s", comment_data.get("reddit_id"))
+            logger.exception(
+                "Failed to store comment %s", comment_data.get("reddit_id")
+            )
 
     return comment_data_list
 
@@ -69,16 +79,22 @@ def _generate_embedding(post: RedditPost, comment_data_list: list[dict]) -> None
     """Generate and store embedding for a post using its content and top comments."""
     top_bodies = [
         c["body"]
-        for c in sorted(comment_data_list, key=lambda c: c["score"], reverse=True)[:EMBEDDING_MAX_COMMENTS]
+        for c in sorted(comment_data_list, key=lambda c: c["score"], reverse=True)[
+            :EMBEDDING_MAX_COMMENTS
+        ]
     ]
     try:
-        post.embedding = gen_text_embedding(post.get_embedding_text(comment_bodies=top_bodies))
+        post.embedding = gen_text_embedding(
+            post.get_embedding_text(comment_bodies=top_bodies)
+        )
         post.save(update_fields=["embedding"])
-    except (httpx.HTTPStatusError, httpx.RequestError, ValueError):
+    except httpx.HTTPStatusError, httpx.RequestError, ValueError:
         logger.exception("Failed to generate embedding for post %s", post.reddit_id)
 
 
-def _link_assets(post: RedditPost, subreddit: str, comment_data_list: list[dict]) -> None:
+def _link_assets(
+    post: RedditPost, subreddit: str, comment_data_list: list[dict]
+) -> None:
     """Resolve tickers from post and comment text, then link assets."""
     comment_bodies = " ".join(c["body"] for c in comment_data_list)
     assets = _resolve_assets(post.title, f"{post.body} {comment_bodies}")
@@ -102,7 +118,7 @@ def sync_reddit_posts(
     for subreddit in subreddits:
         try:
             posts = fetch_posts(subreddit, sort=sort, limit=limit)
-        except (httpx.HTTPStatusError, httpx.RequestError):
+        except httpx.HTTPStatusError, httpx.RequestError:
             logger.exception("Failed to fetch posts from r/%s", subreddit)
             continue
 

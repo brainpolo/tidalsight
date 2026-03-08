@@ -12,6 +12,8 @@ class Command(BaseCommand):
 
         try:
             created = sync_hn_posts()
-            self.stdout.write(self.style.SUCCESS(f"Done: {created} new posts matched to assets"))
+            self.stdout.write(
+                self.style.SUCCESS(f"Done: {created} new posts matched to assets")
+            )
         except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
             self.stdout.write(self.style.ERROR(f"Failed: {e}"))

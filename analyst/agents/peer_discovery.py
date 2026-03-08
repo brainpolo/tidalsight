@@ -1,5 +1,5 @@
-from pydantic import BaseModel
 from agents import Agent, ModelSettings
+from pydantic import BaseModel
 
 from analyst.agents.tools import search_web, validate_ticker
 from analyst.llms import BYTEDANCE_SEED_2_0_MINI

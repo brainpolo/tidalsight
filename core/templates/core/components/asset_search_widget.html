@@ -89,6 +89,7 @@
                 >
                 <div id="searchResults" class="search-results-dropdown"></div>
             </div>
+            <kbd class="search-kbd-full">&#8984;K</kbd>
             <button type="submit" class="search-submit" id="searchBtn">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 8h10M9 4l4 4-4 4"/>
@@ -156,6 +157,23 @@
 
     .search-submit:hover {
         color: #c87941;
+    }
+
+    .search-kbd-full {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.6rem;
+        font-weight: 500;
+        color: #5c5750;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 3px;
+        padding: 3px 7px;
+        line-height: 1;
+        flex-shrink: 0;
+        pointer-events: none;
+    }
+    .search-field:focus-within .search-kbd-full {
+        display: none;
     }
 
     .search-tickers {

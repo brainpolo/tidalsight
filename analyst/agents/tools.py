@@ -11,8 +11,10 @@ def validate_ticker(ticker: str) -> str:
     ticker = ticker.upper().strip().lstrip("$")
     try:
         asset = get_or_create_asset(ticker)
-        return f"Valid: {asset.ticker} ({asset.name}, {asset.get_asset_class_display()})"
-    except (ValueError, ConnectionError):
+        return (
+            f"Valid: {asset.ticker} ({asset.name}, {asset.get_asset_class_display()})"
+        )
+    except ValueError, ConnectionError:
         return f"Invalid: {ticker} is not a recognized ticker. Do not reference it in the digest."
 
 

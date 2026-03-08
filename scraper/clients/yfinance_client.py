@@ -9,12 +9,15 @@ def _to_decimal(value, default=None):
         return default
     try:
         return Decimal(str(value))
-    except (InvalidOperation, ValueError):
+    except InvalidOperation, ValueError:
         return default
 
 
 def fetch_price_history(
-    ticker: str, period: str = "1mo", interval: str = "1d", start: datetime | None = None,
+    ticker: str,
+    period: str = "1mo",
+    interval: str = "1d",
+    start: datetime | None = None,
 ) -> list[dict]:
     stock = yf.Ticker(ticker)
     if start:
@@ -27,14 +30,16 @@ def fetch_price_history(
 
     rows = []
     for ts, row in df.iterrows():
-        rows.append({
-            "open": _to_decimal(row.get("Open")),
-            "high": _to_decimal(row.get("High")),
-            "low": _to_decimal(row.get("Low")),
-            "close": _to_decimal(row.get("Close")),
-            "volume": _to_decimal(row.get("Volume")),
-            "timestamp": ts.to_pydatetime(),
-        })
+        rows.append(
+            {
+                "open": _to_decimal(row.get("Open")),
+                "high": _to_decimal(row.get("High")),
+                "low": _to_decimal(row.get("Low")),
+                "close": _to_decimal(row.get("Close")),
+                "volume": _to_decimal(row.get("Volume")),
+                "timestamp": ts.to_pydatetime(),
+            }
+        )
 
     return rows
 

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0004_redditpost_embedding_alter_pricehistory_timestamp'),
+        ("scraper", "0004_redditpost_embedding_alter_pricehistory_timestamp"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='asset',
-            name='website',
+            model_name="asset",
+            name="website",
             field=models.URLField(blank=True),
         ),
     ]

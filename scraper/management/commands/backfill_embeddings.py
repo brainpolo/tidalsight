@@ -18,7 +18,9 @@ class Command(BaseCommand):
     def _backfill_model(self, queryset, label_fn, batch_size):
         total = queryset.count()
         if total == 0:
-            self.stdout.write(f"  All {queryset.model.__name__} posts already have embeddings.")
+            self.stdout.write(
+                f"  All {queryset.model.__name__} posts already have embeddings."
+            )
             return 0, 0
 
         self.stdout.write(f"  Backfilling {total} {queryset.model.__name__} posts...")
@@ -32,7 +34,9 @@ class Command(BaseCommand):
                 processed += 1
             except (ConnectionError, ValueError, RuntimeError) as e:
                 failed += 1
-                self.stderr.write(self.style.WARNING(f"  Failed for {label_fn(post)}: {e}"))
+                self.stderr.write(
+                    self.style.WARNING(f"  Failed for {label_fn(post)}: {e}")
+                )
 
             if processed % batch_size == 0:
                 self.stdout.write(f"    Progress: {processed}/{total}")
@@ -72,5 +76,7 @@ class Command(BaseCommand):
         total_failed += f
 
         self.stdout.write(
-            self.style.SUCCESS(f"Done: {total_processed} embedded, {total_failed} failed.")
+            self.style.SUCCESS(
+                f"Done: {total_processed} embedded, {total_failed} failed."
+            )
         )

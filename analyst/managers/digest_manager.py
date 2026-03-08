@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from agents import Runner, RunConfig
+from agents import RunConfig, Runner
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.utils import timezone
@@ -33,15 +33,12 @@ DIGEST_LOCK_KEY = "market_digest_lock"
 
 def _build_reddit_section() -> str:
     posts = list(
-        RedditPost.objects
-        .order_by("-posted_at")
-        .prefetch_related(
+        RedditPost.objects.order_by("-posted_at").prefetch_related(
             Prefetch(
                 "comments",
                 queryset=RedditComment.objects.order_by("-score"),
             ),
-        )
-        [:REDDIT_POSTS_FOR_DIGEST]
+        )[:REDDIT_POSTS_FOR_DIGEST]
     )
     if not posts:
         return ""
@@ -55,31 +52,28 @@ def _build_reddit_section() -> str:
             lines.append(f"  {p.body[:REDDIT_POST_BODY_TRUNCATION]}")
 
         for c in p.comments.all()[:REDDIT_COMMENTS_PER_POST_FOR_DIGEST]:
-            lines.append(f"    > {c.author} (score:{c.score}): {c.body[:REDDIT_COMMENT_BODY_TRUNCATION]}")
+            lines.append(
+                f"    > {c.author} (score:{c.score}): {c.body[:REDDIT_COMMENT_BODY_TRUNCATION]}"
+            )
 
     return "\n".join(lines)
 
 
 def _build_hn_section() -> str:
     posts = list(
-        HNPost.objects
-        .order_by("-posted_at")
-        .prefetch_related(
+        HNPost.objects.order_by("-posted_at").prefetch_related(
             Prefetch(
                 "comments",
                 queryset=HNComment.objects.order_by("-posted_at"),
             ),
-        )
-        [:HN_POSTS_FOR_DIGEST]
+        )[:HN_POSTS_FOR_DIGEST]
     )
     if not posts:
         return ""
 
     lines = ["## Hacker News Discussions"]
     for p in posts:
-        lines.append(
-            f"[HN] (score:{p.score}, comments:{p.num_comments}) {p.title}"
-        )
+        lines.append(f"[HN] (score:{p.score}, comments:{p.num_comments}) {p.title}")
 
         for c in p.comments.all()[:HN_COMMENTS_PER_POST_FOR_DIGEST]:
             lines.append(f"    > {c.author}: {c.body[:HN_COMMENT_BODY_TRUNCATION]}")
@@ -89,9 +83,7 @@ def _build_hn_section() -> str:
 
 def _build_news_section() -> str:
     articles = list(
-        NewsArticle.objects
-        .order_by("-published_at")
-        [:NEWS_ARTICLES_FOR_DIGEST]
+        NewsArticle.objects.order_by("-published_at")[:NEWS_ARTICLES_FOR_DIGEST]
     )
     if not articles:
         return ""
@@ -152,7 +144,7 @@ def get_market_digest() -> dict | None:
 
     try:
         digest = _run_agent(prompt)
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError:
         logger.exception("Failed to generate market digest")
         cache.delete(DIGEST_LOCK_KEY)
         return existing

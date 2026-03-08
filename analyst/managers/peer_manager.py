@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from agents import Runner, RunConfig
+from agents import RunConfig, Runner
 from django.core.cache import cache
 
 from analyst.agents.peer_discovery import PeerDiscovery, peer_discovery_agent
@@ -45,14 +45,16 @@ def sync_peers(asset: Asset) -> list[Asset]:
             try:
                 peer = get_or_create_asset(ticker)
                 valid_peers.append(peer)
-            except (ValueError, ConnectionError):
-                logger.warning("Skipping invalid peer ticker %s for %s", ticker, asset.ticker)
+            except ValueError, ConnectionError:
+                logger.warning(
+                    "Skipping invalid peer ticker %s for %s", ticker, asset.ticker
+                )
                 continue
 
         asset.peers.set(valid_peers)
         logger.info("Synced %d peers for %s", len(valid_peers), asset.ticker)
         return valid_peers
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError:
         logger.exception("Failed to sync peers for %s", asset.ticker)
         return []
     finally:

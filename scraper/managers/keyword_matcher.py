@@ -26,7 +26,10 @@ def build_asset_keyword_map() -> dict[str, list[Asset]]:
         # Name words
         for word in asset.name.split():
             clean = re.sub(r"[.,()']", "", word).lower()
-            if len(clean) >= ASSET_KEYWORD_MIN_LENGTH and clean not in ASSET_NAME_STOP_WORDS:
+            if (
+                len(clean) >= ASSET_KEYWORD_MIN_LENGTH
+                and clean not in ASSET_NAME_STOP_WORDS
+            ):
                 keywords.add(clean)
 
         # Website domain (e.g. "google" from "https://www.google.com")
@@ -49,7 +52,9 @@ def compile_keyword_pattern(keyword_map: dict[str, list[Asset]]) -> re.Pattern:
 
 
 def match_assets(
-    text: str, keyword_map: dict[str, list[Asset]], pattern: re.Pattern,
+    text: str,
+    keyword_map: dict[str, list[Asset]],
+    pattern: re.Pattern,
 ) -> list[Asset]:
     """Match text against known asset keywords using a pre-compiled pattern."""
     matched: set[int] = set()
