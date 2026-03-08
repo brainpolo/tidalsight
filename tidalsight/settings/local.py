@@ -20,7 +20,7 @@ DATABASES = {
         "OPTIONS": {
             "pool": {
                 "min_size": 2,
-                "max_size": 10,
+                "max_size": 6,
             },
         },
     }

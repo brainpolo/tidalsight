@@ -1,9 +1,7 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 from django.core.cache import cache
-from django.db import close_old_connections
 from django.utils import timezone
 from requests.exceptions import RequestException
 
@@ -162,7 +160,7 @@ def sync_quick_prices(asset: Asset, ticker: str) -> int:
 
     Called by asset_detail on first visit to a new ticker so the chart can
     render immediately (~1s) instead of waiting for the full history fetch.
-    Pair with sync_full_prices_async() to backfill the remaining data.
+    Pair with sync_full_prices() (via Celery) to backfill the remaining data.
     Cache-locked to prevent duplicate fetches from concurrent requests.
     """
     lock_key = f"sync:prices:{ticker}:quick"
@@ -191,59 +189,37 @@ def sync_quick_prices(asset: Asset, ticker: str) -> int:
         cache.delete(lock_key)
 
 
-_price_executor = ThreadPoolExecutor(max_workers=2)
+def sync_full_prices(asset: Asset, ticker: str) -> None:
+    """Full price backfill: hourly (1yr) + daily (all history).
 
-
-def _sync_full_prices_thread(asset: Asset, ticker: str) -> None:
-    """Background thread: fetch full hourly (1yr) + daily (all history) data.
-
-    Hourly data covers chart ranges up to 1Y. Daily data (period="max")
-    covers 5Y and ALL ranges. Bypasses _sync_prices for hourly because its
-    staleness check would skip the fetch (quick sync data is fresh). Uses
-    cache locks so if asset_header or another request is already syncing
-    the same interval, this skips it. Overlapping rows from the quick sync
-    are ignored via bulk_create's ignore_conflicts=True (unique constraint
-    on asset + timestamp).
+    Intended to be called via Celery right after sync_quick_prices() so the
+    user sees the 1W chart instantly while the remaining history loads in the
+    background. Cache locks prevent duplicate work.
     """
-    try:
-        # Hourly: fetch full year (bypasses _sync_prices which would skip due to staleness)
-        lock_key = f"sync:prices:{ticker}:{DEFAULT_PRICE_INTERVAL}"
-        if cache.add(lock_key, True, SYNC_LOCK_TTL):
-            try:
-                rows = fetch_price_history(
+    # Hourly: fetch full year (bypasses _sync_prices which would skip due to staleness)
+    lock_key = f"sync:prices:{ticker}:{DEFAULT_PRICE_INTERVAL}"
+    if cache.add(lock_key, True, SYNC_LOCK_TTL):
+        try:
+            rows = fetch_price_history(
+                ticker,
+                period=DEFAULT_PRICE_PERIOD,
+                interval=DEFAULT_PRICE_INTERVAL,
+            )
+            if rows:
+                num_created = _bulk_insert_prices(asset, rows)
+                logger.info(
+                    "Backfill-synced %d hourly prices for %s (%d new)",
+                    len(rows),
                     ticker,
-                    period=DEFAULT_PRICE_PERIOD,
-                    interval=DEFAULT_PRICE_INTERVAL,
+                    num_created,
                 )
-                if rows:
-                    num_created = _bulk_insert_prices(asset, rows)
-                    logger.info(
-                        "Background-synced %d hourly prices for %s (%d new)",
-                        len(rows),
-                        ticker,
-                        num_created,
-                    )
-            except RequestException, ValueError:
-                logger.exception("Background hourly sync failed for %s", ticker)
-            finally:
-                cache.delete(lock_key)
+        except RequestException, ValueError:
+            logger.exception("Backfill hourly sync failed for %s", ticker)
+        finally:
+            cache.delete(lock_key)
 
-        # Daily: use existing _sync_prices (no staleness issue — no daily data exists)
-        _sync_prices(asset, ticker, DAILY_PRICE_PERIOD, DAILY_PRICE_INTERVAL)
-    finally:
-        close_old_connections()
-
-
-def sync_full_prices_async(asset: Asset, ticker: str) -> None:
-    """Fire-and-forget full price backfill in a background thread.
-
-    Intended to be called right after sync_quick_prices() so the user sees
-    the 1W chart instantly while 1yr hourly + all daily history loads in
-    the background. Once complete, all chart ranges (1M, 1Y, 5Y, ALL) become
-    available. Cache locks prevent duplicate work if the background worker
-    is already processing this ticker.
-    """
-    _price_executor.submit(_sync_full_prices_thread, asset, ticker)
+    # Daily: use existing _sync_prices (no staleness issue — no daily data exists)
+    _sync_prices(asset, ticker, DAILY_PRICE_PERIOD, DAILY_PRICE_INTERVAL)
 
 
 def sync_fundamentals(ticker: str) -> Fundamental | None:

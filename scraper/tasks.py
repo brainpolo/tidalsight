@@ -6,8 +6,12 @@ from scraper.constants import (
     REDDIT_DEFAULT_LIMIT,
     REDDIT_DEFAULT_SUBREDDITS,
 )
-from scraper.managers.asset_manager import sync_all_prices, sync_fundamentals
-from scraper.managers.brave_news_manager import sync_news
+from scraper.managers.asset_manager import (
+    sync_all_prices,
+    sync_full_prices,
+    sync_fundamentals,
+)
+from scraper.managers.brave_news_manager import sync_asset_news, sync_news
 from scraper.managers.hn_manager import sync_hn_posts
 from scraper.managers.reddit_manager import sync_reddit_posts
 from scraper.models import Asset
@@ -35,6 +39,21 @@ def fetch_reddit(subreddits=None, sort="hot", limit=REDDIT_DEFAULT_LIMIT):
 def fetch_news():
     count = sync_news()
     logger.info("fetch_news: %d new articles", count)
+    return count
+
+
+@shared_task
+def backfill_full_prices(asset_id: int, ticker: str):
+    asset = Asset.objects.get(id=asset_id)
+    sync_full_prices(asset, ticker)
+    logger.info("backfill_full_prices: done for %s", ticker)
+
+
+@shared_task
+def fetch_asset_news(asset_id: int):
+    asset = Asset.objects.get(id=asset_id)
+    count = sync_asset_news(asset)
+    logger.info("fetch_asset_news: %d new articles for %s", count, asset.ticker)
     return count
 
 

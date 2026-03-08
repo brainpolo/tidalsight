@@ -27,7 +27,7 @@ from django.views.decorators.http import require_POST
 
 from analyst.app_behaviour import DIGEST_REFRESH_INTERVAL
 from analyst.managers.digest_manager import get_market_digest
-from analyst.managers.peer_manager import sync_peers
+from analyst.tasks import discover_peers
 from core.app_behaviour import (
     ASSET_DETAIL_FAVICON_SIZE,
     ASSET_DETAIL_HN_POSTS,
@@ -62,12 +62,11 @@ from core.utils import pct_change, total_post_count
 from scraper.managers.asset_manager import (
     get_or_create_asset,
     sync_all_prices,
-    sync_full_prices_async,
     sync_fundamentals,
     sync_quick_prices,
 )
-from scraper.managers.brave_news_manager import sync_asset_news_async
 from scraper.models import Asset, AssetView, PriceHistory
+from scraper.tasks import backfill_full_prices, fetch_asset_news
 
 
 async def _cached(key: str, compute, ttl: int = HOME_COUNTS_CACHE_TTL):
@@ -247,7 +246,7 @@ async def asset_detail(request, ticker):
     # For new assets with no price data, fetch 1W quickly then backfill full history
     if not await asset.prices.aexists():
         await sync_to_async(sync_quick_prices)(asset, ticker)
-        sync_full_prices_async(asset, ticker)
+        backfill_full_prices.delay(asset.id, ticker)
 
     # Track views (cooldown-based dedup via Redis)
     ip = request.META.get("HTTP_X_FORWARDED_FOR", request.META.get("REMOTE_ADDR", ""))
@@ -405,9 +404,9 @@ async def asset_peers(request, ticker):
     if cached is not None:
         return render(request, "core/partials/asset_peers.html", {"peers": cached})
 
-    peers_before = await sync_to_async(sync_peers)(asset)
-    if not peers_before and not await asset.peers.aexists():
-        # Still syncing in another request — tell HTMX to retry
+    if not await asset.peers.aexists():
+        # Kick off Celery task and tell HTMX to retry
+        discover_peers.delay(asset.id)
         response = render(request, "core/partials/asset_peers.html", {"loading": True})
         response["HX-Trigger-After-Settle"] = '{"retryPeers": true}'
         return response
@@ -454,7 +453,7 @@ async def asset_community(request, ticker):
     if not asset:
         return render(request, "core/partials/asset_community.html", {})
 
-    sync_asset_news_async(asset)
+    fetch_asset_news.delay(asset.id)
 
     reddit_posts = [
         p async for p in asset.reddit_posts.all()[:ASSET_DETAIL_REDDIT_POSTS]

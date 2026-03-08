@@ -544,7 +544,7 @@
     </div>
 
     <!-- Peers (HTMX partial) -->
-    <div id="peers-container" hx-get="{% url 'core:asset_peers' asset.ticker %}" hx-trigger="load, retryPeers from:body delay:3s" hx-swap="innerHTML">
+    <div id="peers-container" hx-get="{% url 'core:asset_peers' asset.ticker %}" hx-trigger="load, retryPeers from:body delay:8s" hx-swap="innerHTML">
         {% include "core/components/peers_skeleton.html" %}
     </div>
 
