@@ -18,6 +18,12 @@ DATABASES = {
         "PASSWORD": os.environ["PGPASSWORD"],
         "HOST": os.environ["PGHOST"],
         "PORT": os.environ["PGPORT"],
+        "OPTIONS": {
+            "pool": {
+                "min_size": 2,
+                "max_size": 10,
+            },
+        },
     }
 }
 
