@@ -5,14 +5,14 @@
             {% if show_search %}{% include "core/components/asset_search_widget.html" with compact=True %}{% endif %}
         </div>
         <div class="flex items-center gap-8">
-            <a href="{% url 'core:our_approach' %}" class="text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors">Our Approach</a>
+            <a href="{% url 'core:strategy' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors"><i data-lucide="compass" class="size-3.5"></i> strategy</a>
             {% if user.is_authenticated %}
-                {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors">Admin</a>{% endif %}
-                <a href="{% url 'core:profile' %}" class="text-xs font-medium tracking-[0.06em] text-[#a09a93] hover:text-[#fafafa] transition-colors">{{ user.first_name|default:user.username }}</a>
-                <form method="post" action="{% url 'core:sign_out' %}" class="inline">{% csrf_token %}<button type="submit" class="text-xs font-medium tracking-[0.06em] uppercase text-copper hover:text-copper-light transition-colors">Sign Out</button></form>
+                {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors"><i data-lucide="shield" class="size-3.5"></i> admin</a>{% endif %}
+                <a href="{% url 'core:profile' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-[#a09a93] hover:text-[#fafafa] transition-colors"><i data-lucide="user" class="size-3.5"></i> {{ user.first_name|default:user.username }}</a>
+                <form method="post" action="{% url 'core:sign_out' %}" class="inline">{% csrf_token %}<button type="submit" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-copper hover:text-copper-light transition-colors cursor-pointer"><i data-lucide="log-out" class="size-3.5"></i> sign out</button></form>
             {% else %}
-                <a href="{% url 'core:sign_in' %}" class="text-xs font-medium tracking-[0.06em] uppercase text-[#a09a93] hover:text-[#fafafa] transition-colors">Sign In</a>
-                <a href="{% url 'core:sign_up' %}" class="text-xs font-medium tracking-[0.06em] uppercase px-5 py-2 border border-copper/20 rounded text-copper hover:text-copper-light hover:border-copper/40 transition-all">Sign Up</a>
+                <a href="{% url 'core:sign_in' %}" class="text-xs font-medium tracking-[0.06em] text-[#a09a93] hover:text-[#fafafa] transition-colors">sign in</a>
+                <a href="{% url 'core:sign_up' %}" class="text-xs font-medium tracking-[0.06em] px-5 py-2 border border-copper/20 rounded text-copper hover:text-copper-light hover:border-copper/40 transition-all">sign up</a>
             {% endif %}
         </div>
     </header>

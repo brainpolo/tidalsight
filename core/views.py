@@ -8,6 +8,7 @@ from django.core.cache import cache
 from django.db.models import Case, IntegerField, Q, Subquery, OuterRef, Value, When
 from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -21,7 +22,11 @@ from core.app_behaviour import (
     ASSET_DETAIL_RECENT_PRICES_DAYS,
     ASSET_DETAIL_HN_POSTS,
     ASSET_DETAIL_REDDIT_POSTS,
+    CHART_DATA_CACHE_TTL,
+    COMMUNITY_CACHE_TTL,
     HOME_COUNTS_CACHE_TTL,
+    PEERS_CACHE_TTL,
+    PRICES_CACHE_TTL,
     DEFAULT_CHART_RANGE,
     RSI_PERIOD,
     SEARCH_MAX_RESULTS,
@@ -112,8 +117,8 @@ def home_watchlist(request):
     return render(request, "core/partials/home_watchlist.html", {"items": items})
 
 
-def our_approach(request):
-    return render(request, "core/our_approach.html")
+def strategy(request):
+    return render(request, "core/strategy.html")
 
 
 def market_digest(request):
@@ -214,6 +219,7 @@ def asset_fundamentals(request, ticker):
     })
 
 
+@cache_page(PEERS_CACHE_TTL)
 def asset_peers(request, ticker):
     """Partial: peer/competitor cards. Triggers peer discovery if needed."""
     ticker = ticker.upper()
@@ -253,6 +259,7 @@ def asset_peers(request, ticker):
     return render(request, "core/partials/asset_peers.html", {"peers": peer_data})
 
 
+@cache_page(COMMUNITY_CACHE_TTL)
 def asset_community(request, ticker):
     """Partial: reddit + HN + news articles. Fires background news sync."""
     ticker = ticker.upper()
@@ -273,6 +280,7 @@ def asset_community(request, ticker):
     })
 
 
+@cache_page(PRICES_CACHE_TTL)
 def asset_prices(request, ticker):
     """Partial: recent prices table with daily change."""
     ticker = ticker.upper()
@@ -308,6 +316,7 @@ def asset_prices(request, ticker):
     })
 
 
+@cache_page(CHART_DATA_CACHE_TTL)
 def asset_chart_data(request, ticker):
     ticker = ticker.upper()
     asset = Asset.objects.filter(ticker=ticker).first()

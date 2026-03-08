@@ -13,7 +13,7 @@ app_name = "core"
 
 urlpatterns = [
     path("", views.home, name="home"),
-    path("our-approach/", views.our_approach, name="our_approach"),
+    path("strategy/", views.strategy, name="strategy"),
     path("watchlist/", views.home_watchlist, name="home_watchlist"),
     path("search/", views.asset_search, name="asset_search"),
     path("assets/<str:ticker>/", views.asset_detail, name="asset_detail"),
