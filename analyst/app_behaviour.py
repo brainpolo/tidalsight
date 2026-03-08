@@ -9,12 +9,20 @@ HN_COMMENT_BODY_TRUNCATION = 150
 NEWS_ARTICLES_FOR_DIGEST = 15
 NEWS_ARTICLE_DESCRIPTION_TRUNCATION = 200
 
-DIGEST_FRESHNESS_TTL = 60 * 30  # 30 minutes — how often to regenerate
+DIGEST_FRESHNESS_TTL = 60 * 60  # 1 hour — how often to regenerate
 DIGEST_DATA_TTL = 60 * 60 * 24  # 24 hours — max age before digest is discarded
 DIGEST_LOCK_TTL = 60 * 5  # 5 minutes — prevent concurrent generation
 DIGEST_REFRESH_INTERVAL = 60  # seconds — HTMX polling interval
 
 PEER_SYNC_LOCK_TTL = 60 * 5  # 5 minutes
 PEER_TARGET_COUNT = 6  # ask LLM for this many
+
+SENTIMENT_MAX_POSTS = 20
+SENTIMENT_MIN_POSTS = 5
+SENTIMENT_REDDIT_COMMENTS_PER_POST = 20
+SENTIMENT_HN_COMMENTS_PER_POST = 10
+SENTIMENT_FRESHNESS_TTL = 43200  # 12 hours
+SENTIMENT_DATA_TTL = 86400  # 24 hours
+SENTIMENT_LOCK_TTL = 300  # 5 minutes
 
 MAX_AGENT_TURNS = 50

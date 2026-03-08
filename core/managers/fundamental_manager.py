@@ -246,6 +246,7 @@ def _build_pe_gauge(fundamental):
     return {
         "value": f"{pe:.2f}",
         "sector_avg": sector_avg,
+        "sector_avg_label": f"S&P {sector_avg}",
         "pe_pct": round(pe_pct, 1),
         "avg_pct": round(avg_pct, 1),
         "label": label,

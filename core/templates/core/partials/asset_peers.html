@@ -16,6 +16,9 @@
                          alt="" class="size-5 rounded" loading="lazy">
                     {% endif %}
                     <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-t2 group-hover:text-heading transition-colors">{{ peer.asset.ticker }}</span>
+                    {% if peer.sparkline_svg %}
+                    <span class="ml-auto opacity-50 group-hover:opacity-80 transition-opacity">{{ peer.sparkline_svg }}</span>
+                    {% endif %}
                 </div>
                 <div class="text-[0.7rem] text-t3 truncate mb-2">{{ peer.asset.name }}</div>
                 {% if peer.latest_close is not None %}

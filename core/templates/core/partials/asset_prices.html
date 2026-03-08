@@ -1,53 +1,70 @@
 {% if recent_prices %}
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
     <section class="py-6 sm:py-10">
-        <details class="group/details">
-            <summary class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 hover:text-t2 cursor-pointer select-none list-none flex items-center gap-2.5 transition-colors duration-200">
-                <span class="inline-flex items-center justify-center size-5 rounded bg-surface/[0.04] group-open/details:bg-copper/[0.08] transition-all duration-300">
-                    <svg class="size-3 text-t3 group-open/details:text-copper group-open/details:rotate-90 transition-all duration-300" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5V3z"/></svg>
-                </span>
-                Past Month Prices
-                {% if positive_day_pct != None %}
-                <span class="ml-2 text-[0.55rem] tracking-[0.06em] normal-case font-medium px-2 py-0.5 rounded-sm {% if positive_day_pct >= 50 %}bg-[#22c55e]/10 text-[#22c55e]/80{% else %}bg-[#ef4444]/10 text-[#ef4444]/80{% endif %}">{{ positive_day_pct }}% of days positive</span>
-                {% endif %}
-            </summary>
-            <div class="overflow-x-auto mt-6">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="text-[0.65rem] font-semibold tracking-[0.08em] uppercase text-t3">
-                            <th class="text-left py-3 pr-6">Date</th>
-                            <th class="text-right py-3 px-4">Open</th>
-                            <th class="text-right py-3 px-4">High</th>
-                            <th class="text-right py-3 px-4">Low</th>
-                            <th class="text-right py-3 px-4">Close</th>
-                            <th class="text-right py-3 px-4">Change</th>
-                            <th class="text-right py-3 pl-4">Volume</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for p in recent_prices %}
-                        <tr class="border-t border-surface/[0.04] hover:bg-surface/[0.02] transition-colors">
-                            <td class="py-3 pr-6 text-t2">{{ p.timestamp|date:"M d, Y" }}</td>
-                            <td class="text-right py-3 px-4 text-heading">{{ p.open|floatformat:2 }}</td>
-                            <td class="text-right py-3 px-4 text-sea-light">{{ p.high|floatformat:2 }}</td>
-                            <td class="text-right py-3 px-4 text-copper">{{ p.low|floatformat:2 }}</td>
-                            <td class="text-right py-3 px-4 text-heading font-medium">{{ p.close|floatformat:2 }}</td>
-                            <td class="text-right py-3 px-4">
-                                {% if p.daily_change_pct != None %}
-                                <span class="inline-flex items-center gap-1 text-[0.65rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm {% if p.daily_change >= 0 %}bg-[#22c55e]/10 text-[#22c55e]{% else %}bg-[#ef4444]/10 text-[#ef4444]{% endif %}">
-                                    {% if p.daily_change >= 0 %}+{% endif %}{{ p.daily_change_pct }}%
-                                </span>
-                                {% else %}
-                                <span class="text-t4">—</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-right py-3 pl-4 text-t3">{{ p.volume|floatformat:0 }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </details>
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">Daily Prices</span>
+            {% if positive_30d != None %}
+            <span class="text-[0.55rem] tracking-[0.06em] font-medium px-2 py-0.5 rounded-sm {% if positive_30d >= 50 %}bg-green-500/10 text-green-500/80{% else %}bg-red-500/10 text-red-500/80{% endif %}">30d: {{ positive_30d }}% positive</span>
+            {% endif %}
+            {% if positive_90d != None %}
+            <span class="text-[0.55rem] tracking-[0.06em] font-medium px-2 py-0.5 rounded-sm {% if positive_90d >= 50 %}bg-green-500/10 text-green-500/80{% else %}bg-red-500/10 text-red-500/80{% endif %}">90d: {{ positive_90d }}% positive</span>
+            {% endif %}
+            {% if positive_1y != None %}
+            <span class="text-[0.55rem] tracking-[0.06em] font-medium px-2 py-0.5 rounded-sm {% if positive_1y >= 50 %}bg-green-500/10 text-green-500/80{% else %}bg-red-500/10 text-red-500/80{% endif %}">1y: {{ positive_1y }}% positive</span>
+            {% endif %}
+            {% if positive_5y != None %}
+            <span class="text-[0.55rem] tracking-[0.06em] font-medium px-2 py-0.5 rounded-sm {% if positive_5y >= 50 %}bg-green-500/10 text-green-500/80{% else %}bg-red-500/10 text-red-500/80{% endif %}">5y: {{ positive_5y }}% positive</span>
+            {% endif %}
+            {% if positive_all != None %}
+            <span class="text-[0.55rem] tracking-[0.06em] font-medium px-2 py-0.5 rounded-sm {% if positive_all >= 50 %}bg-green-500/10 text-green-500/80{% else %}bg-red-500/10 text-red-500/80{% endif %}">All: {{ positive_all }}% positive</span>
+            {% endif %}
+        </div>
+        <div class="overflow-x-auto mt-6">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-[0.65rem] font-semibold tracking-[0.08em] uppercase text-t3">
+                        <th class="text-left py-3 pr-6">Date</th>
+                        <th class="text-right py-3 px-4">Open</th>
+                        <th class="text-right py-3 px-4">High</th>
+                        <th class="text-right py-3 px-4">Low</th>
+                        <th class="text-right py-3 px-4">Close</th>
+                        <th class="text-right py-3 px-4">Change</th>
+                        <th class="text-right py-3 pl-4">Volume</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in recent_prices %}
+                    <tr class="border-t border-surface/[0.04] hover:bg-surface/[0.02] transition-colors">
+                        <td class="py-3 pr-6 text-t2">{{ p.timestamp|date:"M d, Y" }}</td>
+                        <td class="text-right py-3 px-4 text-heading">{{ p.open|floatformat:2 }}</td>
+                        <td class="text-right py-3 px-4 text-sea-light">{{ p.high|floatformat:2 }}</td>
+                        <td class="text-right py-3 px-4 text-copper">{{ p.low|floatformat:2 }}</td>
+                        <td class="text-right py-3 px-4 text-heading font-medium">{{ p.close|floatformat:2 }}</td>
+                        <td class="text-right py-3 px-4">
+                            {% if p.daily_change_pct != None %}
+                            <span class="inline-flex items-center gap-1 text-[0.65rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm {% if p.daily_change >= 0 %}bg-green-500/10 text-green-500{% else %}bg-red-500/10 text-red-500{% endif %}">
+                                {% if p.daily_change >= 0 %}+{% endif %}{{ p.daily_change_pct }}%
+                            </span>
+                            {% else %}
+                            <span class="text-t4">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right py-3 pl-4 text-t3">{{ p.volume|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if next_before %}
+                    <tr hx-get="{% url 'core:asset_prices' ticker %}?before={{ next_before|urlencode }}"
+                        hx-trigger="revealed"
+                        hx-swap="outerHTML"
+                        hx-target="this">
+                        <td colspan="7" class="py-4 text-center text-t3 text-xs">
+                            <span class="animate-pulse">Loading more...</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </section>
 </div>
 {% endif %}

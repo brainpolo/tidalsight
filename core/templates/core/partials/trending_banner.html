@@ -9,7 +9,7 @@
             100% { transform: translateX(-50%); }
         }
         .ticker-track {
-            animation: ticker-scroll 45s linear infinite;
+            animation: ticker-scroll 120s linear infinite;
         }
         .ticker-track:hover {
             animation-play-state: paused;
@@ -31,7 +31,7 @@
                         {% endif %}
                         {% if item.price_change_pct != None %}
                         <span class="text-[0.55rem] font-semibold tabular-nums
-                            {% if item.price_change_pct >= 0 %}text-[#22c55e]{% else %}text-[#ef4444]{% endif %}">
+                            {% if item.price_change_pct >= 0 %}text-green-500{% else %}text-red-500{% endif %}">
                             {% if item.price_change_pct >= 0 %}+{% endif %}{{ item.price_change_pct }}%
                         </span>
                         {% endif %}

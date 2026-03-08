@@ -9,7 +9,7 @@
             type="text"
             id="tickerInput"
             class="search-compact-input"
-            placeholder="Search ticker..."
+            placeholder="Search by ticker or name..."
             spellcheck="false"
             name="q"
             hx-get="{% url 'core:asset_search' %}"
@@ -32,7 +32,7 @@
         width: 200px;
     }
     .search-compact:focus-within {
-        border-color: #c87941;
+        border-color: var(--color-copper);
     }
     .search-compact:focus-within .search-kbd {
         display: none;
@@ -79,7 +79,7 @@
                     type="text"
                     id="tickerInput"
                     class="search-input"
-                    placeholder="Enter ticker symbol"
+                    placeholder="Search by ticker or name..."
                     spellcheck="false"
                     name="q"
                     hx-get="{% url 'core:asset_search' %}"
@@ -121,7 +121,7 @@
     }
 
     .search-field:focus-within {
-        border-color: #c87941;
+        border-color: var(--color-copper);
     }
 
     .search-input {
@@ -156,7 +156,7 @@
     }
 
     .search-submit:hover {
-        color: #c87941;
+        color: var(--color-copper);
     }
 
     .search-kbd-full {
@@ -197,7 +197,7 @@
     }
 
     .search-ticker:hover {
-        color: #c87941;
+        color: var(--color-copper);
     }
 </style>
 {% endif %}
@@ -223,7 +223,7 @@
         border-radius: 6px;
         overflow-y: auto;
         max-height: min(420px, 60vh);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 12px 40px color-mix(in srgb, var(--ts-surface) 20%, transparent);
         list-style: none;
         margin: 0;
         padding: 4px;
@@ -273,10 +273,10 @@
         border-radius: 3px;
         flex-shrink: 0;
     }
-    .search-result-badge--equity { background: rgba(74,143,143,0.12); color: #6fb5b5; }
-    .search-result-badge--crypto { background: rgba(200,121,65,0.12); color: #c87941; }
-    .search-result-badge--commodity { background: rgba(224,168,124,0.12); color: #e0a87c; }
-    .search-result-badge--currency { background: rgba(160,154,147,0.12); color: #a09a93; }
+    .search-result-badge--equity { background: color-mix(in srgb, var(--color-sea) 12%, transparent); color: var(--color-sea-light); }
+    .search-result-badge--crypto { background: color-mix(in srgb, var(--color-copper) 12%, transparent); color: var(--color-copper); }
+    .search-result-badge--commodity { background: color-mix(in srgb, var(--color-copper-light) 12%, transparent); color: var(--color-copper-light); }
+    .search-result-badge--currency { background: color-mix(in srgb, var(--ts-t3) 12%, transparent); color: var(--ts-t2); }
     .search-result-exchange {
         font-size: 0.5rem;
         color: var(--ts-t3, #5c5750);
@@ -306,8 +306,8 @@
         font-weight: 600;
         font-variant-numeric: tabular-nums;
     }
-    .search-result-change.up { color: #22c55e; }
-    .search-result-change.down { color: #ef4444; }
+    .search-result-change.up { color: var(--color-green-500, #22c55e); }
+    .search-result-change.down { color: var(--color-red-500, #ef4444); }
 </style>
 
 <script>

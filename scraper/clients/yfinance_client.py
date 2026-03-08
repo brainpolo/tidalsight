@@ -135,7 +135,7 @@ def search_tickers(query: str, max_results: int = 6) -> list[dict]:
         )
         resp.raise_for_status()
         data = resp.json()
-    except (requests.RequestException, ValueError):
+    except requests.RequestException, ValueError:
         logger.warning("Yahoo Finance search failed for query: %s", query)
         return []
 

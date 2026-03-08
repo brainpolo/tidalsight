@@ -1,0 +1,29 @@
+{% for p in recent_prices %}
+<tr class="border-t border-surface/[0.04] hover:bg-surface/[0.02] transition-colors">
+    <td class="py-3 pr-6 text-t2">{{ p.timestamp|date:"M d, Y" }}</td>
+    <td class="text-right py-3 px-4 text-heading">{{ p.open|floatformat:2 }}</td>
+    <td class="text-right py-3 px-4 text-sea-light">{{ p.high|floatformat:2 }}</td>
+    <td class="text-right py-3 px-4 text-copper">{{ p.low|floatformat:2 }}</td>
+    <td class="text-right py-3 px-4 text-heading font-medium">{{ p.close|floatformat:2 }}</td>
+    <td class="text-right py-3 px-4">
+        {% if p.daily_change_pct != None %}
+        <span class="inline-flex items-center gap-1 text-[0.65rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm {% if p.daily_change >= 0 %}bg-green-500/10 text-green-500{% else %}bg-red-500/10 text-red-500{% endif %}">
+            {% if p.daily_change >= 0 %}+{% endif %}{{ p.daily_change_pct }}%
+        </span>
+        {% else %}
+        <span class="text-t4">—</span>
+        {% endif %}
+    </td>
+    <td class="text-right py-3 pl-4 text-t3">{{ p.volume|floatformat:0 }}</td>
+</tr>
+{% endfor %}
+{% if next_before %}
+<tr hx-get="{% url 'core:asset_prices' ticker %}?before={{ next_before|urlencode }}"
+    hx-trigger="revealed"
+    hx-swap="outerHTML"
+    hx-target="this">
+    <td colspan="7" class="py-4 text-center text-t3 text-xs">
+        <span class="animate-pulse">Loading more...</span>
+    </td>
+</tr>
+{% endif %}

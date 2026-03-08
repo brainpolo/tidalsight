@@ -1,0 +1,52 @@
+{% if loading %}
+<div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+    <section class="pt-6 sm:pt-10 pb-4 sm:pb-6">
+        <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Community Sentiment</div>
+        <div class="animate-pulse space-y-3">
+            <div class="h-2.5 w-full rounded-full" style="background: linear-gradient(to right, rgba(239,68,68,0.12), rgba(245,158,11,0.12), rgba(163,163,163,0.10), rgba(163,230,53,0.12), rgba(34,197,94,0.12))"></div>
+            <div class="h-3 w-48 bg-neutral-500/10 rounded"></div>
+            <div class="h-3 w-full bg-neutral-500/10 rounded"></div>
+            <div class="h-3 w-5/6 bg-neutral-500/10 rounded"></div>
+            <div class="h-3 w-3/4 bg-neutral-500/10 rounded"></div>
+            <div class="flex gap-1.5 pt-1">
+                <div class="h-5 w-16 bg-neutral-500/10 rounded-full"></div>
+                <div class="h-5 w-20 bg-neutral-500/10 rounded-full"></div>
+                <div class="h-5 w-14 bg-neutral-500/10 rounded-full"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% elif sentiment %}
+<div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+    <section class="pt-6 sm:pt-10 pb-4 sm:pb-6">
+        <div class="flex items-center gap-2.5 mb-5 sm:mb-7">
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">Community Sentiment</div>
+            {% if sentiment.sentiment_label == "Very Bullish" or sentiment.sentiment_label == "Bullish" %}
+            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">{{ sentiment.sentiment_label }}</span>
+            {% elif sentiment.sentiment_label == "Very Bearish" or sentiment.sentiment_label == "Bearish" %}
+            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">{{ sentiment.sentiment_label }}</span>
+            {% else %}
+            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-neutral-500/15 text-neutral-400">{{ sentiment.sentiment_label }}</span>
+            {% endif %}
+        </div>
+
+        <!-- Gauge -->
+        <div class="mb-6">
+            {% include "core/components/bar_pin.html" with pct=gauge_pct low_label="Bearish" high_label="Bullish" gradient="linear-gradient(to right, rgba(220,38,38,0.35), rgba(239,68,68,0.3), rgba(245,158,11,0.25), color-mix(in srgb, var(--ts-surface) 8%, transparent), rgba(163,230,53,0.25), rgba(34,197,94,0.3), rgba(22,163,74,0.35))" %}
+        </div>
+
+        <!-- Brief -->
+        <p class="text-[0.75rem] leading-[1.7] text-t2 mb-5">{{ sentiment.brief }}</p>
+
+        <!-- Themes -->
+        {% if sentiment.key_themes %}
+        <div class="flex flex-wrap gap-1.5">
+            {% for theme in sentiment.key_themes %}
+            <span class="text-[0.6rem] px-2.5 py-1 rounded-full bg-surface/[0.03] text-t3 border border-surface/[0.05]">{{ theme }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endif %}

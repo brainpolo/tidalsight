@@ -33,7 +33,12 @@ def sync_peers(asset: Asset) -> list[Asset]:
             tracing_disabled=True,
         )
         result = asyncio.run(
-            Runner.run(peer_discovery_agent, input=prompt, run_config=config, max_turns=MAX_AGENT_TURNS)
+            Runner.run(
+                peer_discovery_agent,
+                input=prompt,
+                run_config=config,
+                max_turns=MAX_AGENT_TURNS,
+            )
         )
         discovery: PeerDiscovery = result.final_output
 

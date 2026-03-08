@@ -1,3 +1,4 @@
+import asyncio
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -25,19 +26,20 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_POST
 
-from analyst.app_behaviour import DIGEST_REFRESH_INTERVAL
+from analyst.app_behaviour import DIGEST_REFRESH_INTERVAL, SENTIMENT_MIN_POSTS
 from analyst.managers.digest_manager import get_market_digest
-from analyst.tasks import discover_peers
+from analyst.managers.sentiment_manager import _cache_keys as sentiment_cache_keys
+from analyst.tasks import analyze_asset_sentiment, discover_peers
 from core.app_behaviour import (
     ASSET_DETAIL_FAVICON_SIZE,
     ASSET_DETAIL_HN_POSTS,
     ASSET_DETAIL_NEWS_ARTICLES,
-    ASSET_DETAIL_RECENT_PRICES_DAYS,
     ASSET_DETAIL_REDDIT_POSTS,
     DEFAULT_CHART_RANGE,
     HOME_COUNTS_CACHE_TTL,
     PEERS_CACHE_TTL,
     PRICES_CACHE_TTL,
+    PRICES_PAGE_DAYS,
     RSI_PERIOD,
     SEARCH_MAX_RESULTS,
     SEARCH_MIN_QUERY_LENGTH,
@@ -448,9 +450,26 @@ async def asset_peers(request, ticker):
         )
     ]
 
+    peer_ids = [p.id for p in peers]
+    sparkline_map = defaultdict(list)
+    if peer_ids:
+        sparkline_qs = (
+            PriceHistory.objects.filter(asset_id__in=peer_ids)
+            .annotate(date=TruncDate("timestamp"))
+            .order_by("asset_id", "-date", "-timestamp")
+            .distinct("asset_id", "date")
+            .values_list("asset_id", "close", "date")
+        )
+        async for asset_id, close, _date in sparkline_qs:
+            if len(sparkline_map[asset_id]) < SPARKLINE_DATA_POINTS:
+                sparkline_map[asset_id].append(float(close))
+        for asset_id in sparkline_map:
+            sparkline_map[asset_id].reverse()
+
     peer_data = []
     for peer in peers:
         change_pct = pct_change(peer.latest_close, peer.prev_close)
+        closes = sparkline_map.get(peer.id, [])
         peer_data.append(
             {
                 "asset": peer,
@@ -458,6 +477,7 @@ async def asset_peers(request, ticker):
                 "price_change_pct": round(change_pct, 2)
                 if change_pct is not None
                 else None,
+                "sparkline_svg": build_sparkline_svg(closes, width=56, height=18),
             }
         )
 
@@ -465,6 +485,42 @@ async def asset_peers(request, ticker):
         await cache.aset(cache_key, peer_data, PEERS_CACHE_TTL)
 
     return render(request, "core/partials/asset_peers.html", {"peers": peer_data})
+
+
+async def asset_sentiment(request, ticker):
+    """Partial: AI sentiment gauge. Fires Celery task if not cached."""
+    ticker = ticker.upper()
+    asset = await Asset.objects.filter(ticker=ticker).afirst()
+    if not asset:
+        return render(
+            request, "core/partials/asset_sentiment.html", {"insufficient": True}
+        )
+
+    data_key, fresh_key, _ = sentiment_cache_keys(ticker)
+    cached = await cache.aget(data_key)
+
+    if cached and await cache.aget(fresh_key):
+        gauge_pct = (cached["sentiment_score"] + 1) * 50
+        return render(
+            request,
+            "core/partials/asset_sentiment.html",
+            {"sentiment": cached, "gauge_pct": gauge_pct},
+        )
+
+    total = (
+        await asset.reddit_posts.acount()
+        + await asset.hn_posts.acount()
+        + await asset.news_articles.acount()
+    )
+    if total < SENTIMENT_MIN_POSTS:
+        return render(
+            request, "core/partials/asset_sentiment.html", {"insufficient": True}
+        )
+
+    analyze_asset_sentiment.delay(asset.id)
+    response = render(request, "core/partials/asset_sentiment.html", {"loading": True})
+    response["HX-Trigger-After-Settle"] = '{"retrySentiment": true}'
+    return response
 
 
 async def asset_community(request, ticker):
@@ -495,25 +551,54 @@ async def asset_community(request, ticker):
     )
 
 
-@cache_page(PRICES_CACHE_TTL)
 async def asset_prices(request, ticker):
-    """Partial: recent prices table with daily change."""
+    """Partial: recent prices table with daily change. Supports cursor-based pagination."""
     ticker = ticker.upper()
     asset = await Asset.objects.filter(ticker=ticker).afirst()
     if not asset:
         return render(request, "core/partials/asset_prices.html", {})
 
-    cutoff = timezone.now() - timedelta(days=ASSET_DETAIL_RECENT_PRICES_DAYS)
+    before_param = request.GET.get("before")
+    now = timezone.now()
+
+    if before_param:
+        try:
+            upper_bound = datetime.fromisoformat(before_param)
+        except ValueError:
+            return render(request, "core/partials/asset_prices_page.html", {})
+        if timezone.is_naive(upper_bound):
+            upper_bound = timezone.make_aware(upper_bound)
+    else:
+        upper_bound = now
+
+    cutoff = upper_bound - timedelta(days=PRICES_PAGE_DAYS)
+
+    # Fetch prices in the window, one per day, newest first
     recent_prices_qs = [
         p
-        async for p in asset.prices.filter(timestamp__gte=cutoff)
+        async for p in asset.prices.filter(
+            timestamp__gte=cutoff, timestamp__lt=upper_bound
+        )
         .annotate(date=TruncDate("timestamp"))
         .order_by("-date", "-timestamp")
         .distinct("date")
     ]
+
+    # Grab one extra price before the window for daily_change on the oldest row
+    extra_price = await (
+        asset.prices.filter(timestamp__lt=cutoff).order_by("-timestamp").afirst()
+    )
+
+    # Compute daily changes
     recent_prices = []
     for i, p in enumerate(recent_prices_qs):
-        prev = recent_prices_qs[i + 1] if i + 1 < len(recent_prices_qs) else None
+        if i + 1 < len(recent_prices_qs):
+            prev = recent_prices_qs[i + 1]
+        elif extra_price:
+            prev = extra_price
+        else:
+            prev = None
+
         if prev and prev.close:
             p.daily_change = float(p.close - prev.close)
             p.daily_change_pct = round(
@@ -523,10 +608,64 @@ async def asset_prices(request, ticker):
             p.daily_change = None
             p.daily_change_pct = None
         recent_prices.append(p)
-    days_with_change = [p for p in recent_prices if p.daily_change is not None]
-    positive_days = sum(1 for p in days_with_change if p.daily_change >= 0)
-    positive_day_pct = (
-        round(positive_days / len(days_with_change) * 100) if days_with_change else None
+
+    # Determine next cursor — midnight of the oldest date in this batch.
+    # Using the truncated date (not raw timestamp) prevents duplicate rows
+    # when multiple intraday prices exist for the same date.
+    next_before = None
+    if recent_prices:
+        oldest_date = recent_prices[-1].date  # date from TruncDate annotation
+        oldest_date_midnight = timezone.make_aware(
+            datetime.combine(oldest_date, datetime.min.time())
+        )
+        has_older = await asset.prices.filter(
+            timestamp__lt=oldest_date_midnight
+        ).aexists()
+        if has_older:
+            next_before = oldest_date_midnight.isoformat()
+
+    if before_param:
+        # Subsequent page: just rows + sentinel
+        return render(
+            request,
+            "core/partials/asset_prices_page.html",
+            {
+                "recent_prices": recent_prices,
+                "next_before": next_before,
+                "ticker": ticker,
+            },
+        )
+
+    # Initial load: compute positive-day stats across multiple windows concurrently.
+    async def _positive_day_pct(days: int | None = None) -> int | None:
+        """Return % of positive-change days. None = all time."""
+        qs = asset.prices.all()
+        if days is not None:
+            qs = qs.filter(timestamp__gte=now - timedelta(days=days))
+        closes = [
+            float(p.close)
+            async for p in qs.annotate(date=TruncDate("timestamp"))
+            .order_by("date", "-timestamp")
+            .distinct("date")
+            .only("close", "timestamp")
+        ]
+        if len(closes) < 2:
+            return None
+        up = sum(1 for a, b in zip(closes[1:], closes, strict=False) if a >= b)
+        return round(up / (len(closes) - 1) * 100)
+
+    (
+        positive_30d,
+        positive_90d,
+        positive_1y,
+        positive_5y,
+        positive_all,
+    ) = await asyncio.gather(
+        _positive_day_pct(30),
+        _positive_day_pct(90),
+        _positive_day_pct(365),
+        _positive_day_pct(1825),
+        _positive_day_pct(),
     )
 
     return render(
@@ -534,7 +673,13 @@ async def asset_prices(request, ticker):
         "core/partials/asset_prices.html",
         {
             "recent_prices": recent_prices,
-            "positive_day_pct": positive_day_pct,
+            "positive_30d": positive_30d,
+            "positive_90d": positive_90d,
+            "positive_1y": positive_1y,
+            "positive_5y": positive_5y,
+            "positive_all": positive_all,
+            "next_before": next_before,
+            "ticker": ticker,
         },
     )
 

@@ -6,10 +6,10 @@
     <span class="font-serif text-[2.2rem] leading-none text-copper-light">${{ latest_price.close|floatformat:2 }}</span>
     {% if price_change != None %}
     <div class="flex items-baseline gap-2">
-        <span class="text-[0.75rem] font-semibold tabular-nums {% if price_change >= 0 %}text-[#22c55e]{% else %}text-[#ef4444]{% endif %}">
+        <span class="text-[0.75rem] font-semibold tabular-nums {% if price_change >= 0 %}text-green-500{% else %}text-red-500{% endif %}">
             {% if price_change >= 0 %}+{% endif %}{{ price_change|floatformat:2 }}
         </span>
-        <span class="text-[0.7rem] tabular-nums {% if price_change >= 0 %}text-[#22c55e]/60{% else %}text-[#ef4444]/60{% endif %}">
+        <span class="text-[0.7rem] tabular-nums {% if price_change >= 0 %}text-green-500/60{% else %}text-red-500/60{% endif %}">
             ({% if price_change_pct >= 0 %}+{% endif %}{{ price_change_pct|floatformat:2 }}%)
         </span>
     </div>
@@ -24,7 +24,7 @@
         <span class="text-[0.6rem] text-t3 flex items-center gap-1">{{ v.name }} {% include "core/components/info_tooltip.html" with tooltip_title=v.name tooltip_description=v.description %}</span>
         <div class="flex items-center gap-2">
             <span class="text-[0.7rem] font-medium tabular-nums text-t2">${{ v.value|floatformat:2 }}</span>
-            <span class="text-[0.55rem] font-semibold tabular-nums {% if v.delta_pct >= 0 %}text-[#22c55e]{% else %}text-[#ef4444]{% endif %}">
+            <span class="text-[0.55rem] font-semibold tabular-nums {% if v.delta_pct >= 0 %}text-green-500{% else %}text-red-500{% endif %}">
                 {% if v.delta_pct >= 0 %}▲ {{ v.delta_pct }}%{% else %}▼ {{ v.delta_pct|cut:"-" }}%{% endif %}
             </span>
         </div>

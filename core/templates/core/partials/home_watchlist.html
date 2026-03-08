@@ -12,7 +12,7 @@
             <div class="text-[0.75rem] font-semibold text-heading group-hover:text-t1 transition-colors">{{ item.asset.ticker }}</div>
             {% if item.price_change_pct != None %}
             <div class="text-[0.55rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm
-                {% if item.price_change_pct >= 0 %}bg-[#22c55e]/[0.08] text-[#22c55e]{% else %}bg-[#ef4444]/[0.08] text-[#ef4444]{% endif %}">
+                {% if item.price_change_pct >= 0 %}bg-green-500/[0.08] text-green-500{% else %}bg-red-500/[0.08] text-red-500{% endif %}">
                 {% if item.price_change_pct >= 0 %}+{% endif %}{{ item.price_change_pct|floatformat:2 }}%
             </div>
             {% endif %}

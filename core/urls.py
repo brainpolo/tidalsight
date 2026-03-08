@@ -30,6 +30,11 @@ urlpatterns = [
     ),
     path("assets/<str:ticker>/peers/", views.asset_peers, name="asset_peers"),
     path(
+        "assets/<str:ticker>/sentiment/",
+        views.asset_sentiment,
+        name="asset_sentiment",
+    ),
+    path(
         "assets/<str:ticker>/community/", views.asset_community, name="asset_community"
     ),
     path("assets/<str:ticker>/prices/", views.asset_prices, name="asset_prices"),

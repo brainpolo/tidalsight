@@ -40,4 +40,8 @@ app.conf.beat_schedule = {
         "task": "analyst.tasks.generate_market_digest",
         "schedule": crontab(minute=50),
     },
+    "refresh sentiment every 12 hours": {
+        "task": "analyst.tasks.refresh_all_sentiments",
+        "schedule": crontab(minute=0, hour="*/12"),
+    },
 }

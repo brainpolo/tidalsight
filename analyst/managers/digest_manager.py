@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import logging
 
 from agents import RunConfig, Runner
@@ -32,8 +33,25 @@ DIGEST_FRESH_KEY = "market_digest_fresh"
 DIGEST_LOCK_KEY = "market_digest_lock"
 
 
-def _build_reddit_section() -> str:
-    posts = list(
+def _source_fingerprint(
+    reddit_posts: list[RedditPost],
+    hn_posts: list[HNPost],
+    news_articles: list[NewsArticle],
+) -> str:
+    """Compute a hash of the post IDs to detect when sources change."""
+    parts = []
+    for p in reddit_posts:
+        parts.append(f"r:{p.reddit_id}")
+    for p in hn_posts:
+        parts.append(f"h:{p.hn_id}")
+    for a in news_articles:
+        parts.append(f"n:{a.url}")
+    return hashlib.md5("|".join(parts).encode()).hexdigest()
+
+
+def _fetch_sources() -> tuple[list[RedditPost], list[HNPost], list[NewsArticle]]:
+    """Fetch all source posts for the digest in one pass."""
+    reddit_posts = list(
         RedditPost.objects.order_by("-posted_at").prefetch_related(
             Prefetch(
                 "comments",
@@ -41,27 +59,7 @@ def _build_reddit_section() -> str:
             ),
         )[:REDDIT_POSTS_FOR_DIGEST]
     )
-    if not posts:
-        return ""
-
-    lines = ["## Reddit Discussions"]
-    for p in posts:
-        lines.append(
-            f"[r/{p.subreddit}] (score:{p.score}, comments:{p.num_comments}) {p.title}"
-        )
-        if p.body:
-            lines.append(f"  {p.body[:REDDIT_POST_BODY_TRUNCATION]}")
-
-        for c in p.comments.all()[:REDDIT_COMMENTS_PER_POST_FOR_DIGEST]:
-            lines.append(
-                f"    > {c.author} (score:{c.score}): {c.body[:REDDIT_COMMENT_BODY_TRUNCATION]}"
-            )
-
-    return "\n".join(lines)
-
-
-def _build_hn_section() -> str:
-    posts = list(
+    hn_posts = list(
         HNPost.objects.order_by("-posted_at").prefetch_related(
             Prefetch(
                 "comments",
@@ -69,46 +67,51 @@ def _build_hn_section() -> str:
             ),
         )[:HN_POSTS_FOR_DIGEST]
     )
-    if not posts:
-        return ""
-
-    lines = ["## Hacker News Discussions"]
-    for p in posts:
-        lines.append(f"[HN] (score:{p.score}, comments:{p.num_comments}) {p.title}")
-
-        for c in p.comments.all()[:HN_COMMENTS_PER_POST_FOR_DIGEST]:
-            lines.append(f"    > {c.author}: {c.body[:HN_COMMENT_BODY_TRUNCATION]}")
-
-    return "\n".join(lines)
-
-
-def _build_news_section() -> str:
-    articles = list(
+    news_articles = list(
         NewsArticle.objects.order_by("-published_at")[:NEWS_ARTICLES_FOR_DIGEST]
     )
-    if not articles:
-        return ""
-
-    lines = ["## News Articles"]
-    for a in articles:
-        date = a.published_at.strftime("%Y-%m-%d") if a.published_at else "unknown"
-        lines.append(f"[{a.source}, {date}] {a.title}")
-        if a.description:
-            lines.append(f"  {a.description[:NEWS_ARTICLE_DESCRIPTION_TRUNCATION]}")
-
-    return "\n".join(lines)
+    return reddit_posts, hn_posts, news_articles
 
 
-def _build_prompt() -> str:
-    sections = [
-        _build_reddit_section(),
-        _build_hn_section(),
-        _build_news_section(),
-    ]
-    non_empty = [s for s in sections if s]
-    if not non_empty:
-        return ""
-    return "\n\n".join(non_empty)
+def _build_prompt(
+    reddit_posts: list[RedditPost],
+    hn_posts: list[HNPost],
+    news_articles: list[NewsArticle],
+) -> str:
+    sections = []
+
+    if reddit_posts:
+        lines = ["## Reddit Discussions"]
+        for p in reddit_posts:
+            lines.append(
+                f"[r/{p.subreddit}] (score:{p.score}, comments:{p.num_comments}) {p.title}"
+            )
+            if p.body:
+                lines.append(f"  {p.body[:REDDIT_POST_BODY_TRUNCATION]}")
+            for c in p.comments.all()[:REDDIT_COMMENTS_PER_POST_FOR_DIGEST]:
+                lines.append(
+                    f"    > {c.author} (score:{c.score}): {c.body[:REDDIT_COMMENT_BODY_TRUNCATION]}"
+                )
+        sections.append("\n".join(lines))
+
+    if hn_posts:
+        lines = ["## Hacker News Discussions"]
+        for p in hn_posts:
+            lines.append(f"[HN] (score:{p.score}, comments:{p.num_comments}) {p.title}")
+            for c in p.comments.all()[:HN_COMMENTS_PER_POST_FOR_DIGEST]:
+                lines.append(f"    > {c.author}: {c.body[:HN_COMMENT_BODY_TRUNCATION]}")
+        sections.append("\n".join(lines))
+
+    if news_articles:
+        lines = ["## News Articles"]
+        for a in news_articles:
+            date = a.published_at.strftime("%Y-%m-%d") if a.published_at else "unknown"
+            lines.append(f"[{a.source}, {date}] {a.title}")
+            if a.description:
+                lines.append(f"  {a.description[:NEWS_ARTICLE_DESCRIPTION_TRUNCATION]}")
+        sections.append("\n".join(lines))
+
+    return "\n\n".join(sections)
 
 
 def _run_agent(prompt: str) -> MarketDigest:
@@ -117,7 +120,12 @@ def _run_agent(prompt: str) -> MarketDigest:
         tracing_disabled=True,
     )
     result = asyncio.run(
-        Runner.run(market_digest_agent, input=prompt, run_config=config, max_turns=MAX_AGENT_TURNS)
+        Runner.run(
+            market_digest_agent,
+            input=prompt,
+            run_config=config,
+            max_turns=MAX_AGENT_TURNS,
+        )
     )
     return result.final_output
 
@@ -142,9 +150,18 @@ def get_market_digest() -> dict | None:
         logger.info("Market digest generation already in progress, serving stale")
         return existing
 
-    prompt = _build_prompt()
+    reddit_posts, hn_posts, news_articles = _fetch_sources()
+    prompt = _build_prompt(reddit_posts, hn_posts, news_articles)
     if not prompt:
         logger.warning("No data from any source, skipping digest")
+        cache.delete(DIGEST_LOCK_KEY)
+        return existing
+
+    # Skip regeneration if sources haven't changed
+    fingerprint = _source_fingerprint(reddit_posts, hn_posts, news_articles)
+    if existing and existing.get("source_hash") == fingerprint:
+        logger.info("Digest sources unchanged, refreshing TTL")
+        cache.set(DIGEST_FRESH_KEY, True, DIGEST_FRESHNESS_TTL)
         cache.delete(DIGEST_LOCK_KEY)
         return existing
 
@@ -158,6 +175,7 @@ def get_market_digest() -> dict | None:
         return existing
 
     data = digest.model_dump()
+    data["source_hash"] = fingerprint
     data["generated_at"] = timezone.now().isoformat()
     logger.info("Market digest generated, freshness TTL %ds", DIGEST_FRESHNESS_TTL)
     cache.set(DIGEST_DATA_KEY, data, DIGEST_DATA_TTL)

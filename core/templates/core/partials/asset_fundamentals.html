@@ -30,56 +30,19 @@
                     <span class="text-[0.65rem] font-medium tracking-[0.08em] uppercase text-t3">52-Week Range</span>
                     {% include "core/components/info_tooltip.html" with tooltip_title="52-Week Range" tooltip_description="Shows where the current price sits between its 52-week low and high. Closer to the high may indicate strong momentum; closer to the low may suggest a potential value opportunity." %}
                 </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-[0.65rem] tabular-nums text-copper shrink-0">{{ fundamental_cards.range_gauge.low }}</span>
-                    <div class="flex-1 relative h-[6px]">
-                        <div class="absolute inset-0 rounded-full overflow-hidden">
-                            <div class="absolute inset-0 rounded-full" style="background: linear-gradient(90deg, rgba(184,140,100,0.15), var(--ts-divider), rgba(130,180,160,0.15))"></div>
-                        </div>
-                        <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2" style="left: {{ fundamental_cards.range_gauge.pct }}%">
-                            <div class="relative flex flex-col items-center">
-                                <div class="w-[10px] h-[10px] rounded-full bg-heading border-2 border-page shadow-[0_0_6px_rgba(232,228,223,0.3)]"></div>
-                                <div class="absolute -top-5 whitespace-nowrap text-[0.55rem] font-semibold tabular-nums text-heading">{{ fundamental_cards.range_gauge.current }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="text-[0.65rem] tabular-nums text-sea-light shrink-0">{{ fundamental_cards.range_gauge.high }}</span>
-                </div>
+                {% include "core/components/bar_pin.html" with pct=fundamental_cards.range_gauge.pct pin_value=fundamental_cards.range_gauge.current low_label=fundamental_cards.range_gauge.low high_label=fundamental_cards.range_gauge.high gradient="linear-gradient(90deg, rgba(184,140,100,0.3), var(--ts-divider), rgba(130,180,160,0.3))" %}
             </div>
             {% endif %}
 
             <!-- P/E Ratio Gauge -->
             {% if fundamental_cards.pe_gauge %}
             <div>
-                <div class="flex items-center justify-between mb-2.5">
-                    <span class="text-[0.65rem] font-medium tracking-[0.08em] uppercase text-t3 flex items-center gap-1">
-                        P/E Ratio
-                        {% include "core/components/info_tooltip.html" with tooltip_title="P/E Ratio" tooltip_description="Price-to-Earnings ratio — how much investors pay per dollar of earnings. Higher P/E suggests growth expectations; lower P/E may indicate value." %}
-                    </span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[0.75rem] font-semibold tabular-nums text-heading">{{ fundamental_cards.pe_gauge.value }}</span>
-                        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm {% if fundamental_cards.pe_gauge.label == 'Cheap' %}bg-[#22c55e]/10 text-[#22c55e]{% elif fundamental_cards.pe_gauge.label == 'Expensive' %}bg-[#ef4444]/10 text-[#ef4444]{% else %}bg-surface/[0.06] text-t2{% endif %}">{{ fundamental_cards.pe_gauge.label }}</span>
-                    </div>
+                <div class="flex items-center gap-1.5 mb-2.5">
+                    <span class="text-[0.65rem] font-medium tracking-[0.08em] uppercase text-t3">P/E Ratio</span>
+                    {% include "core/components/info_tooltip.html" with tooltip_title="P/E Ratio" tooltip_description="Price-to-Earnings ratio — how much investors pay per dollar of earnings. Higher P/E suggests growth expectations; lower P/E may indicate value." %}
+                    <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm {% if fundamental_cards.pe_gauge.label == 'Cheap' %}bg-green-500/10 text-green-500{% elif fundamental_cards.pe_gauge.label == 'Expensive' %}bg-red-500/10 text-red-500{% else %}bg-surface/[0.06] text-t2{% endif %}">{{ fundamental_cards.pe_gauge.label }}</span>
                 </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-[0.65rem] tabular-nums text-t4 shrink-0">0</span>
-                    <div class="flex-1 relative h-[6px]">
-                        <div class="absolute inset-0 rounded-full overflow-hidden">
-                            <div class="absolute inset-0 rounded-full" style="background: linear-gradient(90deg, rgba(34,197,94,0.12), rgba(255,255,255,0.04) 40%, rgba(239,68,68,0.12))"></div>
-                        </div>
-                        <!-- Sector average marker -->
-                        <div class="absolute top-1/2 -translate-y-1/2" style="left: {{ fundamental_cards.pe_gauge.avg_pct }}%">
-                            <div class="w-px h-[14px] bg-t3"></div>
-                            <div class="absolute top-[16px] -translate-x-1/2 left-1/2 whitespace-nowrap text-[0.5rem] text-t3">S&P {{ fundamental_cards.pe_gauge.sector_avg }}</div>
-                        </div>
-                        <!-- Current P/E marker -->
-                        <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2" style="left: {{ fundamental_cards.pe_gauge.pe_pct }}%">
-                            <div class="relative flex flex-col items-center">
-                                <div class="w-[10px] h-[10px] rounded-full bg-heading border-2 border-page shadow-[0_0_6px_rgba(232,228,223,0.3)]"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {% include "core/components/bar_pin.html" with pct=fundamental_cards.pe_gauge.pe_pct pin_value=fundamental_cards.pe_gauge.value low_label="0" high_label="" marker_pct=fundamental_cards.pe_gauge.avg_pct marker_label=fundamental_cards.pe_gauge.sector_avg_label gradient="linear-gradient(90deg, rgba(34,197,94,0.25), color-mix(in srgb, var(--ts-surface) 8%, transparent) 40%, rgba(239,68,68,0.25))" %}
             </div>
             {% endif %}
         </div>
