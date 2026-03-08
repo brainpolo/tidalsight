@@ -8,6 +8,7 @@ from core.templatetags.formatting import abbreviate
 class MetricMeta:
     label: str
     description: str
+    icon: str = ""
     benchmark: str | None = None
     prefix: str = ""
     use_abbreviate: bool = False
@@ -18,6 +19,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
     "market_cap": MetricMeta(
         label="Market Cap",
         description="Total market value of all outstanding shares. Calculated as share price × total shares outstanding.",
+        icon="landmark",
         prefix="$",
         use_abbreviate=True,
     ),
@@ -27,6 +29,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Price-to-Earnings ratio — how much investors pay per dollar of earnings. "
             "Higher P/E suggests growth expectations; lower P/E may indicate value."
         ),
+        icon="gauge",
     ),
     "eps": MetricMeta(
         label="EPS",
@@ -34,6 +37,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Earnings Per Share — net income divided by outstanding shares. "
             "Shows how much profit is attributable to each share."
         ),
+        icon="coins",
         prefix="$",
     ),
     "dividend_yield": MetricMeta(
@@ -42,6 +46,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Annual dividend payment as a percentage of the stock price. "
             "Higher yield means more income per dollar invested."
         ),
+        icon="percent",
         benchmark="S&P 500 avg ~1.3%",
         suffix="%",
     ),
@@ -51,11 +56,13 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Measures volatility relative to the overall market. "
             "Beta of 1 = moves with the market. Above 1 = more volatile. Below 1 = less volatile."
         ),
+        icon="activity",
         benchmark="Market = 1.00",
     ),
     "revenue": MetricMeta(
         label="Revenue",
         description="Total income generated from business operations before any expenses are deducted.",
+        icon="banknote",
         prefix="$",
         use_abbreviate=True,
     ),
@@ -65,6 +72,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Percentage of revenue that becomes profit after all expenses. "
             "Higher margins indicate better cost efficiency."
         ),
+        icon="scissors",
         benchmark="S&P 500 avg ~11%",
         suffix="%",
     ),
@@ -74,6 +82,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Total liabilities divided by shareholder equity. "
             "Higher values mean more leverage. Below 1 is conservative; above 2 may signal risk."
         ),
+        icon="scale",
         benchmark="Varies by sector",
     ),
     "free_cash_flow": MetricMeta(
@@ -82,6 +91,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Cash generated after capital expenditures. "
             "Shows how much real cash the business produces, unlike accounting earnings."
         ),
+        icon="wallet",
         prefix="$",
         use_abbreviate=True,
     ),
@@ -91,6 +101,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Return on Equity — net income as a percentage of shareholder equity. "
             "Measures how efficiently a company turns invested capital into profit. Above 15% is generally strong."
         ),
+        icon="target",
         benchmark="S&P 500 avg ~18%",
         suffix="%",
     ),
@@ -100,6 +111,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Price-to-Book ratio — market price per share divided by book value per share. "
             "Below 1 may indicate undervaluation; above 3 suggests growth premium."
         ),
+        icon="book-open",
         benchmark="S&P 500 avg ~4.5",
     ),
     "fifty_two_week_high": MetricMeta(
@@ -108,6 +120,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Highest price reached in the past 52 weeks. "
             "Proximity to this level may indicate strong momentum or resistance."
         ),
+        icon="chevron-up",
         prefix="$",
     ),
     "fifty_two_week_low": MetricMeta(
@@ -116,6 +129,7 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
             "Lowest price reached in the past 52 weeks. "
             "Proximity to this level may indicate support or continued weakness."
         ),
+        icon="chevron-down",
         prefix="$",
     ),
 }
@@ -174,6 +188,7 @@ def build_fundamental_cards(fundamental, latest_price):
                 "value": display,
                 "description": meta.description,
                 "benchmark": meta.benchmark,
+                "icon": meta.icon,
                 "field": field,
             }
         )

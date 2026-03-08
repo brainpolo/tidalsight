@@ -1,12 +1,14 @@
 {% load formatting %}
 
-{% if peers %}
+{% if loading %}
+{% include "core/components/peers_skeleton.html" with message="Discovering peers…" %}
+{% elif peers %}
 <div class="max-w-[1120px] mx-auto px-10">
     <section class="py-14">
         <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Peers</div>
         <div class="flex gap-3 overflow-x-auto py-2 -my-2 scrollbar-hide">
             {% for peer in peers %}
-            <a href="{% url 'core:asset_detail' peer.asset.ticker %}" target="_blank"
+            <a href="{% url 'core:asset_detail' peer.asset.ticker %}"
                class="shrink-0 w-[160px] border border-white/[0.04] rounded-sm p-4 hover:border-white/[0.08] hover:-translate-y-0.5 transition-all duration-200 group block">
                 <div class="flex items-center gap-2 mb-2">
                     {% if peer.asset.website %}

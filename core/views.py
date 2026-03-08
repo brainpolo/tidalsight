@@ -261,7 +261,12 @@ def asset_peers(request, ticker):
     if cached is not None:
         return render(request, "core/partials/asset_peers.html", {"peers": cached})
 
-    sync_peers(asset)
+    peers_before = sync_peers(asset)
+    if not peers_before and not asset.peers.exists():
+        # Still syncing in another request — tell HTMX to retry
+        response = render(request, "core/partials/asset_peers.html", {"loading": True})
+        response["HX-Trigger-After-Settle"] = '{"retryPeers": true}'
+        return response
 
     peers = list(
         asset.peers.annotate(

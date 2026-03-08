@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
@@ -8,8 +9,11 @@ def _to_decimal(value, default=None):
     if value is None:
         return default
     try:
+        floated = float(value)
+        if math.isnan(floated) or math.isinf(floated):
+            return default
         return Decimal(str(value))
-    except InvalidOperation, ValueError:
+    except InvalidOperation, ValueError, TypeError:
         return default
 
 
