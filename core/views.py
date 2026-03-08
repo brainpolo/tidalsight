@@ -57,6 +57,7 @@ from core.managers.user_manager import (
     update_profile,
 )
 from core.managers.valuation_manager import compute_valuations
+from core.models import UserAsset
 from core.sparkline import build_sparkline_svg
 from core.utils import pct_change, total_post_count
 from scraper.managers.asset_manager import (
@@ -65,7 +66,6 @@ from scraper.managers.asset_manager import (
     sync_fundamentals,
     sync_quick_prices,
 )
-from core.models import UserAsset
 from scraper.models import Asset, AssetView, PriceHistory
 from scraper.tasks import backfill_full_prices, fetch_asset_news
 
