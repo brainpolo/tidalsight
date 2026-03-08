@@ -1,28 +1,75 @@
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
     <header class="flex items-center justify-between py-4 sm:py-8 gap-4 sm:gap-12">
         <div class="flex items-center gap-4 sm:gap-8 min-w-0">
-            <a href="{% url 'core:home' %}" class="font-serif text-2xl sm:text-3xl text-[#fafafa] tracking-tight hover:text-copper-light transition-colors shrink-0">TidalSight</a>
+            <a href="{% url 'core:home' %}" class="font-serif text-2xl sm:text-3xl text-t1 tracking-tight hover:text-copper-light transition-colors shrink-0">TidalSight</a>
             {% if show_search %}<div class="hidden sm:block">{% include "core/components/asset_search_widget.html" with compact=True %}</div>{% endif %}
         </div>
 
         {# Desktop nav #}
         <nav class="hidden md:flex items-center gap-6 lg:gap-8">
-            <a href="{% url 'core:strategy' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors"><i data-lucide="compass" class="size-3.5"></i> strategy</a>
+            <a href="{% url 'core:strategy' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="compass" class="size-3.5"></i> strategy</a>
             {% if user.is_authenticated %}
-                {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors"><i data-lucide="shield" class="size-3.5"></i> admin</a>{% endif %}
-                <a href="{% url 'core:profile' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-[#a09a93] hover:text-[#fafafa] transition-colors"><i data-lucide="user" class="size-3.5"></i> {{ user.first_name|default:user.username }}</a>
+                {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="shield" class="size-3.5"></i> admin</a>{% endif %}
+                <a href="{% url 'core:profile' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t2 hover:text-t1 transition-colors"><i data-lucide="user" class="size-3.5"></i> {{ user.first_name|default:user.username }}</a>
                 <form method="post" action="{% url 'core:sign_out' %}" class="inline">{% csrf_token %}<button type="submit" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-copper hover:text-copper-light transition-colors cursor-pointer"><i data-lucide="log-out" class="size-3.5"></i> sign out</button></form>
             {% else %}
-                <a href="{% url 'core:sign_in' %}" class="text-xs font-medium tracking-[0.06em] text-[#a09a93] hover:text-[#fafafa] transition-colors">sign in</a>
+                <a href="{% url 'core:sign_in' %}" class="text-xs font-medium tracking-[0.06em] text-t2 hover:text-t1 transition-colors">sign in</a>
                 <a href="{% url 'core:sign_up' %}" class="text-xs font-medium tracking-[0.06em] px-5 py-2 border border-copper/20 rounded text-copper hover:text-copper-light hover:border-copper/40 transition-all">sign up</a>
             {% endif %}
+
+            {# Theme dropdown #}
+            <div class="relative" id="themeDropdownWrap">
+                <button id="themeDropdownBtn" type="button" class="flex items-center justify-center size-8 rounded-full text-t3 hover:text-t2 hover:bg-surface/[0.06] transition-all cursor-pointer" aria-label="Theme">
+                    <svg class="ts-icon ts-icon-sun size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    <svg class="ts-icon ts-icon-moon size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <svg class="ts-icon ts-icon-auto size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                </button>
+                <div id="themeDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-36 rounded-xl border border-surface/[0.08] bg-dropdown shadow-lg shadow-black/20 py-1 z-50">
+                    <button data-theme="light" type="button" class="ts-theme-opt flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-t3 hover:text-t2 hover:bg-surface/[0.04] transition-colors cursor-pointer">
+                        <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        Light
+                    </button>
+                    <button data-theme="dark" type="button" class="ts-theme-opt flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-t3 hover:text-t2 hover:bg-surface/[0.04] transition-colors cursor-pointer">
+                        <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        Dark
+                    </button>
+                    <button data-theme="auto" type="button" class="ts-theme-opt flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-t3 hover:text-t2 hover:bg-surface/[0.04] transition-colors cursor-pointer">
+                        <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                        Auto
+                    </button>
+                </div>
+            </div>
         </nav>
 
         {# Mobile hamburger #}
-        <button id="mobileMenuBtn" class="md:hidden flex items-center justify-center size-9 -mr-1.5 text-[#5c5750] hover:text-[#a09a93] transition-colors" aria-label="Menu">
-            <svg id="menuIconOpen" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-            <svg id="menuIconClose" class="size-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+        <div class="md:hidden flex items-center gap-2">
+            {# Mobile theme dropdown #}
+            <div class="relative" id="themeDropdownWrapMobile">
+                <button id="themeDropdownBtnMobile" type="button" class="flex items-center justify-center size-9 text-t3 hover:text-t2 transition-colors cursor-pointer" aria-label="Theme">
+                    <svg class="ts-icon ts-icon-sun size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    <svg class="ts-icon ts-icon-moon size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <svg class="ts-icon ts-icon-auto size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                </button>
+                <div id="themeDropdownMenuMobile" class="hidden absolute right-0 top-full mt-2 w-36 rounded-xl border border-surface/[0.08] bg-dropdown shadow-lg shadow-black/20 py-1 z-50">
+                    <button data-theme="light" type="button" class="ts-theme-opt flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-t3 hover:text-t2 hover:bg-surface/[0.04] transition-colors cursor-pointer">
+                        <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        Light
+                    </button>
+                    <button data-theme="dark" type="button" class="ts-theme-opt flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-t3 hover:text-t2 hover:bg-surface/[0.04] transition-colors cursor-pointer">
+                        <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        Dark
+                    </button>
+                    <button data-theme="auto" type="button" class="ts-theme-opt flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-t3 hover:text-t2 hover:bg-surface/[0.04] transition-colors cursor-pointer">
+                        <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                        Auto
+                    </button>
+                </div>
+            </div>
+            <button id="mobileMenuBtn" class="flex items-center justify-center size-9 -mr-1.5 text-t3 hover:text-t2 transition-colors" aria-label="Menu">
+                <svg id="menuIconOpen" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                <svg id="menuIconClose" class="size-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
     </header>
 
     {# Mobile drawer #}
@@ -30,18 +77,18 @@
         <div class="overflow-hidden">
             <div class="pb-5 pt-3">
                 {% if show_search %}
-                <div class="pb-3 mb-3 border-b border-white/[0.04]">
+                <div class="pb-3 mb-3 border-b border-surface/[0.04]">
                     {% include "core/components/asset_search_widget.html" with compact=True %}
                 </div>
                 {% endif %}
                 <div class="flex flex-col">
-                    <a href="{% url 'core:strategy' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-[#5c5750] active:text-[#a09a93] transition-colors py-3"><i data-lucide="compass" class="size-4"></i> Strategy</a>
+                    <a href="{% url 'core:strategy' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t3 active:text-t2 transition-colors py-3"><i data-lucide="compass" class="size-4"></i> Strategy</a>
                     {% if user.is_authenticated %}
-                        {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-[#5c5750] active:text-[#a09a93] transition-colors py-3"><i data-lucide="shield" class="size-4"></i> Admin</a>{% endif %}
-                        <a href="{% url 'core:profile' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-[#a09a93] active:text-[#fafafa] transition-colors py-3"><i data-lucide="user" class="size-4"></i> {{ user.first_name|default:user.username }}</a>
+                        {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t3 active:text-t2 transition-colors py-3"><i data-lucide="shield" class="size-4"></i> Admin</a>{% endif %}
+                        <a href="{% url 'core:profile' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t2 active:text-t1 transition-colors py-3"><i data-lucide="user" class="size-4"></i> {{ user.first_name|default:user.username }}</a>
                         <form method="post" action="{% url 'core:sign_out' %}">{% csrf_token %}<button type="submit" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-copper active:text-copper-light transition-colors py-3 cursor-pointer w-full"><i data-lucide="log-out" class="size-4"></i> Sign out</button></form>
                     {% else %}
-                        <a href="{% url 'core:sign_in' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-[#a09a93] active:text-[#fafafa] transition-colors py-3">Sign in</a>
+                        <a href="{% url 'core:sign_in' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t2 active:text-t1 transition-colors py-3">Sign in</a>
                         <a href="{% url 'core:sign_up' %}" class="inline-flex items-center justify-center text-[0.8rem] font-medium tracking-[0.04em] mt-2 px-5 py-2.5 border border-copper/20 rounded text-copper active:text-copper-light active:border-copper/40 transition-all">Sign up</a>
                     {% endif %}
                 </div>
@@ -52,19 +99,93 @@
 
 <script>
 (function() {
-    const btn = document.getElementById('mobileMenuBtn');
-    const menu = document.getElementById('mobileMenu');
-    const iconOpen = document.getElementById('menuIconOpen');
-    const iconClose = document.getElementById('menuIconClose');
-    if (!btn || !menu) return;
-    let open = false;
+    // Mobile menu
+    var btn = document.getElementById('mobileMenuBtn');
+    var menu = document.getElementById('mobileMenu');
+    var iconOpen = document.getElementById('menuIconOpen');
+    var iconClose = document.getElementById('menuIconClose');
+    if (btn && menu) {
+        var open = false;
+        btn.addEventListener('click', function() {
+            open = !open;
+            menu.style.gridTemplateRows = open ? '1fr' : '0fr';
+            menu.style.borderColor = open ? 'var(--ts-divider)' : 'transparent';
+            iconOpen.classList.toggle('hidden', open);
+            iconClose.classList.toggle('hidden', !open);
+        });
+    }
 
-    btn.addEventListener('click', function() {
-        open = !open;
-        menu.style.gridTemplateRows = open ? '1fr' : '0fr';
-        menu.style.borderColor = open ? 'rgba(255,255,255,0.04)' : 'transparent';
-        iconOpen.classList.toggle('hidden', open);
-        iconClose.classList.toggle('hidden', !open);
+    // Theme dropdown
+    var STORAGE_KEY = 'tidalsight_theme';
+    var systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function getStored() {
+        return localStorage.getItem(STORAGE_KEY) || 'auto';
+    }
+
+    function applyTheme(mode) {
+        var dark = mode === 'dark' || (mode === 'auto' && systemDark.matches);
+        document.documentElement.classList.toggle('dark', dark);
+    }
+
+    function updateIcons(mode) {
+        document.querySelectorAll('.ts-icon').forEach(function(el) {
+            var show = (mode === 'light' && el.classList.contains('ts-icon-sun'))
+                    || (mode === 'dark' && el.classList.contains('ts-icon-moon'))
+                    || (mode === 'auto' && el.classList.contains('ts-icon-auto'));
+            el.style.display = show ? '' : 'none';
+        });
+        document.querySelectorAll('.ts-theme-opt').forEach(function(el) {
+            var active = el.dataset.theme === mode;
+            el.classList.toggle('text-t1', active);
+            el.classList.toggle('text-t3', !active);
+        });
+    }
+
+    function setTheme(mode) {
+        localStorage.setItem(STORAGE_KEY, mode);
+        applyTheme(mode);
+        updateIcons(mode);
+        closeAllDropdowns();
+    }
+
+    // Listen for system theme changes when in auto mode
+    systemDark.addEventListener('change', function() {
+        if (getStored() === 'auto') applyTheme('auto');
     });
+
+    // Dropdown toggle
+    function setupDropdown(btnId, menuId) {
+        var b = document.getElementById(btnId);
+        var m = document.getElementById(menuId);
+        if (!b || !m) return;
+        b.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var wasHidden = m.classList.contains('hidden');
+            closeAllDropdowns();
+            if (wasHidden) m.classList.remove('hidden');
+        });
+        m.querySelectorAll('.ts-theme-opt').forEach(function(opt) {
+            opt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                setTheme(this.dataset.theme);
+            });
+        });
+    }
+
+    function closeAllDropdowns() {
+        document.getElementById('themeDropdownMenu')?.classList.add('hidden');
+        document.getElementById('themeDropdownMenuMobile')?.classList.add('hidden');
+    }
+
+    document.addEventListener('click', closeAllDropdowns);
+
+    setupDropdown('themeDropdownBtn', 'themeDropdownMenu');
+    setupDropdown('themeDropdownBtnMobile', 'themeDropdownMenuMobile');
+
+    // Init
+    var stored = getStored();
+    applyTheme(stored);
+    updateIcons(stored);
 })();
 </script>

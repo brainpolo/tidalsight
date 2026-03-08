@@ -16,3 +16,5 @@ DIGEST_REFRESH_INTERVAL = 60  # seconds — HTMX polling interval
 
 PEER_SYNC_LOCK_TTL = 60 * 5  # 5 minutes
 PEER_TARGET_COUNT = 6  # ask LLM for this many
+
+MAX_AGENT_TURNS = 50

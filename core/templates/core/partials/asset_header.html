@@ -21,9 +21,9 @@
 <div class="space-y-1.5">
     {% for v in valuations %}
     <div class="flex items-center justify-between gap-4">
-        <span class="text-[0.6rem] text-[#5c5750] flex items-center gap-1">{{ v.name }} {% include "core/components/info_tooltip.html" with tooltip_title=v.name tooltip_description=v.description %}</span>
+        <span class="text-[0.6rem] text-t3 flex items-center gap-1">{{ v.name }} {% include "core/components/info_tooltip.html" with tooltip_title=v.name tooltip_description=v.description %}</span>
         <div class="flex items-center gap-2">
-            <span class="text-[0.7rem] font-medium tabular-nums text-[#a09a93]">${{ v.value|floatformat:2 }}</span>
+            <span class="text-[0.7rem] font-medium tabular-nums text-t2">${{ v.value|floatformat:2 }}</span>
             <span class="text-[0.55rem] font-semibold tabular-nums {% if v.delta_pct >= 0 %}text-[#22c55e]{% else %}text-[#ef4444]{% endif %}">
                 {% if v.delta_pct >= 0 %}▲ {{ v.delta_pct }}%{% else %}▼ {{ v.delta_pct|cut:"-" }}%{% endif %}
             </span>

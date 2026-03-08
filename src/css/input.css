@@ -1,5 +1,42 @@
 @import "tailwindcss";
 
+/* ── Dark mode: class-based ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Light mode (default) ── */
+@layer base {
+    :root {
+        --ts-page: #fafaf8;
+        --ts-t1: #1a1816;
+        --ts-t2: #6b6560;
+        --ts-t3: #8a847e;
+        --ts-t4: #b8b2ab;
+        --ts-heading: #2a2725;
+        --ts-surface: #000000;
+        --ts-hover: #f0ece7;
+        --ts-tooltip: #ffffff;
+        --ts-dropdown: #ffffff;
+        --ts-divider: rgba(0, 0, 0, 0.08);
+        --ts-grain-opacity: 0.04;
+    }
+
+    /* ── Dark mode ── */
+    .dark {
+        --ts-page: #0d0c0a;
+        --ts-t1: #fafafa;
+        --ts-t2: #a09a93;
+        --ts-t3: #5c5750;
+        --ts-t4: #3d3a36;
+        --ts-heading: #e8e4df;
+        --ts-surface: #ffffff;
+        --ts-hover: #141310;
+        --ts-tooltip: #1a1815;
+        --ts-dropdown: #1a1916;
+        --ts-divider: rgba(255, 255, 255, 0.08);
+        --ts-grain-opacity: 0.025;
+    }
+}
+
 /* ── Custom theme ── */
 @theme {
     --color-ink: #0d0c0a;
@@ -7,6 +44,17 @@
     --color-copper-light: #e0a87c;
     --color-sea: #4a8f8f;
     --color-sea-light: #6fb5b5;
+
+    --color-page: var(--ts-page);
+    --color-t1: var(--ts-t1);
+    --color-t2: var(--ts-t2);
+    --color-t3: var(--ts-t3);
+    --color-t4: var(--ts-t4);
+    --color-heading: var(--ts-heading);
+    --color-surface: var(--ts-surface);
+    --color-hover: var(--ts-hover);
+    --color-tooltip: var(--ts-tooltip);
+    --color-dropdown: var(--ts-dropdown);
 
     --font-serif: "Instrument Serif", serif;
     --font-sans: "Inter", -apple-system, sans-serif;
@@ -23,7 +71,7 @@
     inset: 0;
     pointer-events: none;
     z-index: 999;
-    opacity: 0.025;
+    opacity: var(--ts-grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 180px;
@@ -34,8 +82,8 @@
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.08) 20%,
-        rgba(255, 255, 255, 0.08) 80%,
+        var(--ts-divider) 20%,
+        var(--ts-divider) 80%,
         transparent
     );
 }

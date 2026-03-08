@@ -1,7 +1,7 @@
-{% if results %}
-<ul class="search-results-list" role="listbox">
+{% if results or yahoo_suggestions %}
+<div class="search-results-list">
     {% for r in results %}
-    <li role="option">
+    <div role="option">
         <a href="{% url 'core:asset_detail' r.asset.ticker %}" class="search-result-item" data-ticker="{{ r.asset.ticker }}">
             <div class="search-result-left">
                 <span class="search-result-ticker">{{ r.asset.ticker }}</span>
@@ -20,7 +20,22 @@
                 {% endif %}
             </div>
         </a>
-    </li>
+    </div>
     {% endfor %}
-</ul>
+    {% if yahoo_suggestions %}
+    {% if results %}<div class="search-divider"></div>{% endif %}
+    {% for s in yahoo_suggestions %}
+    <div role="option">
+        <a href="{% url 'core:asset_detail' s.ticker %}" class="search-result-item" data-ticker="{{ s.ticker }}">
+            <div class="search-result-left">
+                <span class="search-result-ticker">{{ s.ticker }}</span>
+                <span class="search-result-name">{{ s.name }}</span>
+                <span class="search-result-badge search-result-badge--{{ s.asset_class }}">{{ s.asset_class }}</span>
+                {% if s.exchange %}<span class="search-result-exchange">{{ s.exchange }}</span>{% endif %}
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
 {% endif %}

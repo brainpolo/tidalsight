@@ -1,10 +1,19 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TidalSight{% endblock %}</title>
+
+    <!-- Theme: apply before paint to prevent flash -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('tidalsight_theme') || 'auto';
+            var dark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+        })();
+    </script>
 
     <!-- Tailwind (built) -->
     <link rel="stylesheet" href="{% static 'css/dist.css' %}">
@@ -22,7 +31,7 @@
 
     {% block head %}{% endblock %}
 </head>
-<body class="bg-ink text-[#fafafa] font-sans antialiased overflow-x-hidden pt-7 sm:pt-8" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="bg-page text-t1 font-sans antialiased overflow-x-hidden pt-7 sm:pt-8" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     <div class="fixed top-0 left-0 right-0 z-50" data-trending-container
          hx-get="{% url 'core:trending_banner' %}"
          hx-trigger="load"

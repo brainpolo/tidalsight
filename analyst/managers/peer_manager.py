@@ -6,7 +6,7 @@ from django.core.cache import cache
 
 from analyst.agents.peer_discovery import PeerDiscovery, peer_discovery_agent
 from analyst.agents.provider import get_model_provider
-from analyst.app_behaviour import PEER_SYNC_LOCK_TTL, PEER_TARGET_COUNT
+from analyst.app_behaviour import MAX_AGENT_TURNS, PEER_SYNC_LOCK_TTL, PEER_TARGET_COUNT
 from scraper.managers.asset_manager import get_or_create_asset
 from scraper.models import Asset
 
@@ -33,7 +33,7 @@ def sync_peers(asset: Asset) -> list[Asset]:
             tracing_disabled=True,
         )
         result = asyncio.run(
-            Runner.run(peer_discovery_agent, input=prompt, run_config=config)
+            Runner.run(peer_discovery_agent, input=prompt, run_config=config, max_turns=MAX_AGENT_TURNS)
         )
         discovery: PeerDiscovery = result.final_output
 

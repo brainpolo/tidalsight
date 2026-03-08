@@ -2,9 +2,9 @@
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
     <section class="py-6 sm:py-10">
         <details class="group/details">
-            <summary class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] hover:text-[#a09a93] cursor-pointer select-none list-none flex items-center gap-2.5 transition-colors duration-200">
-                <span class="inline-flex items-center justify-center size-5 rounded bg-white/[0.04] group-open/details:bg-copper/[0.08] transition-all duration-300">
-                    <svg class="size-3 text-[#5c5750] group-open/details:text-copper group-open/details:rotate-90 transition-all duration-300" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5V3z"/></svg>
+            <summary class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 hover:text-t2 cursor-pointer select-none list-none flex items-center gap-2.5 transition-colors duration-200">
+                <span class="inline-flex items-center justify-center size-5 rounded bg-surface/[0.04] group-open/details:bg-copper/[0.08] transition-all duration-300">
+                    <svg class="size-3 text-t3 group-open/details:text-copper group-open/details:rotate-90 transition-all duration-300" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5V3z"/></svg>
                 </span>
                 Past Month Prices
                 {% if positive_day_pct != None %}
@@ -14,7 +14,7 @@
             <div class="overflow-x-auto mt-6">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-[0.65rem] font-semibold tracking-[0.08em] uppercase text-[#5c5750]">
+                        <tr class="text-[0.65rem] font-semibold tracking-[0.08em] uppercase text-t3">
                             <th class="text-left py-3 pr-6">Date</th>
                             <th class="text-right py-3 px-4">Open</th>
                             <th class="text-right py-3 px-4">High</th>
@@ -26,22 +26,22 @@
                     </thead>
                     <tbody>
                         {% for p in recent_prices %}
-                        <tr class="border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                            <td class="py-3 pr-6 text-[#a09a93]">{{ p.timestamp|date:"M d, Y" }}</td>
-                            <td class="text-right py-3 px-4 text-[#e8e4df]">{{ p.open|floatformat:2 }}</td>
+                        <tr class="border-t border-surface/[0.04] hover:bg-surface/[0.02] transition-colors">
+                            <td class="py-3 pr-6 text-t2">{{ p.timestamp|date:"M d, Y" }}</td>
+                            <td class="text-right py-3 px-4 text-heading">{{ p.open|floatformat:2 }}</td>
                             <td class="text-right py-3 px-4 text-sea-light">{{ p.high|floatformat:2 }}</td>
                             <td class="text-right py-3 px-4 text-copper">{{ p.low|floatformat:2 }}</td>
-                            <td class="text-right py-3 px-4 text-[#e8e4df] font-medium">{{ p.close|floatformat:2 }}</td>
+                            <td class="text-right py-3 px-4 text-heading font-medium">{{ p.close|floatformat:2 }}</td>
                             <td class="text-right py-3 px-4">
                                 {% if p.daily_change_pct != None %}
                                 <span class="inline-flex items-center gap-1 text-[0.65rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm {% if p.daily_change >= 0 %}bg-[#22c55e]/10 text-[#22c55e]{% else %}bg-[#ef4444]/10 text-[#ef4444]{% endif %}">
                                     {% if p.daily_change >= 0 %}+{% endif %}{{ p.daily_change_pct }}%
                                 </span>
                                 {% else %}
-                                <span class="text-[#3d3a36]">—</span>
+                                <span class="text-t4">—</span>
                                 {% endif %}
                             </td>
-                            <td class="text-right py-3 pl-4 text-[#5c5750]">{{ p.volume|floatformat:0 }}</td>
+                            <td class="text-right py-3 pl-4 text-t3">{{ p.volume|floatformat:0 }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

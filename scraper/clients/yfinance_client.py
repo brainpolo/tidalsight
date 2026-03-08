@@ -1,8 +1,12 @@
+import logging
 import math
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
+import requests
 import yfinance as yf
+
+logger = logging.getLogger(__name__)
 
 
 def _to_decimal(value, default=None):
@@ -98,3 +102,56 @@ def fetch_asset_info(ticker: str) -> dict | None:
         "asset_class": asset_class_map.get(quote_type, "equity"),
         "website": info.get("website") or "",
     }
+
+
+YAHOO_SEARCH_URL = "https://query2.finance.yahoo.com/v1/finance/search"
+
+YAHOO_QUOTE_TYPE_MAP = {
+    "EQUITY": "equity",
+    "CRYPTOCURRENCY": "crypto",
+    "CURRENCY": "currency",
+    "FUTURE": "commodity",
+    "MUTUALFUND": "equity",
+    "ETF": "equity",
+}
+
+
+def search_tickers(query: str, max_results: int = 6) -> list[dict]:
+    """Search Yahoo Finance for tickers matching a natural-language query.
+
+    Returns a list of dicts with keys: ticker, name, exchange, asset_class.
+    """
+    try:
+        resp = requests.get(
+            YAHOO_SEARCH_URL,
+            params={
+                "q": query,
+                "quotesCount": max_results,
+                "newsCount": 0,
+                "listsCount": 0,
+            },
+            timeout=3,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.RequestException, ValueError):
+        logger.warning("Yahoo Finance search failed for query: %s", query)
+        return []
+
+    results = []
+    for quote in data.get("quotes", []):
+        symbol = quote.get("symbol", "")
+        if not symbol:
+            continue
+        quote_type = quote.get("quoteType", "").upper()
+        results.append(
+            {
+                "ticker": symbol,
+                "name": quote.get("shortname") or quote.get("longname") or symbol,
+                "exchange": quote.get("exchange", ""),
+                "asset_class": YAHOO_QUOTE_TYPE_MAP.get(quote_type, "equity"),
+            }
+        )
+
+    return results

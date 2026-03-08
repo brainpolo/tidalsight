@@ -15,6 +15,7 @@ from analyst.app_behaviour import (
     HN_COMMENT_BODY_TRUNCATION,
     HN_COMMENTS_PER_POST_FOR_DIGEST,
     HN_POSTS_FOR_DIGEST,
+    MAX_AGENT_TURNS,
     NEWS_ARTICLE_DESCRIPTION_TRUNCATION,
     NEWS_ARTICLES_FOR_DIGEST,
     REDDIT_COMMENT_BODY_TRUNCATION,
@@ -116,7 +117,7 @@ def _run_agent(prompt: str) -> MarketDigest:
         tracing_disabled=True,
     )
     result = asyncio.run(
-        Runner.run(market_digest_agent, input=prompt, run_config=config)
+        Runner.run(market_digest_agent, input=prompt, run_config=config, max_turns=MAX_AGENT_TURNS)
     )
     return result.final_output
 

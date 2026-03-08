@@ -1,11 +1,11 @@
 {% if digest %}
 <!-- Headline -->
-<div class="font-serif text-base text-[#e8e4df] leading-snug tracking-tight mb-6">{{ digest.headline }}</div>
+<div class="font-serif text-base text-heading leading-snug tracking-tight mb-6">{{ digest.headline }}</div>
 
 <!-- Themes -->
 <div class="space-y-3.5 mb-6">
     {% for theme in digest.themes %}
-    <div class="flex items-start gap-3 text-[0.78rem] leading-relaxed text-[#8a857e]">
+    <div class="flex items-start gap-3 text-[0.78rem] leading-relaxed text-t2">
         <span class="text-copper/60 text-[0.65rem] mt-1 shrink-0 font-medium">{{ forloop.counter|stringformat:"02d" }}</span>
         <span>{{ theme }}</span>
     </div>
@@ -13,15 +13,15 @@
 </div>
 
 <!-- Sentiment -->
-<div class="pt-5 border-t border-white/[0.04]">
+<div class="pt-5 border-t border-surface/[0.04]">
     <div class="flex items-start gap-3">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-sm text-[0.6rem] font-semibold tracking-[0.1em] uppercase shrink-0 mt-px {% if digest.sentiment == 'Bullish' %}bg-sea/10 text-sea-light border border-sea/15{% elif digest.sentiment == 'Bearish' %}bg-copper/10 text-copper border border-copper/15{% else %}bg-white/[0.04] text-[#a09a93] border border-white/[0.06]{% endif %}">{{ digest.sentiment }}</span>
-        <span class="text-[0.78rem] text-[#5c5750] leading-relaxed">{{ digest.sentiment_reason }}</span>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-sm text-[0.6rem] font-semibold tracking-[0.1em] uppercase shrink-0 mt-px {% if digest.sentiment == 'Bullish' %}bg-sea/10 text-sea-light border border-sea/15{% elif digest.sentiment == 'Bearish' %}bg-copper/10 text-copper border border-copper/15{% else %}bg-surface/[0.04] text-t2 border border-surface/[0.06]{% endif %}">{{ digest.sentiment }}</span>
+        <span class="text-[0.78rem] text-t3 leading-relaxed">{{ digest.sentiment_reason }}</span>
     </div>
 </div>
 
 {% if not user.is_authenticated %}
-<div class="mt-6 pt-5 border-t border-white/[0.04]">
+<div class="mt-6 pt-5 border-t border-surface/[0.04]">
     <a href="{% url 'core:sign_in' %}" class="group flex items-center gap-1.5 text-[0.65rem] text-copper/70 hover:text-copper-light transition-colors">
         <span>Sign in to personalise your digest</span>
         <svg class="size-3 transition-transform group-hover:translate-x-0.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6h7M6.5 3l3 3-3 3"/></svg>
@@ -29,7 +29,7 @@
 </div>
 {% endif %}
 {% else %}
-<p class="text-sm text-[#5c5750]">No market data available yet.</p>
+<p class="text-sm text-t3">No market data available yet.</p>
 {% endif %}
 
 <script>

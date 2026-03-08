@@ -60,6 +60,7 @@ from core.managers.valuation_manager import compute_valuations
 from core.models import UserAsset
 from core.sparkline import build_sparkline_svg
 from core.utils import pct_change, total_post_count
+from scraper.clients.yfinance_client import search_tickers
 from scraper.managers.asset_manager import (
     get_or_create_asset,
     sync_all_prices,
@@ -733,7 +734,20 @@ async def asset_search(request):
             }
         )
 
-    return render(request, "core/partials/search_results.html", {"results": results})
+    # Fall back to Yahoo Finance search when local results are sparse
+    yahoo_suggestions = []
+    if len(results) < 3:
+        local_tickers = {a.ticker for a in assets}
+        yahoo_results = await sync_to_async(search_tickers)(query, max_results=6)
+        for yq in yahoo_results:
+            if yq["ticker"] not in local_tickers:
+                yahoo_suggestions.append(yq)
+
+    return render(
+        request,
+        "core/partials/search_results.html",
+        {"results": results, "yahoo_suggestions": yahoo_suggestions},
+    )
 
 
 async def sign_up(request):

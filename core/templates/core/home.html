@@ -18,7 +18,7 @@
         position: absolute;
         bottom: 0; left: 0; right: 0;
         height: 200px;
-        background: linear-gradient(transparent, #0d0c0a);
+        background: linear-gradient(transparent, var(--ts-page));
         z-index: 1;
     }
 
@@ -168,20 +168,20 @@
                     {# Row 1: Welcome + search (left) | Watchlist (right) #}
                     <div class="flex items-start justify-between gap-20 max-lg:flex-col max-lg:gap-14">
                         <div class="max-w-[540px] shrink-0">
-                            <h1 class="font-serif font-normal text-[clamp(2.4rem,5vw,3.8rem)] leading-[1.08] tracking-tight text-[#fafafa] mb-8">
+                            <h1 class="font-serif font-normal text-[clamp(2.4rem,5vw,3.8rem)] leading-[1.08] tracking-tight text-t1 mb-8">
                                 Welcome back,<br><em class="italic text-copper-light">{{ request.user.first_name|default:request.user.username }}</em>
                             </h1>
-                            <div class="mb-8 h-px bg-gradient-to-r from-white/[0.06] to-transparent"></div>
+                            <div class="mb-8 h-px bg-gradient-to-r from-surface/[0.06] to-transparent"></div>
                             {% include "core/components/asset_search_widget.html" %}
                             <div class="mt-8 flex items-center gap-6">
-                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-[#5c5750]">
+                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-t3">
                                     <span>Powered by</span>
-                                    <span class="font-medium text-[#a09a93] border border-white/[0.06] rounded px-2.5 py-1 bg-white/[0.02]">BytePlus ModelArk</span>
+                                    <span class="font-medium text-t2 border border-surface/[0.06] rounded px-2.5 py-1 bg-surface/[0.02]">BytePlus ModelArk</span>
                                 </div>
-                                <div class="w-px h-3 bg-white/[0.06]"></div>
-                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-[#5c5750]">
-                                    <span><span class="text-[#a09a93] font-medium">{{ asset_count }}</span> assets</span>
-                                    <span><span class="text-[#a09a93] font-medium">{{ post_count }}</span> posts</span>
+                                <div class="w-px h-3 bg-surface/[0.06]"></div>
+                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-t3">
+                                    <span><span class="text-t2 font-medium">{{ asset_count }}</span> assets</span>
+                                    <span><span class="text-t2 font-medium">{{ post_count }}</span> posts</span>
                                 </div>
                             </div>
                         </div>
@@ -198,28 +198,28 @@
                     <div class="flex items-start gap-20 max-lg:flex-col max-lg:gap-14">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
-                                <div class="h-px flex-1 bg-white/[0.04]"></div>
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
+                                <div class="h-px flex-1 bg-surface/[0.04]"></div>
                             </div>
                             <div hx-get="{% url 'core:market_digest' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
                                 <div class="space-y-2.5">
-                                    <div class="h-4 w-5/6 bg-white/[0.03] rounded-sm animate-pulse"></div>
-                                    <div class="h-4 w-2/3 bg-white/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
+                                    <div class="h-4 w-5/6 bg-surface/[0.03] rounded-sm animate-pulse"></div>
+                                    <div class="h-4 w-2/3 bg-surface/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
                                     <div class="mt-5 space-y-3">
-                                        <div class="h-3 w-full bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
-                                        <div class="h-3 w-11/12 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
-                                        <div class="h-3 w-4/5 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
+                                        <div class="h-3 w-full bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
+                                        <div class="h-3 w-11/12 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
+                                        <div class="h-3 w-4/5 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
                                     </div>
-                                    <div class="mt-5 text-[0.6rem] text-[#3d3a36] tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Analysing social sentiment...</div>
+                                    <div class="mt-5 text-[0.6rem] text-t4 tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Analysing social sentiment...</div>
                                 </div>
                             </div>
                         </div>
                         <div class="flex-1 min-w-0 max-lg:w-full">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Your Brief</div>
-                                <div class="h-px flex-1 bg-white/[0.04]"></div>
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Your Brief</div>
+                                <div class="h-px flex-1 bg-surface/[0.04]"></div>
                             </div>
-                            <p class="text-sm font-light text-[#3d3a36] leading-relaxed">
+                            <p class="text-sm font-light text-t4 leading-relaxed">
                                 Personalised intelligence based on your watchlist &mdash; coming soon.
                             </p>
                         </div>
@@ -231,44 +231,44 @@
                     <div class="flex items-start justify-between gap-20 max-lg:flex-col max-lg:gap-14">
                         <!-- Left: Hero copy + search -->
                         <div class="max-w-[540px] shrink-0">
-                            <h1 class="font-serif font-normal text-[clamp(3.2rem,7.5vw,5.8rem)] leading-[1.05] tracking-tight text-[#fafafa] mb-10">
+                            <h1 class="font-serif font-normal text-[clamp(3.2rem,7.5vw,5.8rem)] leading-[1.05] tracking-tight text-t1 mb-10">
                                 The market<br>moves in <em class="italic text-copper-light">tides</em>
                             </h1>
-                            <p class="text-lg font-light leading-relaxed text-[#a09a93] max-w-[480px]">
+                            <p class="text-lg font-light leading-relaxed text-t2 max-w-[480px]">
                                 Continuous intelligence across stocks, equities, commodities, and currencies.
                                 We surface actionable buy, sell, and hold signals from market data and public
                                 social sentiment &mdash; so you move before the market does.
                             </p>
-                            <div class="mt-10 mb-8 h-px bg-gradient-to-r from-white/[0.06] to-transparent"></div>
+                            <div class="mt-10 mb-8 h-px bg-gradient-to-r from-surface/[0.06] to-transparent"></div>
                             {% include "core/components/asset_search_widget.html" %}
                             <div class="mt-8 flex items-center gap-6">
-                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-[#5c5750]">
+                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-t3">
                                     <span>Powered by</span>
-                                    <span class="font-medium text-[#a09a93] border border-white/[0.06] rounded px-2.5 py-1 bg-white/[0.02]">BytePlus ModelArk</span>
+                                    <span class="font-medium text-t2 border border-surface/[0.06] rounded px-2.5 py-1 bg-surface/[0.02]">BytePlus ModelArk</span>
                                 </div>
-                                <div class="w-px h-3 bg-white/[0.06]"></div>
-                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-[#5c5750]">
-                                    <span><span class="text-[#a09a93] font-medium">{{ asset_count }}</span> assets</span>
-                                    <span><span class="text-[#a09a93] font-medium">{{ post_count }}</span> posts</span>
+                                <div class="w-px h-3 bg-surface/[0.06]"></div>
+                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-t3">
+                                    <span><span class="text-t2 font-medium">{{ asset_count }}</span> assets</span>
+                                    <span><span class="text-t2 font-medium">{{ post_count }}</span> posts</span>
                                 </div>
                             </div>
                         </div>
                         <!-- Right: Market Digest -->
                         <div class="flex-1 max-lg:w-full">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
-                                <div class="h-px flex-1 bg-white/[0.04]"></div>
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
+                                <div class="h-px flex-1 bg-surface/[0.04]"></div>
                             </div>
                             <div hx-get="{% url 'core:market_digest' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
                                 <div class="space-y-2.5">
-                                    <div class="h-4 w-5/6 bg-white/[0.03] rounded-sm animate-pulse"></div>
-                                    <div class="h-4 w-2/3 bg-white/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
+                                    <div class="h-4 w-5/6 bg-surface/[0.03] rounded-sm animate-pulse"></div>
+                                    <div class="h-4 w-2/3 bg-surface/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
                                     <div class="mt-5 space-y-3">
-                                        <div class="h-3 w-full bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
-                                        <div class="h-3 w-11/12 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
-                                        <div class="h-3 w-4/5 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
+                                        <div class="h-3 w-full bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
+                                        <div class="h-3 w-11/12 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
+                                        <div class="h-3 w-4/5 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
                                     </div>
-                                    <div class="mt-5 text-[0.6rem] text-[#3d3a36] tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Analysing social sentiment...</div>
+                                    <div class="mt-5 text-[0.6rem] text-t4 tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Analysing social sentiment...</div>
                                 </div>
                             </div>
                         </div>
@@ -285,23 +285,23 @@
     <!-- Assets -->
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 reveal">
-            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-12">Coverage</div>
-            <div class="grid grid-cols-4 gap-px bg-white/[0.04] rounded-sm overflow-hidden max-sm:grid-cols-2">
-                <div class="asset asset-equities relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-12">Coverage</div>
+            <div class="grid grid-cols-4 gap-px bg-surface/[0.04] rounded-sm overflow-hidden max-sm:grid-cols-2">
+                <div class="asset asset-equities relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
                     <div class="font-serif text-[2rem] leading-none text-sea-light">S&P</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Stocks</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Stocks</div>
                 </div>
-                <div class="asset asset-crypto relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
+                <div class="asset asset-crypto relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
                     <div class="font-serif text-[2rem] leading-none text-copper">FTSE</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Equities</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Equities</div>
                 </div>
-                <div class="asset asset-gold relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
+                <div class="asset asset-gold relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
                     <div class="font-serif text-[2rem] leading-none text-copper-light">Au</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Commodities</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Commodities</div>
                 </div>
-                <div class="asset asset-more relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
-                    <div class="font-serif text-[2rem] leading-none text-[#e8e4df]">FX</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Currencies</div>
+                <div class="asset asset-more relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
+                    <div class="font-serif text-[2rem] leading-none text-heading">FX</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Currencies</div>
                 </div>
             </div>
         </section>
@@ -312,22 +312,22 @@
     <!-- How it works -->
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 pb-24 reveal">
-            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">How it works</div>
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-14">How it works</div>
             <div class="grid grid-cols-3 gap-16 max-md:grid-cols-1 max-md:gap-12">
                 <div>
                     <div class="how-num font-serif text-[3.5rem] leading-none mb-5 select-none">01</div>
-                    <h3 class="text-[0.95rem] font-medium text-[#e8e4df] mb-3 -tracking-[0.01em]">Collect</h3>
-                    <p class="text-sm font-light text-[#5c5750] leading-relaxed">Structured and unstructured data ingested from news wires, social platforms, regulatory filings, and public markets &mdash; continuously.</p>
+                    <h3 class="text-[0.95rem] font-medium text-heading mb-3 -tracking-[0.01em]">Collect</h3>
+                    <p class="text-sm font-light text-t3 leading-relaxed">Structured and unstructured data ingested from news wires, social platforms, regulatory filings, and public markets &mdash; continuously.</p>
                 </div>
                 <div>
                     <div class="how-num font-serif text-[3.5rem] leading-none mb-5 select-none">02</div>
-                    <h3 class="text-[0.95rem] font-medium text-[#e8e4df] mb-3 -tracking-[0.01em]">Analyse</h3>
-                    <p class="text-sm font-light text-[#5c5750] leading-relaxed">Proprietary models distill volume into signal, isolating sentiment shifts and cross-asset correlations as they emerge.</p>
+                    <h3 class="text-[0.95rem] font-medium text-heading mb-3 -tracking-[0.01em]">Analyse</h3>
+                    <p class="text-sm font-light text-t3 leading-relaxed">Proprietary models distill volume into signal, isolating sentiment shifts and cross-asset correlations as they emerge.</p>
                 </div>
                 <div>
                     <div class="how-num font-serif text-[3.5rem] leading-none mb-5 select-none">03</div>
-                    <h3 class="text-[0.95rem] font-medium text-[#e8e4df] mb-3 -tracking-[0.01em]">Surface</h3>
-                    <p class="text-sm font-light text-[#5c5750] leading-relaxed">Actionable intelligence delivered in real time &mdash; positioned to inform allocation decisions before consensus forms.</p>
+                    <h3 class="text-[0.95rem] font-medium text-heading mb-3 -tracking-[0.01em]">Surface</h3>
+                    <p class="text-sm font-light text-t3 leading-relaxed">Actionable intelligence delivered in real time &mdash; positioned to inform allocation decisions before consensus forms.</p>
                 </div>
             </div>
         </section>
@@ -338,7 +338,7 @@
     <!-- Statement -->
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-24 text-center reveal">
-            <p class="font-serif text-[clamp(1.6rem,3.5vw,2.6rem)] font-normal leading-snug text-[#a09a93] max-w-[640px] mx-auto">
+            <p class="font-serif text-[clamp(1.6rem,3.5vw,2.6rem)] font-normal leading-snug text-t2 max-w-[640px] mx-auto">
                 <strong class="text-copper-light font-normal">Conviction requires clarity.</strong> We provide the intelligence. You make the call.
             </p>
         </section>

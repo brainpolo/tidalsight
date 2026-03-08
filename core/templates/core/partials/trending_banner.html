@@ -15,17 +15,17 @@
             animation-play-state: paused;
         }
     </style>
-    <div class="bg-[#0a0908]/90 backdrop-blur-sm border-b border-white/[0.04] overflow-hidden">
+    <div class="bg-page/90 backdrop-blur-sm border-b border-surface/[0.04] overflow-hidden">
         <div class="py-2 flex items-center">
-            <div class="text-[0.55rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] shrink-0 pl-4 sm:pl-10 pr-6">Trending</div>
-            <div class="w-px h-3 bg-white/[0.06] shrink-0"></div>
+            <div class="text-[0.55rem] font-semibold tracking-[0.14em] uppercase text-t3 shrink-0 pl-4 sm:pl-10 pr-6">Trending</div>
+            <div class="w-px h-3 bg-surface/[0.06] shrink-0"></div>
             <div class="overflow-hidden flex-1">
                 <div class="ticker-track flex items-center gap-6 w-max">
                     {% for copy in "ab" %}
                     {% for item in items %}
                     <a href="{% url 'core:asset_detail' item.asset.ticker %}"
                        class="flex items-center gap-2.5 shrink-0 group transition-colors duration-200 pl-6">
-                        <span class="text-[0.7rem] font-medium text-[#a09a93] group-hover:text-[#e8e4df] transition-colors">{{ item.asset.ticker }}</span>
+                        <span class="text-[0.7rem] font-medium text-t2 group-hover:text-heading transition-colors">{{ item.asset.ticker }}</span>
                         {% if item.sparkline_svg %}
                         <span class="opacity-60 group-hover:opacity-100 transition-opacity">{{ item.sparkline_svg }}</span>
                         {% endif %}
@@ -36,7 +36,7 @@
                         </span>
                         {% endif %}
                     </a>
-                    <div class="w-px h-3 bg-white/[0.04] shrink-0"></div>
+                    <div class="w-px h-3 bg-surface/[0.04] shrink-0"></div>
                     {% endfor %}
                     {% endfor %}
                 </div>
