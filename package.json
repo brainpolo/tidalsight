@@ -2,9 +2,9 @@
   "name": "tidalsight",
   "private": true,
   "scripts": {
-    "dev": "npx @tailwindcss/cli -i static/css/input.css -o static/css/dist.css --watch",
-    "build:css": "npx @tailwindcss/cli -i static/css/input.css -o static/css/dist.css --minify",
-    "build:icons": "npx esbuild static/js/src/icons.js --bundle --outfile=static/js/icons.bundle.js --minify",
+    "dev": "npx @tailwindcss/cli -i src/css/input.css -o static/css/dist.css --watch",
+    "build:css": "npx @tailwindcss/cli -i src/css/input.css -o static/css/dist.css --minify",
+    "build:icons": "npx esbuild src/js/icons.js --bundle --outfile=static/js/icons.bundle.js --minify",
     "build": "npm run build:css && npm run build:icons"
   },
   "devDependencies": {
