@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,56 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TidalSight{% endblock %}</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind (built) -->
+    <link rel="stylesheet" href="{% static 'css/dist.css' %}">
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        ink: '#0d0c0a',
-                        copper: { DEFAULT: '#c87941', light: '#e0a87c' },
-                        sea: { DEFAULT: '#4a8f8f', light: '#6fb5b5' },
-                    },
-                    fontFamily: {
-                        serif: ['"Instrument Serif"', 'serif'],
-                        sans: ['Inter', '-apple-system', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-
-    <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <!-- htmx (vendored) -->
+    <script defer src="{% static 'js/htmx.min.js' %}"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-
-    <style>
-        ::selection { background: theme('colors.copper.DEFAULT'); color: theme('colors.ink'); }
-        .grain {
-            position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0.025;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-repeat: repeat; background-size: 180px;
-        }
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent);
-        }
-        @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .reveal {
-            opacity: 0; transform: translateY(24px);
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .reveal.visible { opacity: 1; transform: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-    </style>
 
     {% block head %}{% endblock %}
 </head>

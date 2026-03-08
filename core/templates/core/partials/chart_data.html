@@ -445,6 +445,11 @@
         canvas.style.cursor = 'crosshair';
     }
 
+    // Reveal canvas before measuring dimensions
+    const skeleton = document.getElementById('chartSkeleton');
+    if (skeleton) skeleton.remove();
+    canvas.classList.remove('hidden');
+
     initCanvas();
     setRange('{{ default_chart_range }}');
 

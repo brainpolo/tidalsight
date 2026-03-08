@@ -41,8 +41,7 @@
                     <div class="flex items-center gap-4 mb-5">
                         {% if asset.website %}
                         <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz={{ favicon_size }}"
-                             alt="" class="size-8 rounded-md self-start mt-0.5" loading="lazy"
-                             onerror="this.style.display='none'">
+                             alt="" class="size-8 rounded-md self-start mt-0.5" loading="lazy">
                         {% endif %}
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2.5">
@@ -64,7 +63,9 @@
                         </div>
                     </div>
                     <!-- Price + Valuations (HTMX partial) -->
-                    <div hx-get="{% url 'core:asset_header' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+                    <div hx-get="{% url 'core:asset_header' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML"
+                         hx-on::after-settle="htmx.trigger(document.body, 'prices-synced')"
+                         hx-on::response-error="htmx.trigger(document.body, 'prices-synced')">
                         <!-- Skeleton: price -->
                         <div class="flex items-baseline gap-4 mb-5">
                             <div class="h-9 w-40 bg-white/[0.06] skel-bar"></div>
@@ -98,8 +99,7 @@
                         <canvas id="priceChart" class="hidden"></canvas>
                         {% include "core/components/chart_skeleton.html" %}
                     </div>
-                    <div hx-get="{% url 'core:asset_chart_data' asset.ticker %}" hx-trigger="load" hx-swap="afterend"
-                         hx-on::after-settle="document.getElementById('chartSkeleton').remove(); document.getElementById('priceChart').classList.remove('hidden');"></div>
+                    <div hx-get="{% url 'core:asset_chart_data' asset.ticker %}" hx-trigger="prices-synced from:body" hx-swap="afterend"></div>
                     <!-- RSI Gauge -->
                     <div id="rsiGauge" class="hidden mt-4">
                         <div class="flex items-center justify-between mb-1.5">

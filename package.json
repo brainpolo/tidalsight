@@ -1,0 +1,15 @@
+{
+  "name": "tidalsight",
+  "private": true,
+  "scripts": {
+    "dev": "bunx @tailwindcss/cli -i static/css/input.css -o static/css/dist.css --watch",
+    "build": "bunx @tailwindcss/cli -i static/css/input.css -o static/css/dist.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.1",
+    "tailwindcss": "^4.2.1"
+  },
+  "dependencies": {
+    "htmx.org": "^2.0.8"
+  }
+}

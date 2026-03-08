@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from agents import Agent, ModelSettings
 
-from analyst.agents.tools import validate_ticker
-from analyst.llms import BYTEDANCE_SEED_2_0_LITE
+from analyst.agents.tools import search_web, validate_ticker
+from analyst.llms import BYTEDANCE_SEED_1_8
 
 
 class MarketDigest(BaseModel):
@@ -16,8 +16,8 @@ market_digest_agent = Agent(
     name="Market Digest",
     instructions=(
         "You are a senior market strategist writing a daily briefing for institutional clients. "
-        "You will receive a list of recent social media posts discussing financial markets. "
-        "Synthesise them into a concise market digest.\n\n"
+        "You will receive recent data from multiple sources: Reddit discussions, Hacker News posts, "
+        "and news articles about financial markets. Synthesise them into a concise market digest.\n\n"
         "Rules:\n"
         "- headline: One punchy sentence capturing the dominant market theme right now.\n"
         "- themes: 3-5 bullet points on the most discussed topics, tickers, or sectors. Each one sentence.\n"
@@ -26,10 +26,11 @@ market_digest_agent = Agent(
         "- Write in present tense.\n"
         "- No disclaimers, no hedging, no filler.\n"
         "- Reference specific tickers with $ prefix when mentioned.\n"
-        "- Before referencing any ticker, call validate_ticker to confirm it is real. Never include unvalidated tickers."
+        "- Before referencing any ticker, call validate_ticker to confirm it is real. Never include unvalidated tickers.\n"
+        "- Use search_web to research major themes or verify claims when needed."
     ),
-    model=BYTEDANCE_SEED_2_0_LITE,
+    model=BYTEDANCE_SEED_1_8,
     model_settings=ModelSettings(temperature=0.4),
     output_type=MarketDigest,
-    tools=[validate_ticker],
+    tools=[validate_ticker, search_web],
 )

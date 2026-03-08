@@ -5,6 +5,7 @@ Django settings for local development.
 from tidalsight.settings.base import *  # noqa: F403
 
 ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS: list[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
 
 DATABASES = {
     "default": {

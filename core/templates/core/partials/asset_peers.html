@@ -11,8 +11,7 @@
                 <div class="flex items-center gap-2 mb-2">
                     {% if peer.asset.website %}
                     <img src="https://www.google.com/s2/favicons?domain={{ peer.asset.website|domain }}&sz=128"
-                         alt="" class="size-5 rounded" loading="lazy"
-                         onerror="this.style.display='none'">
+                         alt="" class="size-5 rounded" loading="lazy">
                     {% endif %}
                     <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-[#a09a93] group-hover:text-[#e8e4df] transition-colors">{{ peer.asset.ticker }}</span>
                 </div>

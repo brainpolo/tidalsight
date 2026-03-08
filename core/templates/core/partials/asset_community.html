@@ -52,10 +52,14 @@
                         <div class="text-sm text-[#e8e4df] group-hover:text-copper-light transition-colors leading-snug truncate">{{ article.title }}</div>
                         <div class="flex items-center gap-3 mt-2 text-[0.65rem] text-[#5c5750]">
                             <span class="text-blue-400/60">News</span>
+                            {% if article.source %}
                             <span>·</span>
                             <span>{{ article.source }}</span>
+                            {% endif %}
+                            {% if article.published_at %}
                             <span>·</span>
-                            {% if article.published_at %}<span>{{ article.published_at|timesince }} ago</span>{% endif %}
+                            <span>{{ article.published_at|timesince }} ago</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

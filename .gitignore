@@ -14,3 +14,11 @@ wheels/
 
 # Environment variables
 .env
+
+# Node
+node_modules/
+bun.lock
+
+# Built assets
+static/css/dist.css
+staticfiles/

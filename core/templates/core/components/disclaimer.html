@@ -7,7 +7,7 @@
                 Past performance is not indicative of future results.
                 Consult a financial adviser before making investment decisions.
             </p>
-            <button onclick="dismissDisclaimer()" class="shrink-0 text-[0.7rem] font-medium tracking-[0.06em] uppercase text-copper hover:text-copper-light transition-colors cursor-pointer px-4 py-1.5 border border-copper/20 rounded">
+            <button id="disclaimer-dismiss" class="shrink-0 text-[0.7rem] font-medium tracking-[0.06em] uppercase text-copper hover:text-copper-light transition-colors cursor-pointer px-4 py-1.5 border border-copper/20 rounded">
                 Understood
             </button>
         </div>
@@ -15,10 +15,10 @@
 </div>
 
 <script>
-    function dismissDisclaimer() {
+    document.getElementById('disclaimer-dismiss').addEventListener('click', function() {
         document.getElementById('disclaimer-banner').classList.add('translate-y-full');
         localStorage.setItem('tidalsight_disclaimer_dismissed', '1');
-    }
+    });
 
     if (!localStorage.getItem('tidalsight_disclaimer_dismissed')) {
         setTimeout(() => {

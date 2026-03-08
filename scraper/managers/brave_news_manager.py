@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 from django.core.cache import cache
+from django.db import close_old_connections
 
 from scraper.clients.brave_client import news_search
 from scraper.constants import (
@@ -120,6 +121,14 @@ def sync_asset_news(asset: Asset, freshness: str = BRAVE_NEWS_DEFAULT_FRESHNESS)
 _executor = ThreadPoolExecutor(max_workers=2)
 
 
+def _sync_asset_news_thread(asset: Asset) -> None:
+    """Wrapper that ensures DB connections are cleaned up after the thread finishes."""
+    try:
+        sync_asset_news(asset)
+    finally:
+        close_old_connections()
+
+
 def sync_asset_news_async(asset: Asset) -> None:
     """Fire-and-forget news sync for an asset in a background thread."""
-    _executor.submit(sync_asset_news, asset)
+    _executor.submit(_sync_asset_news_thread, asset)
