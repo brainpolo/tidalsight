@@ -39,6 +39,7 @@ urlpatterns = [
         name="asset_chart_data",
     ),
     path("market-digest/", views.market_digest, name="market_digest"),
+    path("trending/", views.trending_banner, name="trending_banner"),
     # Auth
     path("sign-up/", views.sign_up, name="sign_up"),
     path("sign-in/", views.sign_in, name="sign_in"),

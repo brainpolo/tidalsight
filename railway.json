@@ -2,11 +2,12 @@
     "$schema": "https://railway.com/railway.schema.json",
     "build": {
         "builder": "RAILPACK",
-        "buildCommand": "npm install && npm run build && python manage.py collectstatic --noinput"
+        "buildCommand": "uv sync --no-dev && npm install && npm run build && python manage.py collectstatic --noinput"
     },
     "deploy": {
         "preDeployCommand": ["python manage.py migrate"],
-        "startCommand": "gunicorn tidalsight.asgi:application --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --preload --workers 4 --timeout 30 --max-requests 750 --max-requests-jitter 250 --graceful-timeout 60",
+        "startCommand": "gunicorn tidalsight.asgi:application --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --preload --workers 3 --timeout 30 --max-requests 1000 --max-requests-jitter 250 --graceful-timeout 60",
+        "numReplicas": 2,
         "healthcheckPath": "/health/",
         "healthcheckTimeout": 30,
         "restartPolicyType": "on_failure"

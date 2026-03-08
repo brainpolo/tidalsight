@@ -12,13 +12,17 @@
         font-size: 0.6rem;
         font-weight: 500;
         letter-spacing: 0.06em;
-        padding: 4px 10px;
+        padding: 6px 8px;
         border: none;
         border-radius: 2px;
         background: none;
         color: #5c5750;
         cursor: pointer;
         transition: color 0.2s, background 0.2s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    @media (min-width: 640px) {
+        .chart-range { padding: 4px 10px; }
     }
     .chart-range:hover { color: #a09a93; }
     .chart-range.active { color: #fafafa; background: rgba(255,255,255,0.06); }
@@ -32,33 +36,40 @@
     {% include "core/components/header.html" with show_search=True %}
 
     <!-- Asset Header + Chart -->
-    <div class="max-w-[1120px] mx-auto px-10">
-        <section class="pt-6 pb-6">
-            <div class="flex items-start gap-12 max-lg:flex-col">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+        <section class="pt-4 sm:pt-6 pb-4 sm:pb-6">
+            <div class="flex items-start gap-6 sm:gap-12 max-lg:flex-col">
                 <!-- Left: Asset info -->
-                <div class="shrink-0 min-w-[300px]">
+                <div class="shrink-0 w-full lg:min-w-[300px] lg:w-auto">
                     <!-- Identity row: logo + ticker + name + link (always available from DB) -->
-                    <div class="flex items-center gap-4 mb-5">
+                    <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
                         {% if asset.website %}
                         <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz={{ favicon_size }}"
-                             alt="" class="size-8 rounded-md self-start mt-0.5" loading="lazy">
+                             alt="" class="size-7 sm:size-8 rounded-md self-start mt-0.5" loading="lazy">
                         {% endif %}
                         <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2.5">
-                                <h1 class="font-serif text-[clamp(1.5rem,3vw,2.1rem)] leading-none tracking-tight text-[#fafafa]">{{ asset.name }}</h1>
+                            <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                                <h1 class="font-serif text-[clamp(1.25rem,4vw,2.1rem)] leading-tight tracking-tight text-[#fafafa]">{{ asset.name }}</h1>
                                 {% if request.user.is_authenticated %}
                                     {% include "core/partials/watchlist_star.html" %}
                                 {% endif %}
                             </div>
-                            <div class="flex items-center gap-3 mt-1.5">
-                                <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-[#5c5750]">{{ asset.ticker }}</span>
+                            <div class="flex items-center gap-2 sm:gap-3 mt-1 sm:mt-1.5 flex-wrap">
+                                <span class="text-[0.6rem] sm:text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-[#5c5750]">{{ asset.ticker }}</span>
                                 {% if asset.website %}
                                 <span class="text-[#3d3a36]">&middot;</span>
-                                <a href="{{ asset.website }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[0.65rem] text-[#5c5750] hover:text-copper transition-colors">
+                                <a href="{{ asset.website }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[0.6rem] sm:text-[0.65rem] text-[#5c5750] hover:text-copper transition-colors">
                                     {{ asset.website|domain }}
                                     <svg class="size-2.5" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 1h6v6M9 1L1 9"/></svg>
                                 </a>
                                 {% endif %}
+                                <span class="text-[#3d3a36]">&middot;</span>
+                                <span class="inline-flex items-center gap-1.5 text-[0.6rem] sm:text-[0.65rem] text-[#5c5750]">
+                                    <i data-lucide="eye" class="size-3 text-[#5c5750]"></i>
+                                    <span class="text-[#a09a93] font-medium">{{ weekly_views }}</span> this week
+                                    <span class="text-[#3d3a36]">&middot;</span>
+                                    <span class="text-[#a09a93] font-medium">{{ all_time_views }}</span> all time
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -81,7 +92,7 @@
                 </div>
                 <!-- Right: Chart -->
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-end gap-1 mb-3">
+                    <div class="flex items-center justify-end gap-0.5 sm:gap-1 mb-3 overflow-x-auto scrollbar-hide">
                         <button class="chart-range{% if default_chart_range == '1D' %} active{% endif %}" data-range="1D">1D</button>
                         <button class="chart-range{% if default_chart_range == '1W' %} active{% endif %}" data-range="1W">1W</button>
                         <button class="chart-range{% if default_chart_range == '1M' %} active{% endif %}" data-range="1M">1M</button>
@@ -99,7 +110,6 @@
                         <canvas id="priceChart" class="hidden"></canvas>
                         {% include "core/components/chart_skeleton.html" %}
                     </div>
-                    <div hx-get="{% url 'core:asset_chart_data' asset.ticker %}" hx-trigger="prices-synced from:body" hx-swap="afterend"></div>
                     <!-- RSI Gauge -->
                     <div id="rsiGauge" class="hidden mt-4">
                         <div class="flex items-center justify-between mb-1.5">
@@ -128,14 +138,381 @@
                             <span class="text-[0.5rem] text-[#3d3a36]">100</span>
                         </div>
                     </div>
+                    <script>
+                    (function() {
+                        const chartDataUrl = '{% url "core:asset_chart_data" asset.ticker %}';
+                        const initialData = {{ chart_data_json|safe }};
+                        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+                        function parseData(raw) {
+                            return raw.map(d => {
+                                const dt = new Date(d.ts);
+                                return { close: d.close, ts: d.ts, label: months[dt.getMonth()] + ' ' + dt.getDate() + ', ' + dt.getFullYear() + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0') };
+                            });
+                        }
+
+                        // Cache fetched range data: { '1W': [...], '1M': [...] }
+                        const rangeCache = {};
+                        rangeCache['1W'] = parseData(initialData);
+
+                        if (!initialData.length) return;
+
+                        const canvas = document.getElementById('priceChart');
+                        const ctx = canvas.getContext('2d');
+                        const isMobile = window.innerWidth < 640;
+                        const pad = { top: 20, right: isMobile ? 8 : 24, bottom: 30, left: isMobile ? 40 : 58 };
+                        let prices, labels, timestamps, min, max, xStep, w, h, currentRange, loading = false;
+
+                        function initCanvas() {
+                            const dpr = window.devicePixelRatio || 1;
+                            const rect = canvas.parentElement.getBoundingClientRect();
+                            canvas.width = rect.width * dpr;
+                            canvas.height = rect.height * dpr;
+                            canvas.style.width = rect.width + 'px';
+                            canvas.style.height = rect.height + 'px';
+                            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                            w = rect.width;
+                            h = rect.height;
+                        }
+
+                        function formatAxisLabel(ts, range) {
+                            const d = new Date(ts);
+                            const mon = months[d.getMonth()];
+                            const day = d.getDate();
+                            const hh = String(d.getHours()).padStart(2, '0');
+                            const mm = String(d.getMinutes()).padStart(2, '0');
+                            const year = d.getFullYear();
+                            if (range === '1D') return hh + ':' + mm;
+                            if (range === '1W' || range === '1M') return mon + ' ' + day;
+                            return mon + ' ' + year;
+                        }
+
+                        function renderData(data) {
+                            let filtered = data;
+                            if (filtered.length > 500) {
+                                const step = Math.ceil(filtered.length / 500);
+                                filtered = filtered.filter((_, i) => i % step === 0);
+                            }
+                            prices = filtered.map(d => d.close);
+                            labels = filtered.map(d => d.label);
+                            timestamps = filtered.map(d => d.ts);
+                            min = Math.min(...prices) * 0.998;
+                            max = Math.max(...prices) * 1.002;
+                            xStep = (w - pad.left - pad.right) / (prices.length - 1);
+                            drawChart();
+                            updateRSI();
+                        }
+
+                        function showLoading() {
+                            loading = true;
+                            canvas.style.opacity = '0.3';
+                        }
+
+                        function hideLoading() {
+                            loading = false;
+                            canvas.style.opacity = '1';
+                        }
+
+                        function switchRange(key) {
+                            currentRange = key;
+                            measurements = []; pendingStart = -1; dismissButtons = [];
+                            hideLoading();
+
+                            // 1D: filter from 1W cache (last trading day)
+                            if (key === '1D' && rangeCache['1W'] && rangeCache['1W'].length) {
+                                if (!rangeCache['1D']) {
+                                    const src = rangeCache['1W'];
+                                    const lastTs = src[src.length - 1].ts;
+                                    const lastDate = new Date(lastTs);
+                                    const dayStart = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()).getTime();
+                                    let filtered = src.filter(d => d.ts >= dayStart);
+                                    if (filtered.length < 2) filtered = src.filter(d => d.ts >= dayStart - 86400000);
+                                    rangeCache['1D'] = filtered;
+                                }
+                                renderData(rangeCache['1D']);
+                                return;
+                            }
+
+                            // If cached, render immediately
+                            if (rangeCache[key] && rangeCache[key].length) {
+                                renderData(rangeCache[key]);
+                                return;
+                            }
+
+                            // Fetch from endpoint
+                            showLoading();
+                            fetch(chartDataUrl + '?range=' + key)
+                                .then(r => r.json())
+                                .then(raw => {
+                                    if (raw.length) rangeCache[key] = parseData(raw);
+                                    if (currentRange !== key) return;
+                                    hideLoading();
+                                    if (rangeCache[key] && rangeCache[key].length) {
+                                        renderData(rangeCache[key]);
+                                    }
+                                })
+                                .catch(() => {
+                                    if (currentRange === key) hideLoading();
+                                });
+                        }
+
+                        function computeRSI(data, period) {
+                            if (data.length < period + 1) return null;
+                            let avgGain = 0, avgLoss = 0;
+                            for (let i = 1; i <= period; i++) {
+                                const delta = data[i] - data[i - 1];
+                                if (delta >= 0) avgGain += delta;
+                                else avgLoss += Math.abs(delta);
+                            }
+                            avgGain /= period;
+                            avgLoss /= period;
+                            for (let i = period + 1; i < data.length; i++) {
+                                const delta = data[i] - data[i - 1];
+                                avgGain = (avgGain * (period - 1) + (delta >= 0 ? delta : 0)) / period;
+                                avgLoss = (avgLoss * (period - 1) + (delta < 0 ? Math.abs(delta) : 0)) / period;
+                            }
+                            if (avgLoss === 0) return 100;
+                            return 100 - (100 / (1 + avgGain / avgLoss));
+                        }
+
+                        function updateRSI() {
+                            const rsi = computeRSI(prices, {{ rsi_period }});
+                            if (rsi === null) { document.getElementById('rsiGauge').classList.add('hidden'); return; }
+                            const rounded = Math.round(rsi * 10) / 10;
+                            let signal, signalBg, signalColor, needleColor;
+                            if (rsi >= 70) { signal = 'Sell'; signalBg = 'rgba(239, 68, 68, 0.15)'; signalColor = '#ef4444'; needleColor = '#ef4444'; }
+                            else if (rsi <= 30) { signal = 'Buy'; signalBg = 'rgba(34, 197, 94, 0.15)'; signalColor = '#22c55e'; needleColor = '#22c55e'; }
+                            else { signal = 'Hold'; signalBg = 'rgba(255, 255, 255, 0.05)'; signalColor = '#a09a93'; needleColor = '#a09a93'; }
+                            document.getElementById('rsiGauge').classList.remove('hidden');
+                            document.getElementById('rsiValue').textContent = rounded.toFixed(1);
+                            const signalEl = document.getElementById('rsiSignal');
+                            signalEl.textContent = signal; signalEl.style.background = signalBg; signalEl.style.color = signalColor;
+                            const needle = document.getElementById('rsiNeedle');
+                            needle.style.left = `calc(${rsi}% - 1.5px)`; needle.style.background = needleColor;
+                        }
+
+                        function xPos(i) { return pad.left + i * xStep; }
+                        function yPos(v) { return pad.top + (1 - (v - min) / (max - min)) * (h - pad.top - pad.bottom); }
+
+                        function drawChart() {
+                            ctx.clearRect(0, 0, w, h);
+                            ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+                            for (let i = 0; i < 5; i++) {
+                                const val = min + (max - min) * (i / 4);
+                                const yy = yPos(val);
+                                ctx.beginPath(); ctx.moveTo(pad.left, yy); ctx.lineTo(w - pad.right, yy); ctx.stroke();
+                                ctx.fillStyle = '#5c5750'; ctx.font = '9px Inter, sans-serif'; ctx.textAlign = 'right';
+                                ctx.fillText('$' + val.toFixed(2), pad.left - 6, yy + 3);
+                            }
+                            const labelCount = Math.min(6, prices.length);
+                            ctx.fillStyle = '#5c5750'; ctx.font = '9px Inter, sans-serif';
+                            for (let i = 0; i < labelCount; i++) {
+                                const idx = Math.round(i * (prices.length - 1) / (labelCount - 1));
+                                const lx = xPos(idx);
+                                ctx.textAlign = i === labelCount - 1 ? 'right' : i === 0 ? 'left' : 'center';
+                                ctx.fillText(formatAxisLabel(timestamps[idx], currentRange), lx, h - 6);
+                            }
+                            ctx.textAlign = 'start';
+                            const bottom = h - pad.bottom;
+                            const isUp = prices[prices.length - 1] >= prices[0];
+                            const lineColor = isUp ? '#22c55e' : '#ef4444';
+                            const grad = ctx.createLinearGradient(0, pad.top, 0, bottom);
+                            grad.addColorStop(0, isUp ? 'rgba(34, 197, 94, 0.18)' : 'rgba(239, 68, 68, 0.18)');
+                            grad.addColorStop(0.7, isUp ? 'rgba(34, 197, 94, 0.03)' : 'rgba(239, 68, 68, 0.03)');
+                            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                            ctx.beginPath(); ctx.moveTo(xPos(0), yPos(prices[0]));
+                            for (let i = 1; i < prices.length; i++) ctx.lineTo(xPos(i), yPos(prices[i]));
+                            ctx.lineTo(xPos(prices.length - 1), bottom); ctx.lineTo(xPos(0), bottom); ctx.closePath();
+                            ctx.fillStyle = grad; ctx.fill();
+                            ctx.beginPath(); ctx.moveTo(xPos(0), yPos(prices[0]));
+                            for (let i = 1; i < prices.length; i++) ctx.lineTo(xPos(i), yPos(prices[i]));
+                            ctx.strokeStyle = lineColor; ctx.lineWidth = 1.5; ctx.stroke();
+                        }
+
+                        // ── Measure tool ──
+                        let measurements = [], pendingStart = -1, dismissButtons = [];
+
+                        function smartDateLabel(startIdx, endIdx) {
+                            const a = labels[startIdx], b = labels[endIdx];
+                            const dateA = a.substring(0, a.length - 5).trim(), dateB = b.substring(0, b.length - 5).trim();
+                            const timeA = a.substring(a.length - 5).trim(), timeB = b.substring(b.length - 5).trim();
+                            if (dateA === dateB) return timeA + ' → ' + timeB;
+                            const shortA = a.substring(0, a.indexOf(',')).trim(), shortB = b.substring(0, b.indexOf(',')).trim();
+                            if (shortA === shortB) return a + ' → ' + timeB;
+                            return shortA + ' → ' + shortB;
+                        }
+
+                        function drawVerticalLine(x, style, dash) {
+                            ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, h - pad.bottom);
+                            ctx.strokeStyle = style; ctx.lineWidth = 1; if (dash) ctx.setLineDash(dash);
+                            ctx.stroke(); ctx.setLineDash([]);
+                        }
+
+                        function drawDot(x, y, color, glowColor) {
+                            ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+                            ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.strokeStyle = glowColor; ctx.lineWidth = 1.5; ctx.stroke();
+                        }
+
+                        function drawTooltip(text, anchorX, topY) {
+                            ctx.font = '600 10px Inter, sans-serif';
+                            const tw = ctx.measureText(text).width + 16, th = 22;
+                            let tx = anchorX - tw / 2;
+                            if (tx < pad.left) tx = pad.left;
+                            if (tx + tw > w - pad.right) tx = w - pad.right - tw;
+                            const ty = topY - 2;
+                            ctx.fillStyle = 'rgba(13, 12, 10, 0.9)'; ctx.beginPath(); ctx.roundRect(tx, ty - th + 2, tw, th, 4); ctx.fill();
+                            ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.stroke();
+                            ctx.fillStyle = '#e8e4df'; ctx.font = '600 10px Inter, sans-serif'; ctx.textAlign = 'center';
+                            ctx.fillText(text, tx + tw / 2, ty - th + 16); ctx.textAlign = 'start';
+                        }
+
+                        function drawMeasurement(startIdx, endIdx, showDismiss, dismissIndex) {
+                            const leftIdx = Math.min(startIdx, endIdx), rightIdx = Math.max(startIdx, endIdx);
+                            const regionUp = prices[endIdx] >= prices[startIdx];
+                            ctx.beginPath(); ctx.moveTo(xPos(leftIdx), yPos(prices[leftIdx]));
+                            for (let i = leftIdx + 1; i <= rightIdx; i++) ctx.lineTo(xPos(i), yPos(prices[i]));
+                            ctx.lineTo(xPos(rightIdx), h - pad.bottom); ctx.lineTo(xPos(leftIdx), h - pad.bottom); ctx.closePath();
+                            ctx.fillStyle = regionUp ? 'rgba(34, 197, 94, 0.08)' : 'rgba(239, 68, 68, 0.08)'; ctx.fill();
+                            drawVerticalLine(xPos(startIdx), 'rgba(255,255,255,0.15)', null);
+                            drawVerticalLine(xPos(endIdx), 'rgba(255,255,255,0.15)', null);
+                            drawDot(xPos(startIdx), yPos(prices[startIdx]), '#c87941', 'rgba(200, 121, 65, 0.4)');
+                            drawDot(xPos(endIdx), yPos(prices[endIdx]), '#c87941', 'rgba(200, 121, 65, 0.4)');
+                            const delta = prices[endIdx] - prices[startIdx];
+                            const deltaPct = ((delta / prices[startIdx]) * 100).toFixed(2);
+                            const sign = delta >= 0 ? '+' : '';
+                            const dateLabel = smartDateLabel(startIdx, endIdx);
+                            const midX = (xPos(startIdx) + xPos(endIdx)) / 2;
+                            const deltaText = sign + '$' + delta.toFixed(2) + '  (' + sign + deltaPct + '%)';
+                            ctx.font = '600 9px Inter, sans-serif';
+                            const deltaW = ctx.measureText(deltaText).width;
+                            ctx.font = '500 8px Inter, sans-serif';
+                            const dateW = ctx.measureText(dateLabel).width;
+                            const dtw = Math.max(deltaW, dateW) + 16, dth = 32;
+                            let dtx = midX - dtw / 2;
+                            if (dtx < pad.left) dtx = pad.left;
+                            if (dtx + dtw > w - pad.right) dtx = w - pad.right - dtw;
+                            const dty = h - pad.bottom - 8;
+                            ctx.fillStyle = 'rgba(13, 12, 10, 0.92)'; ctx.beginPath(); ctx.roundRect(dtx, dty - dth, dtw, dth, 4); ctx.fill();
+                            ctx.strokeStyle = delta >= 0 ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+                            ctx.fillStyle = delta >= 0 ? '#22c55e' : '#ef4444'; ctx.font = '600 9px Inter, sans-serif'; ctx.textAlign = 'center';
+                            ctx.fillText(deltaText, dtx + dtw / 2, dty - dth + 13);
+                            ctx.fillStyle = '#5c5750'; ctx.font = '500 8px Inter, sans-serif';
+                            ctx.fillText(dateLabel, dtx + dtw / 2, dty - dth + 25); ctx.textAlign = 'start';
+                            if (showDismiss && dismissIndex !== undefined) {
+                                const bx = dtx + dtw - 1, by = dty - dth + 1, size = 16;
+                                ctx.fillStyle = 'rgba(13, 12, 10, 0.85)'; ctx.beginPath(); ctx.arc(bx, by, size / 2, 0, Math.PI * 2); ctx.fill();
+                                ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)'; ctx.lineWidth = 1; ctx.stroke();
+                                ctx.strokeStyle = '#a09a93'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+                                const o = 3;
+                                ctx.beginPath(); ctx.moveTo(bx - o, by - o); ctx.lineTo(bx + o, by + o);
+                                ctx.moveTo(bx + o, by - o); ctx.lineTo(bx - o, by + o); ctx.stroke();
+                                dismissButtons.push({ x: bx, y: by, size, index: dismissIndex });
+                            }
+                        }
+
+                        function hitDismiss(mouseX, mouseY) {
+                            for (const btn of dismissButtons) {
+                                if (((mouseX - btn.x) ** 2 + (mouseY - btn.y) ** 2) <= (btn.size / 2 + 4) ** 2) return btn.index;
+                            }
+                            return -1;
+                        }
+
+                        function isMouseInMeasurement(mouseX, m) {
+                            const leftX = xPos(Math.min(m.startIdx, m.endIdx)), rightX = xPos(Math.max(m.startIdx, m.endIdx));
+                            return mouseX >= leftX && mouseX <= rightX;
+                        }
+
+                        function drawAllMeasurements(mouseX) {
+                            dismissButtons = [];
+                            measurements.forEach((m, i) => {
+                                drawMeasurement(m.startIdx, m.endIdx, mouseX !== undefined && isMouseInMeasurement(mouseX, m), i);
+                            });
+                        }
+
+                        function drawCrosshair(mouseX, mouseY) {
+                            if (loading) return;
+                            const clampedX = Math.max(pad.left, Math.min(w - pad.right, mouseX));
+                            const idx = Math.round((clampedX - pad.left) / xStep);
+                            if (idx < 0 || idx >= prices.length) return;
+                            const px = xPos(idx), py = yPos(prices[idx]);
+                            const periodUp = prices[prices.length - 1] >= prices[0];
+                            drawAllMeasurements(mouseX);
+                            if (hitDismiss(mouseX, mouseY) >= 0) { canvas.style.cursor = 'pointer'; return; }
+                            if (pendingStart >= 0 && pendingStart < prices.length) drawMeasurement(pendingStart, idx, false);
+                            drawVerticalLine(px, 'rgba(255,255,255,0.12)', [3, 3]);
+                            const dotColor = periodUp ? '#22c55e' : '#ef4444';
+                            drawDot(px, py, dotColor, periodUp ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)');
+                            drawTooltip('$' + prices[idx].toFixed(2) + '  ·  ' + labels[idx], px, pad.top);
+                            canvas.style.cursor = 'crosshair';
+                        }
+
+                        // ── Range buttons (register before init so they work even if init errors) ──
+                        document.querySelectorAll('.chart-range[data-range]').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const active = document.querySelector('.chart-range.active');
+                                if (active) active.classList.remove('active');
+                                btn.classList.add('active');
+                                switchRange(btn.dataset.range);
+                            });
+                        });
+
+                        // ── Init ──
+                        const skeleton = document.getElementById('chartSkeleton');
+                        if (skeleton) skeleton.remove();
+                        canvas.classList.remove('hidden');
+                        initCanvas();
+                        switchRange('{{ default_chart_range }}');
+
+                        // ── Interactions ──
+                        let rafPending = false;
+                        canvas.addEventListener('mousemove', (e) => {
+                            if (rafPending) return; rafPending = true;
+                            requestAnimationFrame(() => {
+                                const r = canvas.getBoundingClientRect();
+                                drawChart(); drawCrosshair(e.clientX - r.left, e.clientY - r.top); rafPending = false;
+                            });
+                        });
+
+                        canvas.addEventListener('click', (e) => {
+                            if (loading) return;
+                            const r = canvas.getBoundingClientRect();
+                            const mouseX = e.clientX - r.left, mouseY = e.clientY - r.top;
+                            const clampedX = Math.max(pad.left, Math.min(w - pad.right, mouseX));
+                            const idx = Math.round((clampedX - pad.left) / xStep);
+                            const dismissIdx = hitDismiss(mouseX, mouseY);
+                            if (dismissIdx >= 0) { measurements.splice(dismissIdx, 1); drawChart(); drawCrosshair(mouseX, mouseY); return; }
+                            if (pendingStart >= 0) {
+                                if (idx >= 0 && idx < prices.length && idx !== pendingStart) { measurements.push({ startIdx: pendingStart, endIdx: idx }); pendingStart = -1; }
+                            } else if (idx >= 0 && idx < prices.length) { pendingStart = idx; }
+                            drawChart(); drawCrosshair(mouseX, mouseY);
+                        });
+
+                        canvas.addEventListener('mouseleave', () => {
+                            drawChart(); drawAllMeasurements();
+                            if (pendingStart >= 0 && pendingStart < prices.length) {
+                                const pinX = xPos(pendingStart), pinY = yPos(prices[pendingStart]);
+                                drawVerticalLine(pinX, 'rgba(255,255,255,0.2)', null);
+                                drawDot(pinX, pinY, '#c87941', 'rgba(200, 121, 65, 0.4)');
+                            }
+                            canvas.style.cursor = 'default';
+                        });
+
+                        document.getElementById('downloadChart').addEventListener('click', () => {
+                            drawChart(); drawAllMeasurements();
+                            const link = document.createElement('a');
+                            link.download = document.title.split('—')[0].trim() + ' ' + currentRange + '.png';
+                            link.href = canvas.toDataURL('image/png'); link.click();
+                        });
+                    })();
+                    </script>
                 </div>
             </div>
         </section>
     </div>
 
     {% if not request.user.is_authenticated %}
-    <div class="max-w-[1120px] mx-auto px-10 pb-6">
-        <div class="bg-copper/[0.03] border border-copper/[0.08] rounded-lg px-5 py-3 flex items-center gap-3 text-[0.75rem] text-[#a09a93]">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pb-6">
+        <div class="bg-copper/[0.03] border border-copper/[0.08] rounded-lg px-4 sm:px-5 py-3 flex items-center gap-3 text-[0.75rem] text-[#a09a93]">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-copper shrink-0">
                 <rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/>
             </svg>
@@ -150,12 +527,12 @@
 
     <!-- Fundamentals (HTMX partial) -->
     <div hx-get="{% url 'core:asset_fundamentals' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
-        <div class="max-w-[1120px] mx-auto px-10">
-            <section class="py-10">
-                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Fundamentals</div>
+        <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+            <section class="py-6 sm:py-10">
+                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-4 sm:mb-6">Fundamentals</div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">
                     {% for _ in "12345" %}
-                    <div class="border border-white/[0.04] rounded-sm p-6">
+                    <div class="border border-white/[0.04] rounded-sm p-4 sm:p-6">
                         <div class="h-3 w-16 bg-white/[0.04] skel-bar mb-3" style="animation-delay:{{ forloop.counter0 }}00ms"></div>
                         <div class="h-6 w-24 bg-white/[0.06] skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
                     </div>
@@ -173,9 +550,9 @@
 
     <!-- Community Mentions (HTMX partial) -->
     <div hx-get="{% url 'core:asset_community' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
-        <div class="max-w-[1120px] mx-auto px-10">
-            <section class="py-10">
-                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Community Mentions</div>
+        <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+            <section class="py-6 sm:py-10">
+                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-4 sm:mb-6">Community Mentions</div>
                 <div class="space-y-px">
                     {% for _ in "123" %}
                     <div class="bg-white/[0.02] p-5 rounded-sm">

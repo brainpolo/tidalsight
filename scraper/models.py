@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from pgvector.django import VectorField
 
@@ -49,6 +50,7 @@ class Asset(models.Model):
         "self", symmetrical=False, blank=True, related_name="peer_of"
     )
     is_active = models.BooleanField(default=True)
+    views = models.PositiveIntegerField(default=0, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -373,6 +375,32 @@ class NewsArticle(models.Model):
         if self.description:
             parts.append(self.description)
         return "\n".join(parts)
+
+
+class AssetView(models.Model):
+    asset = models.ForeignKey(
+        Asset, on_delete=models.CASCADE, related_name="asset_views"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="asset_views",
+    )
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-viewed_at"]
+        indexes = [
+            models.Index(fields=["asset", "-viewed_at"]),
+            models.Index(fields=["user", "-viewed_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.asset.ticker} view from {self.ip_address}"
 
 
 class Analysis(models.Model):

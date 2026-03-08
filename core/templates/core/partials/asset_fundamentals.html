@@ -1,12 +1,12 @@
 {% load formatting %}
 
 {% if fundamental_cards.cards %}
-<div class="max-w-[1120px] mx-auto px-10">
-    <section class="py-10">
-        <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Fundamentals</div>
+<div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+    <section class="py-6 sm:py-10">
+        <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-4 sm:mb-6">Fundamentals</div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">
             {% for card in fundamental_cards.cards %}
-            <div class="border border-white/[0.04] rounded-sm p-6">
+            <div class="border border-white/[0.04] rounded-sm p-4 sm:p-6">
                 <div class="text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2 flex items-center gap-1.5">
                     {% if card.icon %}<i data-lucide="{{ card.icon }}" class="size-3 text-[#3d3a36]"></i>{% endif %}
                     {{ card.label }}

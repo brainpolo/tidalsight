@@ -17,6 +17,7 @@ DEFAULT_PRICE_PERIOD = "1y"
 DEFAULT_PRICE_INTERVAL = "1h"
 DAILY_PRICE_PERIOD = "max"
 DAILY_PRICE_INTERVAL = "1d"
+QUICK_PRICE_PERIOD = "7d"
 
 # Minimum seconds between re-fetching data for the same asset
 REQUEST_TIMEOUT_SECONDS = 10

@@ -122,6 +122,13 @@ def _run_agent(prompt: str) -> MarketDigest:
 
 
 def get_market_digest() -> dict | None:
+    """Return the cached market digest, regenerating if stale.
+
+    Primary generation is handled by the hourly Celery beat task
+    (analyst.tasks.generate_market_digest). This on-demand path acts as a
+    fallback so the digest still refreshes if the beat worker is down or
+    the cache expires between scheduled runs.
+    """
     existing = cache.get(DIGEST_DATA_KEY)
 
     # If the digest is still fresh, return it immediately
@@ -129,7 +136,7 @@ def get_market_digest() -> dict | None:
         logger.info("Market digest served from cache (fresh)")
         return existing
 
-    # Digest is stale or missing — try to regenerate
+    # Digest is stale or missing — try to regenerate (on-demand fallback)
     if not cache.add(DIGEST_LOCK_KEY, True, DIGEST_LOCK_TTL):
         logger.info("Market digest generation already in progress, serving stale")
         return existing

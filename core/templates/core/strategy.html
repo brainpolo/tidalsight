@@ -41,7 +41,7 @@
     {% include "core/components/header.html" with show_search=True %}
 
     <!-- Page header -->
-    <div class="max-w-[1120px] mx-auto px-10">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="pt-8 pb-16">
             <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Strategy</div>
             <h1 class="font-serif font-normal text-[clamp(2.4rem,5vw,4rem)] leading-[1.1] tracking-tight text-[#fafafa] max-w-[720px] mb-6">
@@ -66,7 +66,7 @@
     <div class="divider"></div>
 
     <!-- Data Sources -->
-    <div class="max-w-[1120px] mx-auto px-10">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 reveal">
             <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">Where our data comes from</div>
 
@@ -90,7 +90,7 @@
                                 <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Fundamentals</span>
                             </div>
                         </div>
-                        <div class="mt-2.5 text-[0.6rem] text-[#3d3a36] tracking-wide">Hourly prices refresh every 60 min &middot; Daily prices every 24 hr &middot; Fundamentals every 60 min</div>
+                        <div class="mt-2.5 text-[0.6rem] text-[#3d3a36] tracking-wide">Hourly prices refresh every 60 min &middot; Daily prices every 24 hr &middot; Fundamentals daily on weekdays</div>
                     </div>
                 </div>
 
@@ -104,16 +104,17 @@
                         <p class="text-sm font-light text-[#5c5750] leading-relaxed">
                             We regularly extract posts and top comments from 15 financial subreddits including
                             r/wallstreetbets, r/stocks, r/investing, r/cryptocurrency, r/bitcoin, r/SecurityAnalysis,
-                            and r/Daytrading. Post scores, comment volume, and upvote ratios provide raw sentiment signal
-                            that feeds directly into our trend analysis.
+                            and r/Daytrading &mdash; plus top stories and discussions from Hacker News. Post scores, comment volume,
+                            and upvote ratios provide raw sentiment signal that feeds directly into our trend analysis.
                         </p>
                         <div class="mt-3 flex flex-wrap gap-2">
                             <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Reddit</span>
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Hacker News</span>
                             <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">15 Subreddits</span>
                             <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Posts & Comments</span>
                             <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Vote Ratios</span>
                         </div>
-                        <div class="mt-2.5 text-[0.6rem] text-[#3d3a36] tracking-wide">Market digest refreshes every 30 min from latest 20 posts</div>
+                        <div class="mt-2.5 text-[0.6rem] text-[#3d3a36] tracking-wide">Market digest refreshes hourly from latest 20 Reddit posts &middot; 15 HN stories &middot; 15 news articles</div>
                     </div>
                 </div>
 
@@ -162,7 +163,7 @@
     <div class="divider"></div>
 
     <!-- Analysis Pipeline -->
-    <div class="max-w-[1120px] mx-auto px-10">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 reveal">
             <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">How we analyse</div>
 
@@ -272,7 +273,7 @@
     <div class="divider"></div>
 
     <!-- From Data to Decision -->
-    <div class="max-w-[1120px] mx-auto px-10">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 reveal">
             <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">From data to decision</div>
 
@@ -338,7 +339,7 @@
     <div class="divider"></div>
 
     <!-- Trust & Transparency -->
-    <div class="max-w-[1120px] mx-auto px-10">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 reveal">
             <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">Trust & Transparency</div>
 
@@ -373,7 +374,7 @@
     <div class="divider"></div>
 
     <!-- Statement -->
-    <div class="max-w-[1120px] mx-auto px-10">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-24 text-center reveal">
             <p class="font-serif text-[clamp(1.6rem,3.5vw,2.6rem)] font-normal leading-snug text-[#a09a93] max-w-[700px] mx-auto">
                 <strong class="text-copper-light font-normal">Public data. Independent signals. AI synthesis.</strong>

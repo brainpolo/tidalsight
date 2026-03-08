@@ -36,4 +36,8 @@ app.conf.beat_schedule = {
         "task": "scraper.tasks.sync_all_asset_fundamentals",
         "schedule": crontab(minute=0, hour=6, day_of_week="1-5"),
     },
+    "refresh market digest hourly": {
+        "task": "analyst.tasks.generate_market_digest",
+        "schedule": crontab(minute=50),
+    },
 }
