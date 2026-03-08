@@ -3,13 +3,21 @@ name = "tidalsight"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
-    "django>=6.0.3",
-    "django-redis>=6.0.0",
-    "gunicorn>=25.1.0",
-    "psycopg[binary,pool]>=3.3.3",
-    "python-dotenv>=1.2.2",
-    "uvicorn>=0.41.0",
-    "whitenoise>=6.12.0",
+    "django",
+    "django-redis",
+    "gunicorn",
+    "psycopg[binary,pool]",
+    "python-dotenv",
+    "httpx",
+    "uvicorn",
+    "whitenoise",
+    "yfinance",
+    "byteplus-python-sdk-v2>=3.0.33",
+    "pydantic",
+    "sniffio",
+    "distro",
+    "openai-agents>=0.10.5",
+    "pgvector>=0.4.2",
 ]

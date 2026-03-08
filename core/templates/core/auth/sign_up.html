@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up — TidalSight{% endblock %}
+{% block body %}
+<div class="grain"></div>
+<div class="min-h-screen flex flex-col">
+    {% include "core/components/header.html" %}
+
+    <div class="flex-1 flex items-center justify-center px-6 py-16">
+        <div class="w-full max-w-md">
+            <div class="relative p-8 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.015] border border-white/[0.06] backdrop-blur-lg">
+                <div class="absolute -top-px -right-px size-32 bg-[radial-gradient(circle_at_top_right,rgba(200,121,65,0.08),transparent_70%)] rounded-tr-2xl pointer-events-none opacity-60"></div>
+
+                <div class="flex items-center gap-2 text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">
+                    <span class="size-1.5 rounded-full bg-copper opacity-60"></span>
+                    Create your account
+                </div>
+
+                <h1 class="font-serif text-3xl text-[#fafafa] mb-8">Sign Up</h1>
+
+                {% if form.non_field_errors %}
+                <div class="mb-4 text-sm text-red-400/80">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.first_name.errors.0 }}</p>{% endif %}
+                        </div>
+                        <div>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.last_name.errors.0 }}</p>{% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        {{ form.username }}
+                        {% if form.username.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.username.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        {{ form.email }}
+                        {% if form.email.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.email.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.password1.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.password2.errors.0 }}</p>{% endif %}
+                    </div>
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 mt-2 rounded-xl bg-gradient-to-r from-copper to-[#a5613a] text-ink text-xs font-semibold tracking-[0.06em] uppercase hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(200,121,65,0.3)] transition-all duration-300 cursor-pointer">
+                        Sign Up
+                    </button>
+                </form>
+
+                <p class="mt-6 text-center text-xs text-[#5c5750]">
+                    Already have an account?
+                    <a href="{% url 'core:sign_in' %}" class="text-copper hover:text-copper-light transition-colors">Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% include "core/components/footer.html" %}
+</div>
+{% endblock %}

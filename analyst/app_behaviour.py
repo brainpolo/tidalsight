@@ -1,0 +1,11 @@
+REDDIT_POSTS_FOR_DIGEST = 20
+REDDIT_COMMENTS_PER_POST_FOR_DIGEST = 5
+REDDIT_POST_BODY_TRUNCATION = 200
+REDDIT_COMMENT_BODY_TRUNCATION = 150
+DIGEST_FRESHNESS_TTL = 60 * 30  # 30 minutes — how often to regenerate
+DIGEST_DATA_TTL = 60 * 60 * 24  # 24 hours — max age before digest is discarded
+DIGEST_LOCK_TTL = 60 * 5  # 5 minutes — prevent concurrent generation
+DIGEST_REFRESH_INTERVAL = 60  # seconds — HTMX polling interval
+
+PEER_SYNC_LOCK_TTL = 60 * 5  # 5 minutes
+PEER_TARGET_COUNT = 6  # ask LLM for this many

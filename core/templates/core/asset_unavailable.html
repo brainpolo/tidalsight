@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Unavailable — TidalSight{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex flex-col">
+    {% include "core/components/header.html" %}
+
+    <div class="flex-1 flex items-center justify-center px-6">
+        <div class="text-center max-w-md">
+            <p class="text-[0.6rem] font-medium tracking-[0.14em] uppercase text-[#5c5750] mb-6">Service Unavailable</p>
+            <h1 class="font-serif text-[clamp(1.8rem,3vw,2.5rem)] text-[#fafafa] mb-4">{{ ticker }}</h1>
+            <p class="text-sm text-[#5c5750] leading-relaxed mb-8">Our data sources are unavailable at the moment. Please try again later.</p>
+            <a href="{% url 'core:home' %}" class="inline-block text-[0.7rem] font-medium tracking-[0.06em] text-copper hover:text-copper-light transition-colors">Back to home</a>
+        </div>
+    </div>
+
+    {% include "core/components/footer.html" %}
+</div>
+{% endblock %}

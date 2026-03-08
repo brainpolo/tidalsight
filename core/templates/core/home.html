@@ -4,21 +4,67 @@
 
 {% block head %}
 <style>
-    ::selection {
-        background: theme('colors.copper.DEFAULT');
-        color: theme('colors.ink');
+    /* Hero scene */
+    .hero-scene {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+    .hero-scene .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    .hero-scene-fade {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 200px;
+        background: linear-gradient(transparent, #0d0c0a);
+        z-index: 1;
     }
 
-    /* Tide canvas */
-    .tide-wrap { position: relative; width: 100%; height: 260px; overflow: hidden; }
-    .tide-wrap canvas { display: block; width: 100%; height: 100%; }
-    .tide-fade-top {
-        position: absolute; top: 0; left: 0; right: 0; height: 40px;
-        background: linear-gradient(#0d0c0a, transparent); z-index: 1;
+    /* Tide SVG waves */
+    .tide-svg {
+        position: absolute;
+        bottom: 0; left: -10%;
+        width: 120%;
+        height: 70%;
+        z-index: 0;
+        pointer-events: none;
     }
-    .tide-fade-bottom {
-        position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
-        background: linear-gradient(transparent, #0d0c0a); z-index: 1;
+    .tide-wave {
+        will-change: transform;
+        transform-origin: center center;
+    }
+    .tide-wave-1 { animation: drift1 25s ease-in-out infinite; }
+    .tide-wave-2 { animation: drift2 20s ease-in-out infinite; }
+    .tide-wave-3 { animation: drift3 30s ease-in-out infinite; }
+    .tide-wave-4 { animation: drift4 22s ease-in-out infinite; }
+    .tide-wave-5 { animation: drift5 28s ease-in-out infinite; }
+    .tide-wave-6 { animation: drift6 18s ease-in-out infinite; }
+
+    @keyframes drift1 {
+        0%, 100% { transform: translate(0, 0) rotate(-2deg); }
+        50% { transform: translate(40px, -15px) rotate(1deg); }
+    }
+    @keyframes drift2 {
+        0%, 100% { transform: translate(0, 0) rotate(1.5deg); }
+        50% { transform: translate(-50px, 10px) rotate(-1.5deg); }
+    }
+    @keyframes drift3 {
+        0%, 100% { transform: translate(0, 0) rotate(-1deg); }
+        50% { transform: translate(30px, 12px) rotate(2deg); }
+    }
+    @keyframes drift4 {
+        0%, 100% { transform: translate(0, 0) rotate(2deg); }
+        50% { transform: translate(-35px, -8px) rotate(-1deg); }
+    }
+    @keyframes drift5 {
+        0%, 100% { transform: translate(0, 0) rotate(-1.5deg); }
+        50% { transform: translate(25px, 6px) rotate(1.5deg); }
+    }
+    @keyframes drift6 {
+        0%, 100% { transform: translate(0, 0) rotate(1deg); }
+        50% { transform: translate(-20px, -10px) rotate(-2deg); }
     }
 
     /* Step numbers */
@@ -45,33 +91,6 @@
     .asset-gold::after { background: #e0a87c; }
     .asset-more::after { background: #a09a93; }
 
-    /* Grain overlay */
-    .grain {
-        position: fixed; inset: 0;
-        pointer-events: none; z-index: 999; opacity: 0.025;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        background-repeat: repeat; background-size: 180px;
-    }
-
-    /* Reveal animation */
-    .reveal {
-        opacity: 0; transform: translateY(24px);
-        transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .reveal.visible { opacity: 1; transform: none; }
-
-    /* Status breathing dot */
-    @keyframes breathe {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.3; }
-    }
-
-    /* Divider */
-    .divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent);
-    }
 </style>
 {% endblock %}
 
@@ -79,40 +98,190 @@
 <div class="grain"></div>
 
 <div class="min-h-screen">
-    <!-- Nav -->
-    <div class="max-w-[1120px] mx-auto px-10">
-        <header class="flex items-center justify-between py-8">
-            <div class="font-serif text-2xl text-[#fafafa] tracking-tight">TidalSight</div>
-            <div class="flex items-center gap-2.5 text-[0.7rem] font-medium tracking-[0.08em] uppercase text-[#a09a93]">
-                <span class="w-1.5 h-1.5 rounded-full bg-sea-light" style="animation: breathe 3s ease-in-out infinite;"></span>
-                Collecting
+    <!-- Hero with 3D ocean backdrop -->
+    <div class="hero-scene">
+        <svg class="tide-svg" viewBox="0 0 1400 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="teal-deep" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#4a8f8f" stop-opacity="0.04"/>
+                    <stop offset="50%" stop-color="#4a8f8f" stop-opacity="0.08"/>
+                    <stop offset="100%" stop-color="#4a8f8f" stop-opacity="0.02"/>
+                </linearGradient>
+                <linearGradient id="teal-mid" x1="0%" y1="0%" x2="80%" y2="100%">
+                    <stop offset="0%" stop-color="#5ba3a3" stop-opacity="0.03"/>
+                    <stop offset="50%" stop-color="#5ba3a3" stop-opacity="0.10"/>
+                    <stop offset="100%" stop-color="#5ba3a3" stop-opacity="0.04"/>
+                </linearGradient>
+                <linearGradient id="copper-soft" x1="20%" y1="0%" x2="100%" y2="80%">
+                    <stop offset="0%" stop-color="#c87941" stop-opacity="0.05"/>
+                    <stop offset="50%" stop-color="#c87941" stop-opacity="0.14"/>
+                    <stop offset="100%" stop-color="#c87941" stop-opacity="0.03"/>
+                </linearGradient>
+                <linearGradient id="copper-mid" x1="0%" y1="20%" x2="80%" y2="100%">
+                    <stop offset="0%" stop-color="#c87941" stop-opacity="0.04"/>
+                    <stop offset="50%" stop-color="#c87941" stop-opacity="0.18"/>
+                    <stop offset="100%" stop-color="#c87941" stop-opacity="0.06"/>
+                </linearGradient>
+                <linearGradient id="copper-bright" x1="10%" y1="0%" x2="90%" y2="100%">
+                    <stop offset="0%" stop-color="#e0a87c" stop-opacity="0.06"/>
+                    <stop offset="50%" stop-color="#e0a87c" stop-opacity="0.12"/>
+                    <stop offset="100%" stop-color="#e0a87c" stop-opacity="0.02"/>
+                </linearGradient>
+                <linearGradient id="copper-glow" x1="0%" y1="0%" x2="100%" y2="60%">
+                    <stop offset="0%" stop-color="#e0a87c" stop-opacity="0.02"/>
+                    <stop offset="40%" stop-color="#c87941" stop-opacity="0.08"/>
+                    <stop offset="100%" stop-color="#c87941" stop-opacity="0.01"/>
+                </linearGradient>
+            </defs>
+
+            <!-- Deep teal — large, slow, tilted -->
+            <path class="tide-wave tide-wave-1" d="M-100,320 C200,260 400,380 700,300 C1000,220 1200,360 1500,280 L1500,700 L-100,700 Z" fill="url(#teal-deep)"/>
+            <path class="tide-wave tide-wave-2" d="M-100,360 C150,300 450,420 750,340 C1050,260 1250,390 1500,330 L1500,700 L-100,700 Z" fill="url(#teal-mid)"/>
+
+            <!-- Teal-copper transition -->
+            <path class="tide-wave tide-wave-3" d="M-100,380 C250,340 500,440 800,370 C1100,300 1300,420 1500,380 L1500,700 L-100,700 Z" fill="url(#copper-soft)"/>
+
+            <!-- Copper mid -->
+            <path class="tide-wave tide-wave-4" d="M-100,420 C200,370 480,470 780,400 C1080,330 1280,460 1500,410 L1500,700 L-100,700 Z" fill="url(#copper-mid)"/>
+
+            <!-- Copper foreground -->
+            <path class="tide-wave tide-wave-5" d="M-100,460 C300,420 550,500 850,440 C1150,380 1350,490 1500,450 L1500,700 L-100,700 Z" fill="url(#copper-bright)"/>
+
+            <!-- Front glow layer -->
+            <path class="tide-wave tide-wave-6" d="M-100,490 C250,460 500,530 800,480 C1100,430 1300,520 1500,490 L1500,700 L-100,700 Z" fill="url(#copper-glow)"/>
+
+            <!-- Crest strokes — thin lines on the top edges for definition -->
+            <path class="tide-wave tide-wave-2" d="M-100,360 C150,300 450,420 750,340 C1050,260 1250,390 1500,330" fill="none" stroke="#5ba3a3" stroke-width="1" stroke-opacity="0.12"/>
+            <path class="tide-wave tide-wave-4" d="M-100,420 C200,370 480,470 780,400 C1080,330 1280,460 1500,410" fill="none" stroke="#c87941" stroke-width="1.2" stroke-opacity="0.18"/>
+            <path class="tide-wave tide-wave-5" d="M-100,460 C300,420 550,500 850,440 C1150,380 1350,490 1500,450" fill="none" stroke="#e0a87c" stroke-width="1.5" stroke-opacity="0.25"/>
+            <path class="tide-wave tide-wave-6" d="M-100,490 C250,460 500,530 800,480 C1100,430 1300,520 1500,490" fill="none" stroke="#e0a87c" stroke-width="1" stroke-opacity="0.12"/>
+        </svg>
+        <div class="hero-scene-fade"></div>
+
+        <div class="hero-content">
+            {% include "core/components/header.html" %}
+
+            <div class="max-w-[1120px] mx-auto px-10">
+                {% if request.user.is_authenticated %}
+                {# ── Authenticated: two-row dashboard layout ── #}
+                <section class="pt-12 pb-16">
+                    {# Row 1: Welcome + search (left) | Watchlist (right) #}
+                    <div class="flex items-start justify-between gap-20 max-lg:flex-col max-lg:gap-14">
+                        <div class="max-w-[540px] shrink-0">
+                            <h1 class="font-serif font-normal text-[clamp(2.4rem,5vw,3.8rem)] leading-[1.08] tracking-tight text-[#fafafa] mb-8">
+                                Welcome back,<br><em class="italic text-copper-light">{{ request.user.first_name|default:request.user.username }}</em>
+                            </h1>
+                            <div class="mb-8 h-px bg-gradient-to-r from-white/[0.06] to-transparent"></div>
+                            {% include "core/components/asset_search_widget.html" %}
+                            <div class="mt-8 flex items-center gap-6">
+                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-[#5c5750]">
+                                    <span>Powered by</span>
+                                    <span class="font-medium text-[#a09a93] border border-white/[0.06] rounded px-2.5 py-1 bg-white/[0.02]">BytePlus ModelArk</span>
+                                </div>
+                                <div class="w-px h-3 bg-white/[0.06]"></div>
+                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-[#5c5750]">
+                                    <span><span class="text-[#a09a93] font-medium">{{ asset_count }}</span> assets</span>
+                                    <span><span class="text-[#a09a93] font-medium">{{ post_count }}</span> posts</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-[240px] max-lg:w-full"
+                             hx-get="{% url 'core:home_watchlist' %}" hx-trigger="load" hx-swap="innerHTML">
+                        </div>
+                    </div>
+                </section>
+
+                <div class="divider"></div>
+
+                {# Row 2: Market Brief (left) | Your Brief placeholder (right) #}
+                <section class="py-16">
+                    <div class="flex items-start gap-20 max-lg:flex-col max-lg:gap-14">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
+                                <div class="h-px flex-1 bg-white/[0.04]"></div>
+                            </div>
+                            <div hx-get="{% url 'core:market_digest' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
+                                <div class="space-y-2.5">
+                                    <div class="h-4 w-5/6 bg-white/[0.03] rounded-sm animate-pulse"></div>
+                                    <div class="h-4 w-2/3 bg-white/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
+                                    <div class="mt-5 space-y-3">
+                                        <div class="h-3 w-full bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
+                                        <div class="h-3 w-11/12 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
+                                        <div class="h-3 w-4/5 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
+                                    </div>
+                                    <div class="mt-5 text-[0.6rem] text-[#3d3a36] tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Analysing social sentiment...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0 max-lg:w-full">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Your Brief</div>
+                                <div class="h-px flex-1 bg-white/[0.04]"></div>
+                            </div>
+                            <p class="text-sm font-light text-[#3d3a36] leading-relaxed">
+                                Personalised intelligence based on your watchlist &mdash; coming soon.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+                {% else %}
+                {# ── Guest: original splash layout ── #}
+                <section class="pt-12 pb-[30vh]">
+                    <div class="flex items-start justify-between gap-20 max-lg:flex-col max-lg:gap-14">
+                        <!-- Left: Hero copy + search -->
+                        <div class="max-w-[540px] shrink-0">
+                            <h1 class="font-serif font-normal text-[clamp(3.2rem,7.5vw,5.8rem)] leading-[1.05] tracking-tight text-[#fafafa] mb-10">
+                                The market<br>moves in <em class="italic text-copper-light">tides</em>
+                            </h1>
+                            <p class="text-lg font-light leading-relaxed text-[#a09a93] max-w-[480px]">
+                                Continuous intelligence across stocks, equities, commodities, and currencies.
+                                We surface actionable buy, sell, and hold signals from market data and public
+                                social sentiment &mdash; so you move before the market does.
+                            </p>
+                            <div class="mt-10 mb-8 h-px bg-gradient-to-r from-white/[0.06] to-transparent"></div>
+                            {% include "core/components/asset_search_widget.html" %}
+                            <div class="mt-8 flex items-center gap-6">
+                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-[#5c5750]">
+                                    <span>Powered by</span>
+                                    <span class="font-medium text-[#a09a93] border border-white/[0.06] rounded px-2.5 py-1 bg-white/[0.02]">BytePlus ModelArk</span>
+                                </div>
+                                <div class="w-px h-3 bg-white/[0.06]"></div>
+                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-[#5c5750]">
+                                    <span><span class="text-[#a09a93] font-medium">{{ asset_count }}</span> assets</span>
+                                    <span><span class="text-[#a09a93] font-medium">{{ post_count }}</span> posts</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right: Market Digest -->
+                        <div class="flex-1 max-lg:w-full">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
+                                <div class="h-px flex-1 bg-white/[0.04]"></div>
+                            </div>
+                            <div hx-get="{% url 'core:market_digest' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
+                                <div class="space-y-2.5">
+                                    <div class="h-4 w-5/6 bg-white/[0.03] rounded-sm animate-pulse"></div>
+                                    <div class="h-4 w-2/3 bg-white/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
+                                    <div class="mt-5 space-y-3">
+                                        <div class="h-3 w-full bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
+                                        <div class="h-3 w-11/12 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
+                                        <div class="h-3 w-4/5 bg-white/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
+                                    </div>
+                                    <div class="mt-5 text-[0.6rem] text-[#3d3a36] tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Analysing social sentiment...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
             </div>
-        </header>
-    </div>
-
-    <!-- Hero -->
-    <div class="max-w-[1120px] mx-auto px-10">
-        <section class="pt-[12vh] pb-[4vh] max-w-[800px]">
-            <h1 class="font-serif font-normal text-[clamp(3.2rem,7.5vw,5.8rem)] leading-[1.05] tracking-tight text-[#fafafa] mb-10">
-                The market<br>moves in <em class="italic text-copper-light">tides</em>
-            </h1>
-            <p class="text-lg font-light leading-relaxed text-[#a09a93] max-w-[520px]">
-                Continuous intelligence across equities, crypto, and commodities.
-                We surface actionable buy, sell, and hold signals from public data
-                and social sentiment &mdash; so you move before the market does.
-            </p>
-        </section>
-    </div>
-
-    <!-- Tide visualization -->
-    <div class="tide-wrap mt-[2vh]">
-        <div class="tide-fade-top"></div>
-        <canvas id="tide"></canvas>
-        <div class="tide-fade-bottom"></div>
+        </div>
     </div>
 
     <div class="divider"></div>
 
+    {% if not request.user.is_authenticated %}
     <!-- Assets -->
     <div class="max-w-[1120px] mx-auto px-10">
         <section class="py-20 reveal">
@@ -120,19 +289,19 @@
             <div class="grid grid-cols-4 gap-px bg-white/[0.04] rounded-sm overflow-hidden max-sm:grid-cols-2">
                 <div class="asset asset-equities relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
                     <div class="font-serif text-[2rem] leading-none text-sea-light">S&P</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Equities</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Stocks</div>
                 </div>
                 <div class="asset asset-crypto relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
-                    <div class="font-serif text-[2rem] leading-none text-copper">BTC</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Crypto</div>
+                    <div class="font-serif text-[2rem] leading-none text-copper">FTSE</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Equities</div>
                 </div>
                 <div class="asset asset-gold relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
                     <div class="font-serif text-[2rem] leading-none text-copper-light">Au</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Gold</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Commodities</div>
                 </div>
                 <div class="asset asset-more relative bg-ink py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-[#141310]">
-                    <div class="font-serif text-[2rem] leading-none text-[#e8e4df]">&amp;</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">More</div>
+                    <div class="font-serif text-[2rem] leading-none text-[#e8e4df]">FX</div>
+                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-[#5c5750]">Currencies</div>
                 </div>
             </div>
         </section>
@@ -174,104 +343,15 @@
             </p>
         </section>
     </div>
+    {% endif %}
 
-    <div class="divider"></div>
-
-    <!-- Footer -->
-    <div class="max-w-[1120px] mx-auto px-10">
-        <footer class="flex items-center justify-between py-8">
-            <span class="text-[0.7rem] text-[#5c5750] tracking-wide">TidalSight</span>
-            <span class="text-[0.7rem] text-[#5c5750] tracking-wide">2026</span>
-        </footer>
-    </div>
+    {% include "core/components/footer.html" %}
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Animated tide waveform — filled layered waves
-    const canvas = document.getElementById('tide');
-    const ctx = canvas.getContext('2d');
-    let w, h, time = 0;
-
-    function resize() {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        w = canvas.width = rect.width * dpr;
-        h = canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-    }
-
-    function waveY(x, rw, yBase, amplitude, frequency, speed) {
-        const norm = x / rw;
-        return yBase
-            + Math.sin(norm * Math.PI * frequency + time * speed) * amplitude
-            + Math.sin(norm * Math.PI * frequency * 0.6 + time * speed * 1.3) * amplitude * 0.4
-            + Math.sin(norm * Math.PI * frequency * 1.8 + time * speed * 0.7) * amplitude * 0.2;
-    }
-
-    function drawFilledWave(yBase, amplitude, frequency, speed, r, g, b, fillOpacity, strokeOpacity) {
-        const rw = w / (window.devicePixelRatio || 1);
-        const rh = h / (window.devicePixelRatio || 1);
-
-        // Build wave path
-        ctx.beginPath();
-        for (let x = 0; x <= rw; x += 1) {
-            const y = waveY(x, rw, yBase, amplitude, frequency, speed);
-            if (x === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-
-        // Close down to bottom for fill
-        ctx.lineTo(rw, rh);
-        ctx.lineTo(0, rh);
-        ctx.closePath();
-
-        // Gradient fill — color at the wave crest, fading to transparent
-        const grad = ctx.createLinearGradient(0, yBase - amplitude, 0, yBase + amplitude + 80);
-        grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${fillOpacity})`);
-        grad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${fillOpacity * 0.3})`);
-        grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        // Stroke the top edge for definition
-        ctx.beginPath();
-        for (let x = 0; x <= rw; x += 1) {
-            const y = waveY(x, rw, yBase, amplitude, frequency, speed);
-            if (x === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${strokeOpacity})`;
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-    }
-
-    function draw() {
-        const rw = w / (window.devicePixelRatio || 1);
-        const rh = h / (window.devicePixelRatio || 1);
-        ctx.clearRect(0, 0, rw, rh);
-
-        const mid = rh * 0.45;
-
-        // Back layer — teal, subtle
-        drawFilledWave(mid + 20, 14, 3.2, 0.3,   74, 143, 143,  0.04, 0.08);
-        drawFilledWave(mid + 10, 18, 2.4, 0.38,   74, 143, 143,  0.06, 0.14);
-        drawFilledWave(mid + 2,  22, 2.0, 0.45,   74, 143, 143,  0.10, 0.22);
-
-        // Front layer — copper, bolder
-        drawFilledWave(mid + 8,  16, 3.0, 0.5,   200, 121, 65,  0.05, 0.10);
-        drawFilledWave(mid - 2,  20, 2.5, 0.42,  200, 121, 65,  0.08, 0.18);
-        drawFilledWave(mid - 6,  26, 1.8, 0.32,  200, 121, 65,  0.12, 0.30);
-        drawFilledWave(mid - 10, 18, 2.8, 0.55,  200, 121, 65,  0.06, 0.40);
-
-        time += 0.012;
-        requestAnimationFrame(draw);
-    }
-
-    window.addEventListener('resize', resize);
-    resize();
-    draw();
+    // No JS animation needed — waves are pure CSS-animated SVG
 
     // Reveal on scroll
     const els = document.querySelectorAll('.reveal');

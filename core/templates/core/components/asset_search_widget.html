@@ -1,0 +1,378 @@
+{% if compact %}
+{# Compact mode: inline search bar for asset pages #}
+<form class="search-compact" id="tickerForm" autocomplete="off">
+    <svg class="search-compact-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/>
+    </svg>
+    <div class="search-input-wrapper">
+        <input
+            type="text"
+            id="tickerInput"
+            class="search-compact-input"
+            placeholder="Search ticker..."
+            spellcheck="false"
+            name="q"
+            hx-get="{% url 'core:asset_search' %}"
+            hx-trigger="input changed delay:250ms"
+            hx-target="#searchResults"
+            hx-swap="innerHTML"
+        >
+        <div id="searchResults" class="search-results-dropdown"></div>
+    </div>
+    <kbd class="search-kbd">&#8984;K</kbd>
+</form>
+
+<style>
+    .search-compact {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        transition: border-color 0.3s ease;
+        width: 200px;
+    }
+    .search-compact:focus-within {
+        border-color: #c87941;
+    }
+    .search-compact:focus-within .search-kbd {
+        display: none;
+    }
+    .search-compact-icon {
+        color: #5c5750;
+        flex-shrink: 0;
+    }
+    .search-compact-input {
+        flex: 1;
+        background: none;
+        border: none;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.75rem;
+        color: #fafafa;
+        padding: 6px 0;
+        min-width: 0;
+    }
+    .search-compact-input::placeholder {
+        color: #3a3733;
+    }
+    .search-kbd {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.55rem;
+        font-weight: 500;
+        color: #5c5750;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 3px;
+        padding: 2px 5px;
+        line-height: 1;
+        flex-shrink: 0;
+        pointer-events: none;
+    }
+</style>
+{% else %}
+{# Widget mode: full search for splash page #}
+<div class="search-widget" id="searchWidget">
+    <form class="search-form" id="tickerForm" autocomplete="off">
+        <div class="search-field">
+            <div class="search-input-wrapper">
+                <input
+                    type="text"
+                    id="tickerInput"
+                    class="search-input"
+                    placeholder="Enter ticker symbol"
+                    spellcheck="false"
+                    name="q"
+                    hx-get="{% url 'core:asset_search' %}"
+                    hx-trigger="input changed delay:250ms"
+                    hx-target="#searchResults"
+                    hx-swap="innerHTML"
+                >
+                <div id="searchResults" class="search-results-dropdown"></div>
+            </div>
+            <button type="submit" class="search-submit" id="searchBtn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 8h10M9 4l4 4-4 4"/>
+                </svg>
+            </button>
+        </div>
+    </form>
+
+    <div class="search-tickers">
+        <button type="button" class="search-ticker" data-ticker="AAPL">AAPL</button>
+        <button type="button" class="search-ticker" data-ticker="BTC-USD">BTC-USD</button>
+        <button type="button" class="search-ticker" data-ticker="MSFT">MSFT</button>
+        <button type="button" class="search-ticker" data-ticker="GC=F">GC=F</button>
+        <button type="button" class="search-ticker" data-ticker="EURUSD=X">EUR/USD</button>
+    </div>
+</div>
+
+<style>
+    .search-widget {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        transition: border-color 0.3s ease;
+    }
+
+    .search-field:focus-within {
+        border-color: #c87941;
+    }
+
+    .search-input {
+        flex: 1;
+        background: none;
+        border: none;
+        outline: none;
+        font-family: 'Instrument Serif', serif;
+        font-size: 1.5rem;
+        color: #fafafa;
+        padding: 10px 0 14px;
+        min-width: 0;
+    }
+
+    .search-input::placeholder {
+        color: #3a3733;
+        font-family: 'Instrument Serif', serif;
+        font-size: 1.5rem;
+    }
+
+    .search-submit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: #5c5750;
+        cursor: pointer;
+        padding: 10px 0 14px;
+        padding-left: 16px;
+        transition: color 0.3s ease;
+    }
+
+    .search-submit:hover {
+        color: #c87941;
+    }
+
+    .search-tickers {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-top: 16px;
+    }
+
+    .search-ticker {
+        background: none;
+        border: none;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.65rem;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        color: #4a4640;
+        cursor: pointer;
+        padding: 0;
+        transition: color 0.3s ease;
+    }
+
+    .search-ticker:hover {
+        color: #c87941;
+    }
+</style>
+{% endif %}
+
+{# Shared dropdown styles #}
+<style>
+    .search-input-wrapper {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+    }
+    .search-results-dropdown {
+        position: absolute;
+        top: 100%;
+        left: -12px;
+        min-width: 360px;
+        z-index: 1000;
+        margin-top: 8px;
+    }
+    .search-results-dropdown:empty {
+        display: none;
+    }
+    .search-results-list {
+        background: #1a1916;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        list-style: none;
+        margin: 0;
+        padding: 4px;
+    }
+    .search-result-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.15s;
+        gap: 12px;
+        border-radius: 4px;
+    }
+    .search-result-item:hover,
+    .search-result-item.kb-active {
+        background: rgba(255, 255, 255, 0.04);
+    }
+    .search-result-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+    .search-result-ticker {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #e8e4df;
+        flex-shrink: 0;
+    }
+    .search-result-name {
+        font-size: 0.65rem;
+        color: #5c5750;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 120px;
+    }
+    .search-result-badge {
+        font-size: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+    .search-result-badge--equity { background: rgba(74,143,143,0.12); color: #6fb5b5; }
+    .search-result-badge--crypto { background: rgba(200,121,65,0.12); color: #c87941; }
+    .search-result-badge--commodity { background: rgba(224,168,124,0.12); color: #e0a87c; }
+    .search-result-badge--currency { background: rgba(160,154,147,0.12); color: #a09a93; }
+    .search-result-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .search-result-price {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #e8e4df;
+        font-variant-numeric: tabular-nums;
+    }
+    .search-result-change {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.6rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+    .search-result-change.up { color: #22c55e; }
+    .search-result-change.down { color: #ef4444; }
+</style>
+
+<script>
+    (function() {
+        const form = document.getElementById('tickerForm');
+        const input = document.getElementById('tickerInput');
+        const tickers = document.querySelectorAll('.search-ticker');
+        const resultsEl = document.getElementById('searchResults');
+
+        function navigate(ticker) {
+            ticker = ticker.trim().toUpperCase();
+            if (ticker) window.location.href = '/assets/' + encodeURIComponent(ticker) + '/';
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            // If a result is highlighted, navigate to it instead
+            const active = resultsEl.querySelector('.kb-active');
+            if (active) {
+                window.location.href = active.getAttribute('href');
+            } else {
+                navigate(input.value);
+            }
+        });
+
+        tickers.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                navigate(this.getAttribute('data-ticker'));
+            });
+        });
+
+        input.addEventListener('input', function() {
+            const pos = this.selectionStart;
+            this.value = this.value.toUpperCase();
+            this.setSelectionRange(pos, pos);
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                input.focus();
+                input.select();
+            }
+        });
+
+        // Keyboard navigation for search results
+        let activeIdx = -1;
+
+        function getItems() {
+            return resultsEl.querySelectorAll('.search-result-item');
+        }
+
+        function setActive(idx) {
+            const items = getItems();
+            items.forEach(el => el.classList.remove('kb-active'));
+            activeIdx = idx;
+            if (idx >= 0 && idx < items.length) {
+                items[idx].classList.add('kb-active');
+                items[idx].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        input.addEventListener('keydown', function(e) {
+            const items = getItems();
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActive(activeIdx < items.length - 1 ? activeIdx + 1 : 0);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActive(activeIdx > 0 ? activeIdx - 1 : items.length - 1);
+            } else if (e.key === 'Escape') {
+                resultsEl.innerHTML = '';
+                activeIdx = -1;
+            }
+        });
+
+        // Reset active index when new results arrive
+        document.body.addEventListener('htmx:afterSwap', function(e) {
+            if (e.detail.target === resultsEl) {
+                activeIdx = -1;
+            }
+        });
+
+        // Dismiss dropdown on click outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#tickerForm') && !e.target.closest('#searchResults')) {
+                resultsEl.innerHTML = '';
+                activeIdx = -1;
+            }
+        });
+    })();
+</script>

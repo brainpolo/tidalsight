@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — TidalSight{% endblock %}
+{% block body %}
+<div class="grain"></div>
+<div class="min-h-screen flex flex-col">
+    {% include "core/components/header.html" %}
+
+    <div class="flex-1 flex items-center justify-center px-6 py-16">
+        <div class="w-full max-w-md">
+            <div class="relative p-8 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.015] border border-white/[0.06] backdrop-blur-lg">
+                <div class="absolute -top-px -right-px size-32 bg-[radial-gradient(circle_at_top_right,rgba(200,121,65,0.08),transparent_70%)] rounded-tr-2xl pointer-events-none opacity-60"></div>
+
+                <div class="flex items-center gap-2 text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">
+                    <span class="size-1.5 rounded-full bg-copper opacity-60"></span>
+                    Welcome back
+                </div>
+
+                <h1 class="font-serif text-3xl text-[#fafafa] mb-8">Sign In</h1>
+
+                {% if form.non_field_errors %}
+                <div class="mb-4 text-sm text-red-400/80">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+                    <div>
+                        {{ form.username }}
+                        {% if form.username.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.username.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        {{ form.password }}
+                        {% if form.password.errors %}<p class="mt-1 text-xs text-red-400/70">{{ form.password.errors.0 }}</p>{% endif %}
+                    </div>
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 mt-2 rounded-xl bg-gradient-to-r from-copper to-[#a5613a] text-ink text-xs font-semibold tracking-[0.06em] uppercase hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(200,121,65,0.3)] transition-all duration-300 cursor-pointer">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-6 flex items-center justify-between text-xs text-[#5c5750]">
+                    <a href="{% url 'core:password_reset' %}" class="hover:text-[#a09a93] transition-colors">Forgot password?</a>
+                    <span>
+                        No account?
+                        <a href="{% url 'core:sign_up' %}" class="text-copper hover:text-copper-light transition-colors">Sign Up</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include "core/components/footer.html" %}
+</div>
+{% endblock %}

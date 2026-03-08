@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+{% block title %}Our Approach — TidalSight{% endblock %}
+
+{% block head %}
+<style>
+    .pipeline-step {
+        position: relative;
+        padding-left: 48px;
+    }
+    .pipeline-step::before {
+        content: '';
+        position: absolute;
+        left: 15px; top: 40px; bottom: -32px;
+        width: 1px;
+        background: linear-gradient(180deg, rgba(200,121,65,0.3), rgba(200,121,65,0.05));
+    }
+    .pipeline-step:last-child::before { display: none; }
+    .pipeline-dot {
+        position: absolute;
+        left: 8px; top: 6px;
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        border: 2px solid rgba(200,121,65,0.4);
+        background: #0d0c0a;
+    }
+    .pipeline-dot::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border-radius: 50%;
+        background: #c87941;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="grain"></div>
+
+<div class="min-h-screen">
+    {% include "core/components/header.html" with show_search=True %}
+
+    <!-- Page header -->
+    <div class="max-w-[1120px] mx-auto px-10">
+        <section class="pt-8 pb-16">
+            <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Our Approach</div>
+            <h1 class="font-serif font-normal text-[clamp(2.4rem,5vw,4rem)] leading-[1.1] tracking-tight text-[#fafafa] max-w-[720px] mb-6">
+                How we build <em class="italic text-copper-light">conviction</em>
+            </h1>
+            <p class="text-lg font-light leading-relaxed text-[#a09a93] max-w-[600px]">
+                Every buy, sell, or hold signal we surface is the product of multiple independent data layers &mdash;
+                market prices, social sentiment, and financial news &mdash; cross-referenced and synthesised by
+                AI analyst agents. No single source drives a decision. Here's how it works.
+            </p>
+            <div class="mt-8 flex flex-wrap items-center gap-3">
+                <span class="text-[0.65rem] tracking-[0.04em] text-[#5c5750]">Covering</span>
+                <span class="text-[0.7rem] font-medium text-sea-light border border-sea/15 rounded px-2.5 py-1 bg-sea/[0.04]">$AAPL</span>
+                <span class="text-[0.7rem] font-medium text-copper border border-copper/15 rounded px-2.5 py-1 bg-copper/[0.04]">$BTC</span>
+                <span class="text-[0.7rem] font-medium text-copper-light border border-copper-light/15 rounded px-2.5 py-1 bg-copper-light/[0.04]">$GC=F</span>
+                <span class="text-[0.7rem] font-medium text-[#a09a93] border border-white/[0.06] rounded px-2.5 py-1 bg-white/[0.02]">$GBPUSD</span>
+                <span class="text-[0.65rem] tracking-[0.04em] text-[#3d3a36]">and more</span>
+            </div>
+        </section>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Data Sources -->
+    <div class="max-w-[1120px] mx-auto px-10">
+        <section class="py-20 reveal">
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">Where our data comes from</div>
+
+            <div class="grid grid-cols-2 gap-12 max-md:grid-cols-1">
+                <!-- Market Data -->
+                <div class="flex gap-5">
+                    <div class="size-10 rounded-lg flex items-center justify-center text-[1.1rem] shrink-0 bg-sea/10 text-sea-light">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-[0.95rem] font-medium text-[#e8e4df] mb-2">Market Data</h3>
+                        <p class="text-sm font-light text-[#5c5750] leading-relaxed">
+                            Real-time and historical OHLCV price data plus fundamentals (P/E, EPS, market cap, dividend yield, beta,
+                            52-week range) sourced via Yahoo Finance. Covers stocks, cryptocurrencies like Bitcoin and Ethereum,
+                            commodities like gold, and currency pairs.
+                        </p>
+                        <div class="mt-3 flex items-center gap-3">
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Yahoo Finance</span>
+                                <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">OHLCV</span>
+                                <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Fundamentals</span>
+                            </div>
+                        </div>
+                        <div class="mt-2.5 text-[0.6rem] text-[#3d3a36] tracking-wide">Hourly prices refresh every 60 min &middot; Daily prices every 24 hr &middot; Fundamentals every 60 min</div>
+                    </div>
+                </div>
+
+                <!-- Reddit / Social Sentiment -->
+                <div class="flex gap-5">
+                    <div class="size-10 rounded-lg flex items-center justify-center text-[1.1rem] shrink-0 bg-copper/10 text-copper-light">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-[0.95rem] font-medium text-[#e8e4df] mb-2">Social Sentiment</h3>
+                        <p class="text-sm font-light text-[#5c5750] leading-relaxed">
+                            We regularly extract posts and top comments from 15 financial subreddits including
+                            r/wallstreetbets, r/stocks, r/investing, r/cryptocurrency, r/bitcoin, r/SecurityAnalysis,
+                            and r/Daytrading. Post scores, comment volume, and upvote ratios provide raw sentiment signal
+                            that feeds directly into our trend analysis.
+                        </p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Reddit</span>
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">15 Subreddits</span>
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Posts & Comments</span>
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Vote Ratios</span>
+                        </div>
+                        <div class="mt-2.5 text-[0.6rem] text-[#3d3a36] tracking-wide">Market digest refreshes every 30 min from latest 20 posts</div>
+                    </div>
+                </div>
+
+                <!-- News -->
+                <div class="flex gap-5">
+                    <div class="size-10 rounded-lg flex items-center justify-center text-[1.1rem] shrink-0 bg-sea/10 text-sea-light">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-[0.95rem] font-medium text-[#e8e4df] mb-2">Financial News</h3>
+                        <p class="text-sm font-light text-[#5c5750] leading-relaxed">
+                            Headlines and summaries from news wires, categorised by type: earnings, macro, regulatory,
+                            geopolitical, sector, and company-specific. Each article is linked to affected assets with
+                            directional impact scoring (positive/negative/stagnant, high/medium/low).
+                        </p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">News APIs</span>
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Impact Scoring</span>
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Categorisation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Embeddings -->
+                <div class="flex gap-5">
+                    <div class="size-10 rounded-lg flex items-center justify-center text-[1.1rem] shrink-0 bg-copper/10 text-copper-light">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-[0.95rem] font-medium text-[#e8e4df] mb-2">Vector Embeddings</h3>
+                        <p class="text-sm font-light text-[#5c5750] leading-relaxed">
+                            Social posts and news content are converted into high-dimensional vector embeddings,
+                            enabling semantic similarity search. This lets us surface thematically related discussions
+                            that keyword matching would miss.
+                        </p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">pgvector</span>
+                            <span class="text-[0.6rem] tracking-[0.04em] text-[#3d3a36] border border-white/[0.06] rounded px-2 py-0.5">Semantic Search</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Analysis Pipeline -->
+    <div class="max-w-[1120px] mx-auto px-10">
+        <section class="py-20 reveal">
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">How we analyse</div>
+
+            <div class="grid grid-cols-2 gap-20 max-md:grid-cols-1 max-md:gap-12">
+                <div>
+                    <p class="text-sm font-light text-[#a09a93] leading-relaxed mb-10">
+                        Raw data doesn't produce conviction. Our AI analyst agents &mdash; powered by LLMs via
+                        BytePlus ModelArk &mdash; process each data layer independently, then synthesise across sources.
+                        The result is a forward-looking sentiment assessment and trend prediction grounded in
+                        multiple signals, not a single heuristic.
+                    </p>
+
+                    <div class="space-y-8">
+                        <div class="pipeline-step">
+                            <div class="pipeline-dot"></div>
+                            <h4 class="text-[0.85rem] font-medium text-[#e8e4df] mb-1.5">Ingest & Normalise</h4>
+                            <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                                Hourly and daily OHLCV prices, fundamentals, Reddit posts from 15 subreddits, and categorised
+                                news are continuously scraped, cleaned, and linked to specific assets like $AAPL, $BTC-USD, or $GC=F.
+                            </p>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="pipeline-dot"></div>
+                            <h4 class="text-[0.85rem] font-medium text-[#e8e4df] mb-1.5">Embed & Index</h4>
+                            <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                                Social and news text is converted into 2048-dimensional vector embeddings and stored in a pgvector index.
+                                When you query an asset, semantically related discussions are retrieved instantly &mdash; even if they never mention the ticker by name.
+                            </p>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="pipeline-dot"></div>
+                            <h4 class="text-[0.85rem] font-medium text-[#e8e4df] mb-1.5">AI Analyst Agents</h4>
+                            <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                                A senior financial analyst agent examines price action, fundamentals, and social signal for each asset.
+                                A separate market digest agent synthesises the latest 20 Reddit posts into a macro-level briefing with
+                                dominant themes and overall market sentiment (Bullish / Bearish / Mixed).
+                            </p>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="pipeline-dot"></div>
+                            <h4 class="text-[0.85rem] font-medium text-[#e8e4df] mb-1.5">Assess Forward Trajectory</h4>
+                            <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                                Each agent produces a structured trend prediction &mdash; not a vague outlook, but a directional assessment
+                                with explicit reasoning. Price momentum, fundamental strength, and crowd sentiment are weighted
+                                together to determine whether the forward trajectory is bullish, bearish, or neutral.
+                            </p>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="pipeline-dot"></div>
+                            <h4 class="text-[0.85rem] font-medium text-[#e8e4df] mb-1.5">Generate Buy / Sell / Hold Signal</h4>
+                            <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                                Signals are only surfaced when multiple independent layers converge. A bullish Reddit thread alone
+                                doesn't trigger a buy. A price drop without negative fundamentals doesn't trigger a sell. The final
+                                signal is the intersection of data-driven evidence across all sources.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col justify-center">
+                    <div class="border border-white/[0.06] rounded-lg p-8 bg-white/[0.01]">
+                        <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Signal composition</div>
+                        <div class="space-y-5">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[0.75rem] font-medium text-[#a09a93]">Market Data</span>
+                                    <span class="text-[0.65rem] text-[#5c5750]">Price, volume, fundamentals</span>
+                                </div>
+                                <div class="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                                    <div class="h-full bg-sea/40 rounded-full" style="width: 35%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[0.75rem] font-medium text-[#a09a93]">Social Sentiment</span>
+                                    <span class="text-[0.65rem] text-[#5c5750]">Reddit, community signals</span>
+                                </div>
+                                <div class="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                                    <div class="h-full bg-copper/50 rounded-full" style="width: 30%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[0.75rem] font-medium text-[#a09a93]">News Intelligence</span>
+                                    <span class="text-[0.65rem] text-[#5c5750]">Headlines, impact scoring</span>
+                                </div>
+                                <div class="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                                    <div class="h-full bg-copper-light/40 rounded-full" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[0.75rem] font-medium text-[#a09a93]">AI Synthesis</span>
+                                    <span class="text-[0.65rem] text-[#5c5750]">Cross-source validation</span>
+                                </div>
+                                <div class="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                                    <div class="h-full bg-[#a09a93]/30 rounded-full" style="width: 10%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- From Data to Decision -->
+    <div class="max-w-[1120px] mx-auto px-10">
+        <section class="py-20 reveal">
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">From data to decision</div>
+
+            <div class="max-w-[720px]">
+                <p class="text-sm font-light text-[#a09a93] leading-relaxed mb-8">
+                    Our objective is clear: <strong class="font-medium text-[#e8e4df]">regularly extract and summarise public data sources
+                    and social media information to analyse future trends</strong> in the stock market, Bitcoin, gold, and other assets &mdash;
+                    then translate that analysis into actionable buy, sell, or hold signals.
+                </p>
+                <p class="text-sm font-light text-[#a09a93] leading-relaxed mb-10">
+                    Here's how each signal type is calculated:
+                </p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-px bg-white/[0.04] rounded-sm overflow-hidden max-md:grid-cols-1">
+                <div class="bg-ink p-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="size-2.5 rounded-full bg-emerald-500/70"></div>
+                        <span class="font-serif text-[1.5rem] text-emerald-400/80">Buy</span>
+                    </div>
+                    <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                        Bullish sentiment across social channels <strong class="text-[#a09a93] font-medium">and</strong>
+                        price momentum is positive or consolidating <strong class="text-[#a09a93] font-medium">and</strong>
+                        fundamentals support the valuation (strong earnings, reasonable P/E, improving margins)
+                        <strong class="text-[#a09a93] font-medium">and</strong> news impact is neutral-to-positive.
+                    </p>
+                </div>
+                <div class="bg-ink p-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="size-2.5 rounded-full bg-red-500/70"></div>
+                        <span class="font-serif text-[1.5rem] text-red-400/80">Sell</span>
+                    </div>
+                    <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                        Bearish sentiment is rising across social channels <strong class="text-[#a09a93] font-medium">and</strong>
+                        price action shows breakdown or declining momentum <strong class="text-[#a09a93] font-medium">and</strong>
+                        fundamentals are deteriorating (contracting margins, missed earnings, high P/E relative to sector)
+                        <strong class="text-[#a09a93] font-medium">and</strong> news carries negative directional impact.
+                    </p>
+                </div>
+                <div class="bg-ink p-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="size-2.5 rounded-full bg-[#a09a93]/60"></div>
+                        <span class="font-serif text-[1.5rem] text-[#a09a93]/80">Hold</span>
+                    </div>
+                    <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                        Signals are mixed or insufficient for conviction. Social sentiment is divided,
+                        price is range-bound, fundamentals are stable but unexceptional, or news impact is
+                        contradictory. The default state &mdash; we only recommend action when the evidence converges.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-8 border border-white/[0.06] rounded-lg px-8 py-6 bg-white/[0.01] max-w-[720px]">
+                <p class="text-[0.8rem] font-light text-[#5c5750] leading-relaxed">
+                    <span class="text-[#a09a93] font-medium">The key principle:</span> every signal requires convergence across
+                    at least three independent layers &mdash; price data, social sentiment, and news or fundamentals. Divergence
+                    between layers defaults to Hold. We'd rather miss a move than recommend one we can't substantiate.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Trust & Transparency -->
+    <div class="max-w-[1120px] mx-auto px-10">
+        <section class="py-20 reveal">
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-14">Trust & Transparency</div>
+
+            <div class="grid grid-cols-3 gap-16 max-md:grid-cols-1 max-md:gap-10">
+                <div>
+                    <div class="font-serif text-[2rem] leading-none text-sea-light mb-5">Open sources</div>
+                    <p class="text-sm font-light text-[#5c5750] leading-relaxed">
+                        Every data source we use is publicly accessible. We don't rely on proprietary feeds or insider
+                        data. You can verify what we see, because it's the same data you can find yourself &mdash; we just
+                        process it faster and more systematically.
+                    </p>
+                </div>
+                <div>
+                    <div class="font-serif text-[2rem] leading-none text-copper mb-5">Multi-signal</div>
+                    <p class="text-sm font-light text-[#5c5750] leading-relaxed">
+                        No single data source drives our assessments. A bullish Reddit thread alone doesn't make a buy signal.
+                        A price spike without fundamental backing gets flagged, not promoted. Conviction comes from convergence.
+                    </p>
+                </div>
+                <div>
+                    <div class="font-serif text-[2rem] leading-none text-copper-light mb-5">AI-augmented</div>
+                    <p class="text-sm font-light text-[#5c5750] leading-relaxed">
+                        Our analyst agents are powered by large language models that read and synthesise thousands of data
+                        points continuously. They produce structured, auditable outputs &mdash; not black-box scores. Every
+                        analysis includes the reasoning behind it.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Statement -->
+    <div class="max-w-[1120px] mx-auto px-10">
+        <section class="py-24 text-center reveal">
+            <p class="font-serif text-[clamp(1.6rem,3.5vw,2.6rem)] font-normal leading-snug text-[#a09a93] max-w-[700px] mx-auto">
+                <strong class="text-copper-light font-normal">Public data. Independent signals. AI synthesis.</strong>
+                We analyse the trends so you can act on them.
+            </p>
+        </section>
+    </div>
+
+    {% include "core/components/footer.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const els = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.15 });
+    els.forEach(el => observer.observe(el));
+</script>
+{% endblock %}

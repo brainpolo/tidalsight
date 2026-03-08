@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load formatting %}
+
+{% block title %}{{ asset.ticker }} — TidalSight{% endblock %}
+
+{% block head %}
+<style>
+    @keyframes skelPulse { 0%, 100% { opacity: 0.06; } 50% { opacity: 0.03; } }
+    .skel-bar { animation: skelPulse 2s ease-in-out infinite; border-radius: 2px; }
+    .chart-range {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.6rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        padding: 4px 10px;
+        border: none;
+        border-radius: 2px;
+        background: none;
+        color: #5c5750;
+        cursor: pointer;
+        transition: color 0.2s, background 0.2s;
+    }
+    .chart-range:hover { color: #a09a93; }
+    .chart-range.active { color: #fafafa; background: rgba(255,255,255,0.06); }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="grain"></div>
+
+<div class="min-h-screen">
+    {% include "core/components/header.html" with show_search=True %}
+
+    <!-- Asset Header + Chart -->
+    <div class="max-w-[1120px] mx-auto px-10">
+        <section class="pt-6 pb-6">
+            <div class="flex items-start gap-12 max-lg:flex-col">
+                <!-- Left: Asset info -->
+                <div class="shrink-0 min-w-[300px]">
+                    <!-- Identity row: logo + ticker + name + link (always available from DB) -->
+                    <div class="flex items-center gap-4 mb-5">
+                        {% if asset.website %}
+                        <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz={{ favicon_size }}"
+                             alt="" class="size-8 rounded-md self-start mt-0.5" loading="lazy"
+                             onerror="this.style.display='none'">
+                        {% endif %}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2.5">
+                                <h1 class="font-serif text-[clamp(1.5rem,3vw,2.1rem)] leading-none tracking-tight text-[#fafafa]">{{ asset.name }}</h1>
+                                {% if request.user.is_authenticated %}
+                                    {% include "core/partials/watchlist_star.html" %}
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center gap-3 mt-1.5">
+                                <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-[#5c5750]">{{ asset.ticker }}</span>
+                                {% if asset.website %}
+                                <span class="text-[#3d3a36]">&middot;</span>
+                                <a href="{{ asset.website }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[0.65rem] text-[#5c5750] hover:text-copper transition-colors">
+                                    {{ asset.website|domain }}
+                                    <svg class="size-2.5" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 1h6v6M9 1L1 9"/></svg>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Price + Valuations (HTMX partial) -->
+                    <div hx-get="{% url 'core:asset_header' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+                        <!-- Skeleton: price -->
+                        <div class="flex items-baseline gap-4 mb-5">
+                            <div class="h-9 w-40 bg-white/[0.06] skel-bar"></div>
+                            <div class="h-4 w-20 bg-white/[0.06] skel-bar" style="animation-delay:200ms"></div>
+                        </div>
+                        <!-- Skeleton: valuations -->
+                        <div class="space-y-2.5">
+                            <div class="flex justify-between"><div class="h-3 w-24 bg-white/[0.04] skel-bar" style="animation-delay:100ms"></div><div class="h-3 w-20 bg-white/[0.04] skel-bar" style="animation-delay:300ms"></div></div>
+                            <div class="flex justify-between"><div class="h-3 w-20 bg-white/[0.04] skel-bar" style="animation-delay:200ms"></div><div class="h-3 w-20 bg-white/[0.04] skel-bar" style="animation-delay:400ms"></div></div>
+                            <div class="flex justify-between"><div class="h-3 w-28 bg-white/[0.04] skel-bar" style="animation-delay:300ms"></div><div class="h-3 w-20 bg-white/[0.04] skel-bar" style="animation-delay:500ms"></div></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right: Chart -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-end gap-1 mb-3">
+                        <button class="chart-range{% if default_chart_range == '1D' %} active{% endif %}" data-range="1D">1D</button>
+                        <button class="chart-range{% if default_chart_range == '1W' %} active{% endif %}" data-range="1W">1W</button>
+                        <button class="chart-range{% if default_chart_range == '1M' %} active{% endif %}" data-range="1M">1M</button>
+                        <button class="chart-range{% if default_chart_range == '1Y' %} active{% endif %}" data-range="1Y">1Y</button>
+                        <button class="chart-range{% if default_chart_range == '5Y' %} active{% endif %}" data-range="5Y">5Y</button>
+                        <button class="chart-range{% if default_chart_range == 'ALL' %} active{% endif %}" data-range="ALL">ALL</button>
+                        <div class="w-px h-3 bg-white/[0.06] mx-1"></div>
+                        <button id="downloadChart" class="chart-range" title="Download chart as PNG">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 2v9M4 7l4 4 4-4M2 13h12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="h-[200px] relative">
+                        <canvas id="priceChart" class="hidden"></canvas>
+                        {% include "core/components/chart_skeleton.html" %}
+                    </div>
+                    <div hx-get="{% url 'core:asset_chart_data' asset.ticker %}" hx-trigger="load" hx-swap="afterend"
+                         hx-on::after-settle="document.getElementById('chartSkeleton').remove(); document.getElementById('priceChart').classList.remove('hidden');"></div>
+                    <!-- RSI Gauge -->
+                    <div id="rsiGauge" class="hidden mt-4">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[0.6rem] font-semibold tracking-[0.1em] uppercase text-[#5c5750] flex items-center gap-1.5">RSI
+                                {% include "core/components/info_tooltip.html" with tooltip_title="Relative Strength Index" tooltip_description="Measures the speed and magnitude of recent price changes to evaluate whether an asset is overbought or oversold. RSI below 30 = Buy (oversold), 30–70 = Hold, above 70 = Sell (overbought)." %}
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <span id="rsiValue" class="text-[0.75rem] font-semibold tabular-nums text-[#e8e4df]"></span>
+                                <span id="rsiSignal" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm"></span>
+                            </div>
+                        </div>
+                        <div class="relative h-[6px] rounded-full overflow-hidden bg-white/[0.03]">
+                            <!-- Zone backgrounds -->
+                            <div class="absolute inset-0 flex">
+                                <div class="h-full" style="width:30%; background: rgba(34,197,94,0.08)"></div>
+                                <div class="h-full" style="width:40%; background: rgba(255,255,255,0.02)"></div>
+                                <div class="h-full" style="width:30%; background: rgba(239,68,68,0.08)"></div>
+                            </div>
+                            <!-- Needle -->
+                            <div id="rsiNeedle" class="absolute top-0 h-full w-[3px] rounded-full transition-all duration-700 ease-out" style="left:50%"></div>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span class="text-[0.5rem] text-[#3d3a36]">0</span>
+                            <span class="text-[0.5rem] text-[#3d3a36]" style="position:relative; left:-20%">30</span>
+                            <span class="text-[0.5rem] text-[#3d3a36]" style="position:relative; left:20%">70</span>
+                            <span class="text-[0.5rem] text-[#3d3a36]">100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    {% if not request.user.is_authenticated %}
+    <div class="max-w-[1120px] mx-auto px-10 pb-6">
+        <div class="bg-copper/[0.03] border border-copper/[0.08] rounded-lg px-5 py-3 flex items-center gap-3 text-[0.75rem] text-[#a09a93]">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-copper shrink-0">
+                <rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/>
+            </svg>
+            <span class="text-[#5c5750]">Looks like you're browsing as a guest &mdash;
+            <a href="{% url 'core:sign_up' %}" class="text-copper hover:text-copper-light transition-colors font-medium">sign up for free</a>
+            and you'll get watchlists, price alerts, AI briefs, portfolio tracking, and a fully personalised experience.</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="divider"></div>
+
+    <!-- Fundamentals (HTMX partial) -->
+    <div hx-get="{% url 'core:asset_fundamentals' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+        <div class="max-w-[1120px] mx-auto px-10">
+            <section class="py-10">
+                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Fundamentals</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">
+                    {% for _ in "12345" %}
+                    <div class="border border-white/[0.04] rounded-sm p-6">
+                        <div class="h-3 w-16 bg-white/[0.04] skel-bar mb-3" style="animation-delay:{{ forloop.counter0 }}00ms"></div>
+                        <div class="h-6 w-24 bg-white/[0.06] skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+        <div class="divider"></div>
+    </div>
+
+    <!-- Peers (HTMX partial) -->
+    <div hx-get="{% url 'core:asset_peers' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+        <div class="max-w-[1120px] mx-auto px-10">
+            <section class="py-10">
+                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Peers</div>
+                <div class="flex gap-3 overflow-hidden">
+                    {% for _ in "123456" %}
+                    <div class="shrink-0 w-[160px] border border-white/[0.04] rounded-sm p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="size-5 rounded bg-white/[0.04] skel-bar" style="animation-delay:{{ forloop.counter0 }}00ms"></div>
+                            <div class="h-3 w-10 bg-white/[0.06] skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+                        </div>
+                        <div class="h-2.5 w-20 bg-white/[0.04] skel-bar mb-2" style="animation-delay:{{ forloop.counter }}50ms"></div>
+                        <div class="h-3 w-14 bg-white/[0.04] skel-bar" style="animation-delay:{{ forloop.counter }}50ms"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+        <div class="divider"></div>
+    </div>
+
+    <!-- Community Mentions (HTMX partial) -->
+    <div hx-get="{% url 'core:asset_community' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+        <div class="max-w-[1120px] mx-auto px-10">
+            <section class="py-10">
+                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">Community Mentions</div>
+                <div class="space-y-px">
+                    {% for _ in "123" %}
+                    <div class="bg-white/[0.02] p-5 rounded-sm">
+                        <div class="h-4 w-3/4 bg-white/[0.04] skel-bar mb-2" style="animation-delay:{{ forloop.counter0 }}00ms"></div>
+                        <div class="h-3 w-1/3 bg-white/[0.03] skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+        <div class="divider"></div>
+    </div>
+
+    <!-- Recent Prices (HTMX partial) -->
+    <div hx-get="{% url 'core:asset_prices' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML"></div>
+
+    {% include "core/components/footer.html" %}
+</div>
+{% endblock %}

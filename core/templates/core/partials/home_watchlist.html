@@ -1,0 +1,40 @@
+{% if items %}
+<div class="flex items-center gap-3 mb-6">
+    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Watchlist</div>
+    <div class="h-px flex-1 bg-white/[0.04]"></div>
+</div>
+
+<div class="grid grid-cols-2 xl:grid-cols-3 gap-px max-h-[460px] overflow-y-auto scrollbar-hide">
+    {% for item in items %}
+    <a href="{% url 'core:asset_detail' item.asset.ticker %}"
+       class="group border border-white/[0.04] rounded-sm p-4 transition-all duration-300 hover:bg-white/[0.02] hover:border-white/[0.08]">
+        <div class="flex items-center justify-between mb-2">
+            <div class="text-[0.75rem] font-semibold text-[#e8e4df] group-hover:text-[#fafafa] transition-colors">{{ item.asset.ticker }}</div>
+            {% if item.price_change_pct != None %}
+            <div class="text-[0.55rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm
+                {% if item.price_change_pct >= 0 %}bg-[#22c55e]/[0.08] text-[#22c55e]{% else %}bg-[#ef4444]/[0.08] text-[#ef4444]{% endif %}">
+                {% if item.price_change_pct >= 0 %}+{% endif %}{{ item.price_change_pct|floatformat:2 }}%
+            </div>
+            {% endif %}
+        </div>
+        <div class="text-[0.55rem] text-[#3d3a36] truncate mb-2">{{ item.asset.name }}</div>
+        <div class="flex items-end justify-between gap-2">
+            <div class="opacity-50 group-hover:opacity-100 transition-opacity">
+                {{ item.sparkline_svg }}
+            </div>
+            {% if item.latest_close %}
+            <div class="text-[0.65rem] font-medium tabular-nums text-[#a09a93] shrink-0">${{ item.latest_close|floatformat:2 }}</div>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="flex items-center gap-3 mb-6">
+    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750]">Watchlist</div>
+    <div class="h-px flex-1 bg-white/[0.04]"></div>
+</div>
+<p class="text-[0.7rem] text-[#3d3a36] leading-relaxed">
+    Star assets to track them here.
+</p>
+{% endif %}

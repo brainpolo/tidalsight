@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — TidalSight{% endblock %}
+
+{% block head %}
+<style>
+    select option { background: #0d0c0a; color: #fafafa; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="grain"></div>
+<div class="min-h-screen flex flex-col">
+    {% include "core/components/header.html" %}
+
+    <div class="flex-1 max-w-xl mx-auto w-full px-6 py-12">
+
+        <h1 class="font-serif text-[clamp(2rem,4vw,3rem)] text-[#fafafa] mb-2">Profile</h1>
+        <p class="text-sm text-[#5c5750] mb-10">{{ user.username }} &middot; {{ user.email }}</p>
+
+        <!-- Profile Details -->
+        <div class="relative p-8 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.015] border border-white/[0.06] backdrop-blur-lg mb-8">
+            <div class="absolute -top-px -right-px size-32 bg-[radial-gradient(circle_at_top_right,rgba(200,121,65,0.08),transparent_70%)] rounded-tr-2xl pointer-events-none opacity-60"></div>
+
+            <div class="flex items-center gap-2 text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">
+                <span class="size-1.5 rounded-full bg-copper opacity-60"></span>
+                Personal details
+            </div>
+
+            {% if profile_saved %}
+            <div class="mb-6 px-4 py-3 rounded-xl bg-sea/10 border border-sea/20 text-sm text-sea-light">
+                Profile updated successfully.
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2">First name</label>
+                        {{ profile_form.first_name }}
+                        {% if profile_form.first_name.errors %}<p class="mt-1 text-xs text-red-400/70">{{ profile_form.first_name.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2">Last name</label>
+                        {{ profile_form.last_name }}
+                        {% if profile_form.last_name.errors %}<p class="mt-1 text-xs text-red-400/70">{{ profile_form.last_name.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2">Currency</label>
+                        {{ profile_form.currency }}
+                    </div>
+                    <div>
+                        <label class="block text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2">Timezone</label>
+                        {{ profile_form.timezone }}
+                    </div>
+                </div>
+                <button type="submit" name="update_profile" class="w-full flex items-center justify-center gap-2 py-3 mt-2 rounded-xl bg-gradient-to-r from-copper to-[#a5613a] text-ink text-xs font-semibold tracking-[0.06em] uppercase hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(200,121,65,0.3)] transition-all duration-300 cursor-pointer">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="relative p-8 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.015] border border-white/[0.06] backdrop-blur-lg">
+            <div class="absolute -top-px -right-px size-32 bg-[radial-gradient(circle_at_top_right,rgba(74,143,143,0.08),transparent_70%)] rounded-tr-2xl pointer-events-none opacity-60"></div>
+
+            <div class="flex items-center gap-2 text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-[#5c5750] mb-6">
+                <span class="size-1.5 rounded-full bg-sea opacity-60"></span>
+                Change password
+            </div>
+
+            {% if password_changed %}
+            <div class="mb-6 px-4 py-3 rounded-xl bg-sea/10 border border-sea/20 text-sm text-sea-light">
+                Password changed successfully.
+            </div>
+            {% endif %}
+
+            {% if password_form.non_field_errors %}
+            <div class="mb-4 text-sm text-red-400/80">
+                {% for error in password_form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2">Current password</label>
+                    {{ password_form.old_password }}
+                    {% if password_form.old_password.errors %}<p class="mt-1 text-xs text-red-400/70">{{ password_form.old_password.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2">New password</label>
+                    {{ password_form.new_password1 }}
+                    {% if password_form.new_password1.errors %}<p class="mt-1 text-xs text-red-400/70">{{ password_form.new_password1.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-medium tracking-[0.08em] uppercase text-[#5c5750] mb-2">Confirm new password</label>
+                    {{ password_form.new_password2 }}
+                    {% if password_form.new_password2.errors %}<p class="mt-1 text-xs text-red-400/70">{{ password_form.new_password2.errors.0 }}</p>{% endif %}
+                </div>
+                <button type="submit" name="change_password" class="w-full flex items-center justify-center gap-2 py-3 mt-2 rounded-xl bg-gradient-to-r from-sea to-[#3a7a7a] text-ink text-xs font-semibold tracking-[0.06em] uppercase hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(74,143,143,0.3)] transition-all duration-300 cursor-pointer">
+                    Change Password
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    {% include "core/components/footer.html" %}
+</div>
+{% endblock %}

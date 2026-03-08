@@ -1,0 +1,28 @@
+<div id="disclaimer-banner" class="fixed bottom-0 left-0 right-0 z-[1000] transition-transform duration-500 translate-y-full">
+    <div class="border-t border-white/[0.06] bg-[#141310]/95 backdrop-blur-md px-6 py-5">
+        <div class="max-w-[1120px] mx-auto flex items-start gap-6 justify-between">
+            <p class="text-[0.75rem] leading-relaxed text-[#a09a93] max-w-[800px]">
+                Information provided is for educational purposes only and does not constitute as a recommendation or professional investment advice
+                to buy or sell any asset.
+                Past performance is not indicative of future results.
+                Consult a financial adviser before making investment decisions.
+            </p>
+            <button onclick="dismissDisclaimer()" class="shrink-0 text-[0.7rem] font-medium tracking-[0.06em] uppercase text-copper hover:text-copper-light transition-colors cursor-pointer px-4 py-1.5 border border-copper/20 rounded">
+                Understood
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function dismissDisclaimer() {
+        document.getElementById('disclaimer-banner').classList.add('translate-y-full');
+        localStorage.setItem('tidalsight_disclaimer_dismissed', '1');
+    }
+
+    if (!localStorage.getItem('tidalsight_disclaimer_dismissed')) {
+        setTimeout(() => {
+            document.getElementById('disclaimer-banner').classList.remove('translate-y-full');
+        }, 800);
+    }
+</script>

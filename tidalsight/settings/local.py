@@ -15,6 +15,8 @@ DATABASES = {
     }
 }
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",

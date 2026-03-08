@@ -17,15 +17,24 @@ BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
 # Load .env from project root
 load_dotenv(BASE_DIR / ".env")
 
-ENV_TYPE = os.environ.get("ENV_TYPE")
+ENV_TYPE: str | None = os.environ.get("ENV_TYPE")
 if ENV_TYPE not in ("local", "prod"):
     raise RuntimeError(f"ENV_TYPE must be 'local' or 'prod', got: {ENV_TYPE!r}")
 
 DEBUG: bool = os.environ.get("DEBUG", "false").lower() == "true"
 
-SECRET_KEY = os.environ["SECRET_KEY"]
 
-# Application definition
+# Required Environment Variables ---------------------------------------
+
+SECRET_KEY: str = os.environ["SECRET_KEY"]
+# BytePlus ModelArk
+BYTEPLUS_MODELARK_KEY: str = os.environ["BYTEPLUS_MODELARK_KEY"]
+BYTEPLUS_MODELARK_BASE_URL: str = "https://ark.ap-southeast.bytepluses.com/api/v3"
+# Brave Search
+BRAVE_SEARCH_API_KEY: str = os.environ["BRAVE_SEARCH_API_KEY"]
+
+
+# Application definition -----------------------------------------------
 
 INSTALLED_APPS: list[str] = [
     "django.contrib.admin",
@@ -35,6 +44,8 @@ INSTALLED_APPS: list[str] = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "core",
+    "scraper",
+    "analyst",
 ]
 
 MIDDLEWARE: list[str] = [
@@ -84,3 +95,35 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL: str = "static/"
 STATIC_ROOT: Path = BASE_DIR / "staticfiles"
+
+
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "[{levelname}] {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "analyst": {"handlers": ["console"], "level": "INFO"},
+        "scraper": {"handlers": ["console"], "level": "INFO"},
+    },
+}
+
+# Concurrency
+SYNC_MAX_WORKERS: int = 2
+
+AUTH_USER_MODEL = "core.User"
+LOGIN_URL = "core:sign_in"
+LOGIN_REDIRECT_URL = "core:home"
+LOGOUT_REDIRECT_URL = "core:home"

@@ -1,0 +1,34 @@
+{% load formatting %}
+
+<!-- Price row: price + change inline -->
+{% if latest_price %}
+<div class="flex items-baseline gap-4 mb-5">
+    <span class="font-serif text-[2.2rem] leading-none text-copper-light">${{ latest_price.close|floatformat:2 }}</span>
+    {% if price_change != None %}
+    <div class="flex items-baseline gap-2">
+        <span class="text-[0.75rem] font-semibold tabular-nums {% if price_change >= 0 %}text-[#22c55e]{% else %}text-[#ef4444]{% endif %}">
+            {% if price_change >= 0 %}+{% endif %}{{ price_change|floatformat:2 }}
+        </span>
+        <span class="text-[0.7rem] tabular-nums {% if price_change >= 0 %}text-[#22c55e]/60{% else %}text-[#ef4444]/60{% endif %}">
+            ({% if price_change_pct >= 0 %}+{% endif %}{{ price_change_pct|floatformat:2 }}%)
+        </span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+<!-- Valuations -->
+{% if valuations %}
+<div class="space-y-1.5">
+    {% for v in valuations %}
+    <div class="flex items-center justify-between gap-4">
+        <span class="text-[0.6rem] text-[#5c5750] flex items-center gap-1">{{ v.name }} {% include "core/components/info_tooltip.html" with tooltip_title=v.name tooltip_description=v.description %}</span>
+        <div class="flex items-center gap-2">
+            <span class="text-[0.7rem] font-medium tabular-nums text-[#a09a93]">${{ v.value|floatformat:2 }}</span>
+            <span class="text-[0.55rem] font-semibold tabular-nums {% if v.delta_pct >= 0 %}text-[#22c55e]{% else %}text-[#ef4444]{% endif %}">
+                {% if v.delta_pct >= 0 %}▲ {{ v.delta_pct }}%{% else %}▼ {{ v.delta_pct|cut:"-" }}%{% endif %}
+            </span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

@@ -1,0 +1,94 @@
+<div id="chartSkeleton" class="absolute inset-0 overflow-hidden rounded-sm">
+    <style>
+        @keyframes labelFlicker {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.08; }
+        }
+        @keyframes skelBreathe {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.2; }
+        }
+        #chartSkeleton .flicker { animation: labelFlicker 2s ease-in-out infinite; }
+        #chartSkeleton .breathe { animation: skelBreathe 2.5s ease-in-out infinite; }
+    </style>
+    <div class="h-full w-full px-12 pb-7 pt-4 relative">
+        <div class="absolute top-2 left-0 right-0 flex justify-center">
+            <span class="text-[0.6rem] font-medium tracking-[0.16em] uppercase text-[#5c5750] breathe">Generating chart</span>
+        </div>
+        <svg id="skelSvg" class="w-full h-full" viewBox="0 0 400 100" preserveAspectRatio="none" fill="none">
+            <defs>
+                <linearGradient id="skelFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(200,121,65,0.06)"/>
+                    <stop offset="100%" stop-color="rgba(200,121,65,0)"/>
+                </linearGradient>
+            </defs>
+            <path id="skelFillPath" fill="url(#skelFill)"/>
+            <path id="skelLinePath" stroke="rgba(200,121,65,0.12)" stroke-width="1.5" fill="none"/>
+        </svg>
+        <div class="absolute left-0 top-4 bottom-7 w-12 flex flex-col justify-between items-end pr-2">
+            <div class="h-1 w-7 bg-white/[0.04] rounded-sm flicker"></div>
+            <div class="h-1 w-5 bg-white/[0.04] rounded-sm flicker" style="animation-delay: 400ms;"></div>
+            <div class="h-1 w-6 bg-white/[0.04] rounded-sm flicker" style="animation-delay: 800ms;"></div>
+            <div class="h-1 w-4 bg-white/[0.04] rounded-sm flicker" style="animation-delay: 1200ms;"></div>
+        </div>
+        <div class="absolute left-12 right-3 bottom-0 h-5 flex justify-between items-center">
+            <div class="h-1 w-8 bg-white/[0.04] rounded-sm flicker" style="animation-delay: 200ms;"></div>
+            <div class="h-1 w-8 bg-white/[0.04] rounded-sm flicker" style="animation-delay: 600ms;"></div>
+            <div class="h-1 w-8 bg-white/[0.04] rounded-sm flicker" style="animation-delay: 1000ms;"></div>
+            <div class="h-1 w-8 bg-white/[0.04] rounded-sm flicker" style="animation-delay: 1400ms;"></div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const pts = 10, w = 400, h = 100;
+            const line = document.getElementById('skelLinePath');
+            const fill = document.getElementById('skelFillPath');
+            let current = [], target = [];
+
+            function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
+
+            function genPoints() {
+                const p = [];
+                for (let i = 0; i <= pts; i++) {
+                    p.push({ x: (w / pts) * i, y: rand(18, 78) });
+                }
+                return p;
+            }
+
+            function toPath(p, closed) {
+                let d = `M${p[0].x},${p[0].y}`;
+                for (let i = 1; i < p.length; i++) {
+                    const cx = (p[i - 1].x + p[i].x) / 2;
+                    d += ` C${cx},${p[i - 1].y} ${cx},${p[i].y} ${p[i].x},${p[i].y}`;
+                }
+                if (closed) d += ` V${h} H0 Z`;
+                return d;
+            }
+
+            function lerp(a, b, t) {
+                return a.map((p, i) => ({ x: p.x, y: p.y + (b[i].y - p.y) * t }));
+            }
+
+            current = genPoints();
+            target = genPoints();
+            let progress = 0;
+            const speed = 0.008;
+
+            function frame() {
+                if (!document.getElementById('chartSkeleton')) return;
+                progress += speed;
+                if (progress >= 1) {
+                    current = target;
+                    target = genPoints();
+                    progress = 0;
+                }
+                const t = progress * progress * (3 - 2 * progress); // smoothstep
+                const pts = lerp(current, target, t);
+                line.setAttribute('d', toPath(pts, false));
+                fill.setAttribute('d', toPath(pts, true));
+                requestAnimationFrame(frame);
+            }
+            frame();
+        })();
+    </script>
+</div>

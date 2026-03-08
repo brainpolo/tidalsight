@@ -1,0 +1,19 @@
+<div class="max-w-[1120px] mx-auto px-10">
+    <header class="flex items-center justify-between py-8 gap-12">
+        <div class="flex items-center gap-8">
+            <a href="{% url 'core:home' %}" class="font-serif text-3xl text-[#fafafa] tracking-tight hover:text-copper-light transition-colors">TidalSight</a>
+            {% if show_search %}{% include "core/components/asset_search_widget.html" with compact=True %}{% endif %}
+        </div>
+        <div class="flex items-center gap-8">
+            <a href="{% url 'core:our_approach' %}" class="text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors">Our Approach</a>
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="text-xs font-medium tracking-[0.06em] text-[#5c5750] hover:text-[#a09a93] transition-colors">Admin</a>{% endif %}
+                <a href="{% url 'core:profile' %}" class="text-xs font-medium tracking-[0.06em] text-[#a09a93] hover:text-[#fafafa] transition-colors">{{ user.first_name|default:user.username }}</a>
+                <form method="post" action="{% url 'core:sign_out' %}" class="inline">{% csrf_token %}<button type="submit" class="text-xs font-medium tracking-[0.06em] uppercase text-copper hover:text-copper-light transition-colors">Sign Out</button></form>
+            {% else %}
+                <a href="{% url 'core:sign_in' %}" class="text-xs font-medium tracking-[0.06em] uppercase text-[#a09a93] hover:text-[#fafafa] transition-colors">Sign In</a>
+                <a href="{% url 'core:sign_up' %}" class="text-xs font-medium tracking-[0.06em] uppercase px-5 py-2 border border-copper/20 rounded text-copper hover:text-copper-light hover:border-copper/40 transition-all">Sign Up</a>
+            {% endif %}
+        </div>
+    </header>
+</div>

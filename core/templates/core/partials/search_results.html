@@ -1,0 +1,26 @@
+{% if results %}
+<ul class="search-results-list" role="listbox">
+    {% for r in results %}
+    <li role="option">
+        <a href="{% url 'core:asset_detail' r.asset.ticker %}" class="search-result-item" data-ticker="{{ r.asset.ticker }}">
+            <div class="search-result-left">
+                <span class="search-result-ticker">{{ r.asset.ticker }}</span>
+                <span class="search-result-name">{{ r.asset.name }}</span>
+                <span class="search-result-badge search-result-badge--{{ r.asset.asset_class }}">{{ r.asset.get_asset_class_display }}</span>
+            </div>
+            <div class="search-result-right">
+                {{ r.sparkline_svg }}
+                {% if r.latest_close %}
+                <span class="search-result-price">${{ r.latest_close|floatformat:2 }}</span>
+                {% endif %}
+                {% if r.price_change_pct != None %}
+                <span class="search-result-change {% if r.price_change_pct >= 0 %}up{% else %}down{% endif %}">
+                    {% if r.price_change_pct >= 0 %}+{% endif %}{{ r.price_change_pct|floatformat:2 }}%
+                </span>
+                {% endif %}
+            </div>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}

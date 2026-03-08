@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found — TidalSight{% endblock %}
+
+{% block body %}
+<div class="grain"></div>
+<div class="min-h-screen flex flex-col">
+    {% include "core/components/header.html" %}
+    <div class="flex-1 flex items-center justify-center px-10">
+        <div class="text-center max-w-md">
+            <div class="font-serif text-[5rem] leading-none text-copper/30 mb-4">404</div>
+            <h1 class="font-serif text-2xl text-[#e8e4df] mb-3">Page not found</h1>
+            <p class="text-sm text-[#5c5750] mb-8">The page you're looking for doesn't exist or has been moved.</p>
+            <a href="{% url 'core:home' %}" class="inline-block text-[0.7rem] font-medium tracking-[0.06em] uppercase text-copper hover:text-copper-light transition-colors">Back to home</a>
+        </div>
+    </div>
+    {% include "core/components/footer.html" %}
+</div>
+{% endblock %}
