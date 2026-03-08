@@ -271,9 +271,10 @@ async def asset_detail(request, ticker):
     weekly_views = await asset.asset_views.filter(viewed_at__gte=weekly_cutoff).acount()
     all_time_views = await asset.asset_views.acount()
 
-    is_watched = request.user.is_authenticated and await request.user.watchlist.filter(
-        pk=asset.pk
-    ).aexists()
+    is_watched = (
+        request.user.is_authenticated
+        and await request.user.watchlist.filter(pk=asset.pk).aexists()
+    )
 
     # Inline 1W hourly data for instant chart render (no HTMX round-trip)
     hourly_cutoff = timezone.now() - timedelta(days=7)
@@ -354,7 +355,9 @@ async def asset_header(request, ticker):
         price_change_pct = None
 
     fundamental = await asset.fundamentals.afirst()
-    valuations = await sync_to_async(compute_valuations)(asset, fundamental, latest_price)
+    valuations = await sync_to_async(compute_valuations)(
+        asset, fundamental, latest_price
+    )
 
     return render(
         request,
@@ -453,7 +456,9 @@ async def asset_community(request, ticker):
 
     sync_asset_news_async(asset)
 
-    reddit_posts = [p async for p in asset.reddit_posts.all()[:ASSET_DETAIL_REDDIT_POSTS]]
+    reddit_posts = [
+        p async for p in asset.reddit_posts.all()[:ASSET_DETAIL_REDDIT_POSTS]
+    ]
     hn_posts = [p async for p in asset.hn_posts.all()[:ASSET_DETAIL_HN_POSTS]]
     news_articles = [
         a async for a in asset.news_articles.all()[:ASSET_DETAIL_NEWS_ARTICLES]

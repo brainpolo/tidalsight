@@ -6,32 +6,41 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0010_add_asset_views_tracking'),
+        ("scraper", "0010_add_asset_views_tracking"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='assetview',
-            options={'ordering': ['-viewed_at']},
+            name="assetview",
+            options={"ordering": ["-viewed_at"]},
         ),
         migrations.RemoveConstraint(
-            model_name='assetview',
-            name='unique_asset_view',
+            model_name="assetview",
+            name="unique_asset_view",
         ),
         migrations.AddField(
-            model_name='assetview',
-            name='user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='asset_views', to=settings.AUTH_USER_MODEL),
+            model_name="assetview",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="asset_views",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddIndex(
-            model_name='assetview',
-            index=models.Index(fields=['asset', '-viewed_at'], name='scraper_ass_asset_i_9f77cc_idx'),
+            model_name="assetview",
+            index=models.Index(
+                fields=["asset", "-viewed_at"], name="scraper_ass_asset_i_9f77cc_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='assetview',
-            index=models.Index(fields=['user', '-viewed_at'], name='scraper_ass_user_id_73f766_idx'),
+            model_name="assetview",
+            index=models.Index(
+                fields=["user", "-viewed_at"], name="scraper_ass_user_id_73f766_idx"
+            ),
         ),
     ]
