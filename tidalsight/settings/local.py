@@ -4,6 +4,15 @@ Django settings for local development.
 
 from tidalsight.settings.base import *  # noqa: F403
 
+# Vite dev server CSP overrides
+_VITE = "http://localhost:5173"
+SECURE_CSP = {
+    **SECURE_CSP,  # noqa: F405
+    "script-src": [*SECURE_CSP["script-src"], _VITE],  # noqa: F405
+    "style-src": [*SECURE_CSP["style-src"], _VITE],  # noqa: F405
+    "connect-src": [*SECURE_CSP["connect-src"], _VITE, "ws://localhost:5173"],  # noqa: F405
+}
+
 # daphne overrides runserver to use ASGI (must be before django.contrib.staticfiles)
 INSTALLED_APPS = ["daphne", *INSTALLED_APPS]  # noqa: F405
 ASGI_APPLICATION = "tidalsight.asgi.application"

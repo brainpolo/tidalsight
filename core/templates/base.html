@@ -1,10 +1,11 @@
-{% load static %}
+{% load static vite %}
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TidalSight{% endblock %}</title>
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
 
     <!-- Theme: apply before paint to prevent flash -->
     <script>
@@ -15,14 +16,31 @@
         })();
     </script>
 
-    <!-- Tailwind (built) -->
-    <link rel="stylesheet" href="{% static 'css/dist.css' %}">
-
     <!-- htmx (vendored) -->
     <script defer src="{% static 'js/htmx.min.js' %}"></script>
 
-    <!-- Lucide icons (tree-shaken bundle) -->
-    <script defer src="{% static 'js/icons.bundle.js' %}"></script>
+    {% if VITE_DEV %}
+    <!-- Hide body until Vite injects CSS -->
+    <style id="vite-cloak">body { opacity: 0; transition: opacity 0.1s; }</style>
+    <!-- Vite dev server (HMR) -->
+    <script type="module" src="http://localhost:5173/@vite/client"></script>
+    <script type="module" src="http://localhost:5173/src/js/main.js"></script>
+    <script type="module">
+        // Wait for Vite to inject the stylesheet, then reveal
+        (function check() {
+            if (getComputedStyle(document.documentElement).getPropertyValue('--ts-page').trim()) {
+                document.body.style.opacity = '';
+                var cloak = document.getElementById('vite-cloak');
+                if (cloak) cloak.remove();
+            } else {
+                requestAnimationFrame(check);
+            }
+        })();
+    </script>
+    {% else %}
+    <!-- Production build -->
+    {% vite_asset "src/js/main.js" %}
+    {% endif %}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

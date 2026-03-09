@@ -1,40 +1,48 @@
 {% load formatting %}
 
 {% if loading %}
-{% include "core/components/peers_skeleton.html" with message="Discovering peers…" %}
+<div class="max-w-[1120px] mx-auto px-4 sm:px-10 pt-3 pb-1">
+    <div class="flex items-center gap-3">
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 shrink-0">Peers</span>
+        <div class="flex items-center gap-2 overflow-hidden">
+            {% for _ in "12345" %}
+            <div class="h-4 w-16 bg-surface/[0.04] rounded-sm skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 {% elif peers %}
-<div class="max-w-[1120px] mx-auto px-4 sm:px-10">
-    <section class="py-6 sm:py-14">
-        <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Peers</div>
-        <div class="flex gap-3 overflow-x-auto py-2 -my-2 scrollbar-hide">
+<div class="max-w-[1120px] mx-auto px-4 sm:px-10 pt-3 pb-1">
+    <div class="flex items-start gap-3 overflow-x-auto scrollbar-hide justify-center">
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 shrink-0 pt-1.5">Peers</span>
+        <div class="flex items-start gap-1 min-w-0">
             {% for peer in peers %}
             <a href="{% url 'core:asset_detail' peer.asset.ticker %}"
-               class="shrink-0 w-[160px] border border-surface/[0.04] rounded-sm p-4 hover:border-surface/[0.08] hover:-translate-y-0.5 transition-all duration-200 group block">
-                <div class="flex items-center gap-2 mb-2">
+               class="shrink-0 px-2.5 py-1.5 rounded-sm hover:bg-surface/[0.03] transition-colors group">
+                <div class="flex items-center gap-1.5">
                     {% if peer.asset.website %}
                     <img src="https://www.google.com/s2/favicons?domain={{ peer.asset.website|domain }}&sz=128"
-                         alt="" class="size-5 rounded" loading="lazy">
+                         alt="" class="size-3.5 rounded-sm" loading="lazy">
                     {% endif %}
-                    <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-t2 group-hover:text-heading transition-colors">{{ peer.asset.ticker }}</span>
+                    <span class="text-[0.6rem] font-semibold tracking-[0.08em] uppercase text-t3 group-hover:text-t1 transition-colors">{{ peer.asset.ticker }}</span>
                     {% if peer.sparkline_svg %}
-                    <span class="ml-auto opacity-50 group-hover:opacity-80 transition-opacity">{{ peer.sparkline_svg }}</span>
+                    <span class="ml-auto opacity-40 group-hover:opacity-70 transition-opacity">{{ peer.sparkline_svg }}</span>
                     {% endif %}
                 </div>
-                <div class="text-[0.7rem] text-t3 truncate mb-2">{{ peer.asset.name }}</div>
                 {% if peer.latest_close is not None %}
-                <div class="flex items-baseline gap-1.5">
-                    <span class="text-[0.75rem] font-semibold tabular-nums text-heading">${{ peer.latest_close|floatformat:2 }}</span>
+                <div class="flex items-baseline gap-1 mt-0.5">
+                    <span class="text-[0.55rem] tabular-nums text-t2">${{ peer.latest_close|floatformat:2 }}</span>
                     {% if peer.price_change_pct is not None %}
-                    <span class="text-[0.6rem] font-semibold tabular-nums {% if peer.price_change_pct >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
-                        {% if peer.price_change_pct >= 0 %}+{% endif %}{{ peer.price_change_pct }}%
-                    </span>
+                    <span class="text-[0.5rem] font-semibold tabular-nums {% if peer.price_change_pct >= 0 %}text-emerald-400/70{% else %}text-red-400/70{% endif %}">{% if peer.price_change_pct >= 0 %}+{% endif %}{{ peer.price_change_pct }}%</span>
                     {% endif %}
                 </div>
                 {% endif %}
             </a>
+            {% if not forloop.last %}
+            <span class="text-surface/[0.12] text-[0.5rem]">&middot;</span>
+            {% endif %}
             {% endfor %}
         </div>
-    </section>
+    </div>
 </div>
-<div class="divider"></div>
 {% endif %}

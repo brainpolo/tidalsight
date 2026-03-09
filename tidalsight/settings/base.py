@@ -75,6 +75,7 @@ TEMPLATES: list[dict[str, Any]] = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.csp",
+                "core.context_processors.vite",
             ],
         },
     },
@@ -109,20 +110,30 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "simple": {
-            "format": "[{levelname}] {name}: {message}",
-            "style": "{",
+        "rich": {
+            "format": "%(message)s",
+            "datefmt": "[%X]",
         },
     },
     "handlers": {
         "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "class": "rich.logging.RichHandler",
+            "formatter": "rich",
+            "level": "DEBUG",
+            "rich_tracebacks": True,
+            "tracebacks_suppress": ["django"],
+            "show_path": True,
         },
     },
     "loggers": {
-        "analyst": {"handlers": ["console"], "level": "INFO"},
-        "scraper": {"handlers": ["console"], "level": "INFO"},
+        "analyst": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "scraper": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "core": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
     },
 }
 

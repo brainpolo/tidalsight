@@ -4,6 +4,7 @@ import re
 import httpx
 from django.db import IntegrityError
 
+from scraper.app_behaviour import REDDIT_MIN_SCORE
 from scraper.clients.reddit_client import fetch_comments, fetch_posts
 from scraper.constants import (
     EMBEDDING_MAX_COMMENTS,
@@ -123,6 +124,9 @@ def sync_reddit_posts(
             continue
 
         for post_data in posts:
+            if post_data.get("score", 0) < REDDIT_MIN_SCORE:
+                continue
+
             reddit_id = post_data.pop("reddit_id")
 
             post, created = RedditPost.objects.update_or_create(

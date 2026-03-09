@@ -24,6 +24,11 @@ urlpatterns = [
     ),
     path("assets/<str:ticker>/header/", views.asset_header, name="asset_header"),
     path(
+        "assets/<str:ticker>/description/",
+        views.asset_description,
+        name="asset_description",
+    ),
+    path(
         "assets/<str:ticker>/fundamentals/",
         views.asset_fundamentals,
         name="asset_fundamentals",
@@ -36,6 +41,36 @@ urlpatterns = [
     ),
     path(
         "assets/<str:ticker>/community/", views.asset_community, name="asset_community"
+    ),
+    path(
+        "assets/<str:ticker>/report-card/financial-health/",
+        views.report_card_financial_health,
+        name="report_card_financial_health",
+    ),
+    path(
+        "assets/<str:ticker>/report-card/external-risk/",
+        views.report_card_external_risk,
+        name="report_card_external_risk",
+    ),
+    path(
+        "assets/<str:ticker>/report-card/valuation/",
+        views.report_card_valuation,
+        name="report_card_valuation",
+    ),
+    path(
+        "assets/<str:ticker>/report-card/product-flywheel/",
+        views.report_card_product_flywheel,
+        name="report_card_product_flywheel",
+    ),
+    path(
+        "assets/<str:ticker>/report-card/leadership/",
+        views.report_card_leadership,
+        name="report_card_leadership",
+    ),
+    path(
+        "assets/<str:ticker>/report-card/overall/",
+        views.report_card_overall,
+        name="report_card_overall",
     ),
     path("assets/<str:ticker>/prices/", views.asset_prices, name="asset_prices"),
     path(

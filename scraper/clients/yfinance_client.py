@@ -21,6 +21,14 @@ def _to_decimal(value, default=None):
         return default
 
 
+def _ratio_to_pct(value, default=None):
+    """Convert a 0-1 ratio from yfinance to a percentage (e.g. 0.2704 → 27.04)."""
+    raw = _to_decimal(value, default)
+    if raw is None:
+        return default
+    return (raw * 100).quantize(Decimal("0.01"))
+
+
 def fetch_price_history(
     ticker: str,
     period: str = "1mo",
@@ -74,14 +82,17 @@ def fetch_fundamentals(ticker: str) -> dict | None:
         "eps": _to_decimal(info.get("trailingEps")),
         "dividend_yield": _to_decimal(info.get("dividendYield")),
         "revenue": _to_decimal(info.get("totalRevenue")),
-        "profit_margin": _to_decimal(info.get("profitMargins")),
+        "profit_margin": _ratio_to_pct(info.get("profitMargins")),
         "beta": _to_decimal(info.get("beta")),
         "debt_to_equity": _to_decimal(info.get("debtToEquity")),
         "free_cash_flow": _to_decimal(info.get("freeCashflow")),
-        "return_on_equity": _to_decimal(info.get("returnOnEquity")),
+        "return_on_equity": _ratio_to_pct(info.get("returnOnEquity")),
         "price_to_book": _to_decimal(info.get("priceToBook")),
         "fifty_two_week_high": _to_decimal(info.get("fiftyTwoWeekHigh")),
         "fifty_two_week_low": _to_decimal(info.get("fiftyTwoWeekLow")),
+        "revenue_growth": _ratio_to_pct(info.get("revenueGrowth")),
+        "earnings_growth": _ratio_to_pct(info.get("earningsGrowth")),
+        "current_ratio": _to_decimal(info.get("currentRatio")),
     }
 
 

@@ -58,9 +58,11 @@ def fetch_asset_news(asset_id: int):
 
 
 @shared_task
-def sync_all_asset_prices():
+def sync_crypto_prices():
+    """Sync prices for crypto assets only (24/7 markets)."""
     tickers = list(
-        Asset.objects.filter(is_active=True).values_list("ticker", flat=True)
+        Asset.objects.filter(is_active=True, asset_class=Asset.AssetClass.CRYPTO)
+        .values_list("ticker", flat=True)
     )
     total = 0
     for ticker in tickers:
@@ -69,15 +71,41 @@ def sync_all_asset_prices():
         except Exception:
             logger.exception("Failed to sync prices for %s", ticker)
     logger.info(
-        "sync_all_asset_prices: %d new rows across %d assets", total, len(tickers)
+        "sync_crypto_prices: %d new rows across %d assets", total, len(tickers)
     )
     return total
 
 
 @shared_task
-def sync_all_asset_fundamentals():
+def sync_traditional_prices():
+    """Sync prices for non-crypto assets (equity, commodity, etc.)."""
     tickers = list(
-        Asset.objects.filter(is_active=True).values_list("ticker", flat=True)
+        Asset.objects.filter(is_active=True)
+        .exclude(asset_class=Asset.AssetClass.CRYPTO)
+        .values_list("ticker", flat=True)
+    )
+    total = 0
+    for ticker in tickers:
+        try:
+            total += sync_all_prices(ticker)
+        except Exception:
+            logger.exception("Failed to sync prices for %s", ticker)
+    logger.info(
+        "sync_traditional_prices: %d new rows across %d assets", total, len(tickers)
+    )
+    return total
+
+
+@shared_task
+def sync_watched_asset_fundamentals():
+    """Sync fundamentals only for assets in at least one user's watchlist."""
+    tickers = list(
+        Asset.objects.filter(
+            is_active=True,
+            user_assets__in_watchlist=True,
+        )
+        .distinct()
+        .values_list("ticker", flat=True)
     )
     updated = 0
     for ticker in tickers:
@@ -86,5 +114,5 @@ def sync_all_asset_fundamentals():
                 updated += 1
         except Exception:
             logger.exception("Failed to sync fundamentals for %s", ticker)
-    logger.info("sync_all_asset_fundamentals: %d assets updated", updated)
+    logger.info("sync_watched_asset_fundamentals: %d/%d watched assets updated", updated, len(tickers))
     return updated

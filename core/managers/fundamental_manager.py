@@ -132,6 +132,33 @@ METRIC_DESCRIPTIONS: dict[str, MetricMeta] = {
         icon="chevron-down",
         prefix="$",
     ),
+    "revenue_growth": MetricMeta(
+        label="Revenue Growth",
+        description=(
+            "Year-over-year quarterly revenue growth rate. "
+            "Positive growth indicates expanding business; negative signals contraction."
+        ),
+        icon="trending-up",
+        suffix="%",
+    ),
+    "earnings_growth": MetricMeta(
+        label="Earnings Growth",
+        description=(
+            "Year-over-year quarterly earnings growth rate. "
+            "Shows whether profitability is improving or declining."
+        ),
+        icon="trending-up",
+        suffix="%",
+    ),
+    "current_ratio": MetricMeta(
+        label="Current Ratio",
+        description=(
+            "Current assets divided by current liabilities. "
+            "Above 1 means the company can cover short-term obligations. Below 1 may signal liquidity risk."
+        ),
+        icon="droplets",
+        benchmark="Healthy > 1.0",
+    ),
 }
 
 # Fields rendered as dedicated gauges instead of regular cards
@@ -143,8 +170,11 @@ FUNDAMENTAL_FIELD_ORDER = [
     "dividend_yield",
     "beta",
     "revenue",
+    "revenue_growth",
+    "earnings_growth",
     "profit_margin",
     "debt_to_equity",
+    "current_ratio",
     "free_cash_flow",
     "return_on_equity",
     "price_to_book",

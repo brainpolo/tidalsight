@@ -3,12 +3,14 @@ import hashlib
 import logging
 
 from agents import RunConfig, Runner
+from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.utils import timezone
 
 from analyst.agents.market_digest import MarketDigest, market_digest_agent
 from analyst.agents.provider import get_model_provider
+from analyst.grounding import agent_grounding
 from analyst.app_behaviour import (
     DIGEST_DATA_TTL,
     DIGEST_FRESHNESS_TTL,
@@ -122,7 +124,7 @@ def _run_agent(prompt: str) -> MarketDigest:
     result = asyncio.run(
         Runner.run(
             market_digest_agent,
-            input=prompt,
+            input=prompt + agent_grounding(),
             run_config=config,
             max_turns=MAX_AGENT_TURNS,
         )
@@ -169,7 +171,7 @@ def get_market_digest() -> dict | None:
 
     try:
         digest = _run_agent(prompt)
-    except ConnectionError, RuntimeError, ValueError, TimeoutError:
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate market digest")
         cache.delete(DIGEST_LOCK_KEY)
         return existing

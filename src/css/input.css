@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../core/templates/";
 
 /* ── Dark mode: class-based ── */
 @custom-variant dark (&:where(.dark, .dark *));

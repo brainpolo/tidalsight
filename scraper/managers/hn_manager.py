@@ -3,11 +3,11 @@ import logging
 import httpx
 from django.db import IntegrityError
 
+from scraper.app_behaviour import HN_MIN_SCORE
 from scraper.clients.hn_client import fetch_comments, fetch_top_stories
 from scraper.constants import (
     EMBEDDING_MAX_COMMENTS,
     HN_DEFAULT_COMMENT_LIMIT,
-    HN_MIN_SCORE,
     HN_TOP_STORIES_LIMIT,
 )
 from scraper.embeddings import gen_text_embedding

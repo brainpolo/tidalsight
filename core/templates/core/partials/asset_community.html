@@ -1,5 +1,4 @@
 {% if reddit_posts or hn_posts or news_articles %}
-<div class="max-w-[1120px] mx-auto px-4 sm:px-10">
     <section class="py-6 sm:py-10">
         <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Mentioned In</div>
         <div class="max-h-[420px] overflow-y-auto space-y-px sm:pr-2" style="scrollbar-width: thin; scrollbar-color: var(--ts-divider) transparent;">
@@ -55,7 +54,5 @@
             {% endfor %}
         </div>
     </section>
-</div>
-
-<div class="divider"></div>
+<div class="h-px bg-surface/[0.04]"></div>
 {% endif %}

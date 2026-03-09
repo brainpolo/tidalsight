@@ -81,11 +81,12 @@ def get_or_create_asset(ticker: str) -> Asset:
         if created:
             logger.info("Created asset: %s", asset)
             try:
-                from analyst.tasks import discover_peers
+                from analyst.tasks import discover_peers, generate_asset_description
 
                 discover_peers.delay(asset.id)
+                generate_asset_description.delay(asset.id)
             except Exception:
-                logger.warning("Failed to queue peer discovery for %s", ticker)
+                logger.warning("Failed to queue post-creation tasks for %s", ticker)
         return asset
     finally:
         cache.delete(lock_key)

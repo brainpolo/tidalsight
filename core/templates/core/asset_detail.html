@@ -40,7 +40,7 @@
         <section class="pt-4 sm:pt-6 pb-4 sm:pb-6">
             <div class="flex items-start gap-6 sm:gap-12 max-lg:flex-col">
                 <!-- Left: Asset info -->
-                <div class="shrink-0 w-full lg:min-w-[300px] lg:w-auto">
+                <div class="shrink-0 w-full lg:min-w-[300px] lg:max-w-[420px] lg:w-auto">
                     <!-- Identity row -->
                     <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
                         {% if asset.website %}
@@ -73,10 +73,11 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Company description (HTMX partial) -->
+                    <div hx-get="{% url 'core:asset_description' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+                    </div>
                     <!-- Price + Valuations (HTMX partial) -->
-                    <div hx-get="{% url 'core:asset_header' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML"
-                         hx-on::after-settle="htmx.trigger(document.body, 'prices-synced')"
-                         hx-on::response-error="htmx.trigger(document.body, 'prices-synced')">
+                    <div hx-get="{% url 'core:asset_header' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
                         <div class="flex items-baseline gap-4 mb-5">
                             <div class="h-9 w-40 bg-surface/[0.06] skel-bar"></div>
                             <div class="h-4 w-20 bg-surface/[0.06] skel-bar" style="animation-delay:200ms"></div>
@@ -180,9 +181,14 @@
                         const initialData = {{ chart_data_json|safe }};
                         const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-                        // Theme-aware colors from CSS variables
-                        const cs = getComputedStyle(document.documentElement);
-                        function tv(n) { return cs.getPropertyValue(n).trim(); }
+                        // Wait for CSS vars to be available (Vite injects CSS async in dev)
+                        function tv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+                        function waitForCSS(cb) {
+                            if (tv('--ts-page')) { cb(); return; }
+                            requestAnimationFrame(function() { waitForCSS(cb); });
+                        }
+                        waitForCSS(initChart);
+                        function initChart() {
                         const axisColor = tv('--ts-t3');
                         const tooltipBg = tv('--ts-tooltip');
                         const tooltipText = tv('--ts-heading');
@@ -551,6 +557,7 @@
                             link.download = document.title.split('\u2014')[0].trim() + ' ' + currentRange + '.png';
                             link.href = canvas.toDataURL('image/png'); link.click();
                         });
+                    } // end initChart
                     })();
                     </script>
                 </div>
@@ -558,63 +565,9 @@
         </section>
     </div>
 
-    {% if request.user.is_authenticated %}
-    <!-- Personal Notes -->
-    <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pt-2 pb-6">
-        <div class="border border-surface/[0.04] rounded-sm p-4 sm:p-5">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase text-t3">Your Notes</span>
-                    <span class="text-[0.55rem] text-t4">&mdash; private to you</span>
-                </div>
-                <div id="noteSaveStatus" class="text-[0.55rem] text-t4 transition-opacity"></div>
-            </div>
-            <textarea id="userNote" rows="3"
-                      placeholder="Why are you watching {{ asset.ticker }}? Jot down your investment thesis, key levels, or anything you'd like the AI to consider when generating analysis tailored to your perspective."
-                      class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-3 py-2.5 text-[0.75rem] leading-relaxed text-heading placeholder-t4 resize-y focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
-            <div class="flex items-center justify-between mt-2.5">
-                <span class="text-[0.5rem] text-t4">Your notes help shape AI-generated briefs and analysis around your investment reasoning.</span>
-                <button id="noteSaveBtn" class="text-[0.6rem] font-semibold tracking-[0.08em] uppercase px-3 py-1.5 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-3">Save</button>
-            </div>
-        </div>
+    <!-- Peers (compact strip) -->
+    <div id="peers-container" hx-get="{% url 'core:asset_peers' asset.ticker %}" hx-trigger="load, retryPeers from:body delay:8s" hx-swap="innerHTML">
     </div>
-    <script>
-    (function() {
-        const url = '{% url "core:save_note" asset.ticker %}';
-        const csrf = '{{ csrf_token }}';
-        const textarea = document.getElementById('userNote');
-        const btn = document.getElementById('noteSaveBtn');
-        const status = document.getElementById('noteSaveStatus');
-
-        function save() {
-            const body = new URLSearchParams();
-            body.set('note', textarea.value);
-            body.set('csrfmiddlewaretoken', csrf);
-            btn.textContent = 'Saving\u2026';
-            btn.disabled = true;
-            fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-                .then(() => {
-                    btn.textContent = 'Saved';
-                    status.textContent = 'Saved just now';
-                    status.style.opacity = '1';
-                    setTimeout(() => { btn.textContent = 'Save'; btn.disabled = false; status.style.opacity = '0'; }, 2000);
-                })
-                .catch(() => {
-                    btn.textContent = 'Save';
-                    btn.disabled = false;
-                    status.textContent = 'Failed to save';
-                    status.style.opacity = '1';
-                });
-        }
-
-        btn.addEventListener('click', save);
-        textarea.addEventListener('keydown', (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save(); }
-        });
-    })();
-    </script>
-    {% endif %}
 
     {% if not request.user.is_authenticated %}
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pb-6">
@@ -631,9 +584,167 @@
 
     <div class="divider"></div>
 
+    <!-- Main content + sticky notes sidebar -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+        <div class="flex max-xl:flex-col xl:gap-8 items-start">
+
+        <!-- Mobile notes (visible below xl) -->
+        {% if request.user.is_authenticated %}
+        <div class="xl:hidden w-full mb-4 border border-surface/[0.04] rounded-sm p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-1.5">
+                    <i data-lucide="pen-line" class="size-3 text-t4"></i>
+                    <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3">Your Notes</span>
+                    <span class="text-[0.5rem] text-t4 ml-1">&mdash; shapes your report card</span>
+                </div>
+                <div id="noteSaveStatusMobile" class="text-[0.5rem] text-t4 transition-opacity"></div>
+            </div>
+            <textarea id="userNoteMobile" rows="2"
+                      placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
+                      class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
+            <div class="flex items-center justify-between mt-2">
+                <span class="text-[0.45rem] text-t4">Influences Valuation, Flywheel &amp; Leadership scores</span>
+                <button id="noteSaveBtnMobile" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main content column -->
+        <div class="min-w-0 flex-1">
+
+    <!-- Report Card -->
+        <section class="py-6 sm:py-10">
+            <div class="flex items-center gap-3 mb-6 sm:mb-8">
+                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">At a Glance &mdash; TidalSight Report</div>
+                <div class="flex-1 h-px bg-surface/[0.04]"></div>
+            </div>
+
+            <!-- Hygiene Factors -->
+            <div class="mb-6 rounded-lg border border-surface/[0.04] overflow-hidden">
+                <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-surface/[0.015] border-b border-surface/[0.04]">
+                    <i data-lucide="shield-check" class="size-3.5 text-t4"></i>
+                    <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3">Hygiene Factors</span>
+                    <span class="text-[0.5rem] text-t4/60 italic">necessary conditions for investment viability</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-surface/[0.01] [&>*]:flex [&>*]:flex-col">
+
+                <!-- 1. Financial Health (HTMX partial) -->
+                <div hx-get="{% url 'core:report_card_financial_health' asset.ticker %}"
+                     hx-trigger="load"
+                     hx-swap="outerHTML">
+                    {% include "core/partials/report_card_financial_health.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                </div>
+
+                <!-- 2. Sentiment -->
+                <div class="p-5 sm:p-6 border-l border-surface/[0.04]">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="message-circle" class="size-3.5 text-t4"></i>
+                            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Sentiment</span>
+                        </div>
+                        <div class="flex items-center gap-1" title="{% if sentiment_score_5 != None %}{{ sentiment_score_5 }} / 5{% else %}Score pending{% endif %}">
+                            {% for i in "12345" %}
+                                {% if sentiment_score_5 != None and forloop.counter <= sentiment_filled_dots %}
+                                <div class="size-1.5 rounded-full bg-copper"></div>
+                                {% else %}
+                                <div class="size-1.5 rounded-full bg-surface/[0.08]"></div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if sentiment_score_5 != None %}
+                    <div class="flex items-baseline gap-2 mb-2">
+                        <div class="font-serif text-2xl text-heading">{{ sentiment_score_5 }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 5</span></div>
+                        {% if sentiment_label == "Very Bullish" or sentiment_label == "Bullish" %}
+                        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ sentiment_label }}</span>
+                        {% elif sentiment_label == "Very Bearish" or sentiment_label == "Bearish" %}
+                        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ sentiment_label }}</span>
+                        {% else %}
+                        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ sentiment_label }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-[0.65rem] leading-relaxed text-t2 mb-3">{{ sentiment_brief }}</p>
+                    {% if sentiment_themes %}
+                    <div class="border-t border-surface/[0.06] pt-3 mt-auto">
+                        <div class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 mb-1.5">Key Factors</div>
+                        <div class="space-y-1">
+                            {% for theme in sentiment_themes|slice:":5" %}
+                            <div class="flex items-start gap-2">
+                                <span class="shrink-0 w-0.5 h-3 rounded-full bg-copper/50 mt-px"></span>
+                                <span class="text-[0.55rem] leading-snug text-t2">{{ theme }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="font-serif text-2xl text-t4 mb-2">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 5</span></div>
+                    <p class="text-[0.65rem] leading-relaxed text-t4">Community and market sentiment from Reddit, news, and social.</p>
+                    {% endif %}
+                </div>
+
+                <!-- 3. External Risk Profile -->
+                <div hx-get="{% url 'core:report_card_external_risk' asset.ticker %}"
+                     hx-trigger="load"
+                     hx-swap="outerHTML">
+                    {% include "core/partials/report_card_external_risk.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                </div>
+
+                </div>
+            </div>
+
+            <!-- Motivators -->
+            <div class="mb-0 rounded-lg border border-copper/[0.08] overflow-hidden">
+                <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-copper/[0.02] border-b border-copper/[0.06]">
+                    <i data-lucide="flame" class="size-3.5 text-copper/70"></i>
+                    <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-copper/80">Motivators</span>
+                    <span class="text-[0.5rem] text-t4/60 italic">sufficient conditions for alpha generation</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-copper/[0.01] [&>*]:flex [&>*]:flex-col">
+
+                <!-- 4. Valuation / Fair Value -->
+                <div hx-get="{% url 'core:report_card_valuation' asset.ticker %}"
+                     hx-trigger="load"
+                     hx-swap="outerHTML">
+                    {% include "core/partials/report_card_valuation.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                </div>
+
+                <!-- 5. Product Flywheel -->
+                <div hx-get="{% url 'core:report_card_product_flywheel' asset.ticker %}"
+                     hx-trigger="load"
+                     hx-swap="outerHTML">
+                    {% include "core/partials/report_card_product_flywheel.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                </div>
+
+                <!-- 6. Leadership & Hiring -->
+                <div hx-get="{% url 'core:report_card_leadership' asset.ticker %}"
+                     hx-trigger="load"
+                     hx-swap="outerHTML">
+                    {% include "core/partials/report_card_leadership.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                </div>
+                </div>
+            </div>
+
+            <!-- Overall Assessment (HTMX partial) -->
+            <div hx-get="{% url 'core:report_card_overall' asset.ticker %}"
+                 hx-trigger="load, section-scored from:body delay:2s"
+                 hx-swap="outerHTML">
+                {% include "core/partials/report_card_overall.html" with waiting=True ticker=asset.ticker scored_count=0 %}
+            </div>
+
+            <p class="text-[0.55rem] text-t4 mt-3">Scores are generated from financial data, AI analysis, and community signals.{% if request.user.is_authenticated %} Your notes help personalise this assessment.{% endif %}</p>
+        </section>
+
+    <div class="h-px bg-surface/[0.04]"></div>
+
+    <!-- Deep Dive heading -->
+        <div class="flex items-center gap-3 pt-6 sm:pt-10">
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">Deep Dive &mdash; {{ asset.ticker }}</div>
+            <div class="flex-1 h-px bg-surface/[0.04]"></div>
+        </div>
+
     <!-- Fundamentals (HTMX partial) -->
     <div hx-get="{% url 'core:asset_fundamentals' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
-        <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
             <section class="py-6 sm:py-10">
                 <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Fundamentals</div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">
@@ -645,13 +756,7 @@
                     {% endfor %}
                 </div>
             </section>
-        </div>
-        <div class="divider"></div>
-    </div>
-
-    <!-- Peers (HTMX partial) -->
-    <div id="peers-container" hx-get="{% url 'core:asset_peers' asset.ticker %}" hx-trigger="load, retryPeers from:body delay:8s" hx-swap="innerHTML">
-        {% include "core/components/peers_skeleton.html" %}
+        <div class="h-px bg-surface/[0.04]"></div>
     </div>
 
     <!-- Sentiment Analysis (HTMX partial) -->
@@ -663,7 +768,6 @@
 
     <!-- Mentioned In (HTMX partial) -->
     <div hx-get="{% url 'core:asset_community' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
-        <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
             <section class="py-6 sm:py-10">
                 <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Mentioned In</div>
                 <div class="space-y-px">
@@ -675,12 +779,95 @@
                     {% endfor %}
                 </div>
             </section>
-        </div>
-        <div class="divider"></div>
+        <div class="h-px bg-surface/[0.04]"></div>
     </div>
 
     <!-- Recent Prices (HTMX partial — waits for header to finish syncing prices) -->
-    <div hx-get="{% url 'core:asset_prices' asset.ticker %}" hx-trigger="prices-synced from:body" hx-swap="innerHTML"></div>
+    <div hx-get="{% url 'core:asset_prices' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML"></div>
+
+        </div><!-- /main content column -->
+
+        {% if request.user.is_authenticated %}
+        <!-- Sticky notes sidebar -->
+        <div class="hidden xl:block w-[240px] shrink-0 sticky top-6 self-start">
+            <div class="border border-surface/[0.04] rounded-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="pen-line" class="size-3 text-t4"></i>
+                        <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3">Your Notes</span>
+                    </div>
+                    <div id="noteSaveStatus" class="text-[0.5rem] text-t4 transition-opacity"></div>
+                </div>
+                <textarea id="userNote" rows="9"
+                          placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
+                          class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[0.45rem] text-t4 leading-tight">Influences Valuation, Flywheel &amp; Leadership scores</span>
+                    <button id="noteSaveBtn" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>
+                </div>
+            </div>
+        </div>
+        <script>
+        (function() {
+            const url = '{% url "core:save_note" asset.ticker %}';
+            const csrf = '{{ csrf_token }}';
+            const desktop = { ta: document.getElementById('userNote'), btn: document.getElementById('noteSaveBtn'), status: document.getElementById('noteSaveStatus') };
+            const mobile = { ta: document.getElementById('userNoteMobile'), btn: document.getElementById('noteSaveBtnMobile') };
+
+            // Auto-resize textarea to fit content
+            function autoResize(ta) {
+                if (!ta) return;
+                ta.style.height = 'auto';
+                ta.style.height = ta.scrollHeight + 'px';
+            }
+
+            // Keep textareas in sync
+            if (desktop.ta && mobile.ta) {
+                desktop.ta.addEventListener('input', () => { mobile.ta.value = desktop.ta.value; autoResize(desktop.ta); autoResize(mobile.ta); });
+                mobile.ta.addEventListener('input', () => { desktop.ta.value = mobile.ta.value; autoResize(mobile.ta); autoResize(desktop.ta); });
+            }
+
+            // Initial auto-resize
+            autoResize(desktop.ta);
+            autoResize(mobile.ta);
+
+            function save(source) {
+                const ta = source.ta || desktop.ta;
+                const btn = source.btn || desktop.btn;
+                const body = new URLSearchParams();
+                body.set('note', ta.value);
+                body.set('csrfmiddlewaretoken', csrf);
+                btn.textContent = 'Saving\u2026';
+                btn.disabled = true;
+                fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+                    .then(() => {
+                        btn.textContent = 'Saved';
+                        if (desktop.status) { desktop.status.textContent = 'Saved'; desktop.status.style.opacity = '1'; }
+                        setTimeout(() => { btn.textContent = 'Save'; btn.disabled = false; if (desktop.status) desktop.status.style.opacity = '0'; }, 2000);
+                    })
+                    .catch(() => {
+                        btn.textContent = 'Save';
+                        btn.disabled = false;
+                        if (desktop.status) { desktop.status.textContent = 'Failed'; desktop.status.style.opacity = '1'; }
+                    });
+            }
+
+            function bindNote(obj) {
+                if (!obj.ta || !obj.btn) return;
+                obj.btn.addEventListener('click', () => save(obj));
+                obj.ta.addEventListener('keydown', (e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save(obj); }
+                });
+            }
+            bindNote(desktop);
+            bindNote(mobile);
+        })();
+        </script>
+        {% endif %}
+
+        </div><!-- /flex -->
+    </div><!-- /max-w container -->
 
     {% include "core/components/footer.html" %}
 </div>

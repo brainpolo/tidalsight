@@ -1,0 +1,10 @@
+{% if loading %}
+<p class="text-[0.65rem] leading-relaxed text-t3 mt-1.5"
+   hx-get="{% url 'core:asset_description' ticker %}"
+   hx-trigger="load delay:4s, retryDescription from:body delay:4s"
+   hx-swap="outerHTML">
+    <span class="inline-block h-2.5 w-3/4 bg-surface/[0.04] skel-bar rounded-sm"></span>
+</p>
+{% elif description %}
+<p class="text-[0.65rem] leading-relaxed text-t3 mt-1.5">{{ description }}</p>
+{% endif %}

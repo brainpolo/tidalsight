@@ -49,6 +49,8 @@ class Asset(models.Model):
     peers = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="peer_of"
     )
+    description = models.TextField(blank=True)
+    description_updated_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     views = models.PositiveIntegerField(default=0, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -169,6 +171,24 @@ class Fundamental(models.Model):
     fifty_two_week_low = models.DecimalField(
         max_digits=PRICE_MAX_DIGITS,
         decimal_places=PRICE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
+    )
+    revenue_growth = models.DecimalField(
+        max_digits=PERCENTAGE_MAX_DIGITS,
+        decimal_places=PERCENTAGE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
+    )
+    earnings_growth = models.DecimalField(
+        max_digits=PERCENTAGE_MAX_DIGITS,
+        decimal_places=PERCENTAGE_DECIMAL_PLACES,
+        null=True,
+        blank=True,
+    )
+    current_ratio = models.DecimalField(
+        max_digits=RATIO_MAX_DIGITS,
+        decimal_places=RATIO_DECIMAL_PLACES,
         null=True,
         blank=True,
     )

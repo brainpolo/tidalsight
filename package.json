@@ -2,15 +2,13 @@
   "name": "tidalsight",
   "private": true,
   "scripts": {
-    "dev": "npx @tailwindcss/cli -i src/css/input.css -o static/css/dist.css --watch",
-    "build:css": "npx @tailwindcss/cli -i src/css/input.css -o static/css/dist.css --minify",
-    "build:icons": "npx esbuild src/js/icons.js --bundle --outfile=static/js/icons.bundle.js --minify",
-    "build": "npm run build:css && npm run build:icons"
+    "dev": "vite",
+    "build": "vite build"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.1",
-    "esbuild": "^0.27.3",
-    "tailwindcss": "^4.2.1"
+    "@tailwindcss/vite": "^4.2.1",
+    "tailwindcss": "^4.2.1",
+    "vite": "^7.3.1"
   },
   "dependencies": {
     "htmx.org": "^2.0.8",

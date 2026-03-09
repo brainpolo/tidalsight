@@ -1,7 +1,6 @@
 {% load formatting %}
 
 {% if fundamental_cards.cards %}
-<div class="max-w-[1120px] mx-auto px-4 sm:px-10">
     <section class="py-6 sm:py-10">
         <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Fundamentals</div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">
@@ -50,7 +49,5 @@
 
         <div class="text-[0.6rem] text-t4 mt-4">Last updated {{ fundamental_cards.fetched_at|timesince }} ago</div>
     </section>
-</div>
-
-<div class="divider"></div>
+<div class="h-px bg-surface/[0.04]"></div>
 {% endif %}

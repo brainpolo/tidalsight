@@ -33,12 +33,16 @@ app.conf.beat_schedule = {
         "task": "scraper.tasks.fetch_news",
         "schedule": crontab(minute=30, hour="*/6"),
     },
-    "sync prices hourly": {
-        "task": "scraper.tasks.sync_all_asset_prices",
+    "sync crypto prices hourly": {
+        "task": "scraper.tasks.sync_crypto_prices",
         "schedule": crontab(minute=45),
     },
-    "sync fundamentals daily on weekdays": {
-        "task": "scraper.tasks.sync_all_asset_fundamentals",
+    "sync traditional prices hourly on weekdays": {
+        "task": "scraper.tasks.sync_traditional_prices",
+        "schedule": crontab(minute=45, day_of_week="1-5"),
+    },
+    "sync watched asset fundamentals daily on weekdays": {
+        "task": "scraper.tasks.sync_watched_asset_fundamentals",
         "schedule": crontab(minute=0, hour=6, day_of_week="1-5"),
     },
     "refresh market digest hourly": {

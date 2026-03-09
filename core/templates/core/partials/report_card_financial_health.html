@@ -1,0 +1,101 @@
+{% if loading %}
+<!-- Loading skeleton — self-polls until agent finishes -->
+<div class="p-5 sm:p-6"
+     hx-get="{% url 'core:report_card_financial_health' ticker %}"
+     hx-trigger="load delay:{{ poll_interval }}s"
+     hx-swap="outerHTML">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <i data-lucide="heart-pulse" class="size-3.5 text-t4"></i>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Financial Health</span>
+        </div>
+        <div class="flex items-center gap-1">
+            {% for _ in "12345" %}
+            <div class="size-1.5 rounded-full bg-surface/[0.08] animate-pulse"></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="h-7 w-16 bg-surface/[0.06] skel-bar mb-2"></div>
+    <div class="h-3 w-full bg-surface/[0.04] skel-bar mb-1.5"></div>
+    <div class="h-3 w-3/4 bg-surface/[0.04] skel-bar"></div>
+</div>
+
+{% elif health %}
+<!-- Scored card -->
+<div class="p-5 sm:p-6">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <i data-lucide="heart-pulse" class="size-3.5 text-t4"></i>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Financial Health</span>
+        </div>
+        <div class="flex items-center gap-1" title="{{ health.score }} / 5">
+            {% for i in "12345" %}
+                {% if forloop.counter <= filled_dots %}
+                <div class="size-1.5 rounded-full bg-copper"></div>
+                {% else %}
+                <div class="size-1.5 rounded-full bg-surface/[0.08]"></div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="flex items-baseline gap-2 mb-2">
+        <div class="font-serif text-2xl text-heading">{{ health.score }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 5</span></div>
+        {% if health.label == "Excellent" or health.label == "Strong" %}
+        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ health.label }}</span>
+        {% elif health.label == "Critical" or health.label == "Weak" %}
+        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ health.label }}</span>
+        {% else %}
+        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ health.label }}</span>
+        {% endif %}
+    </div>
+    <p class="text-[0.65rem] leading-relaxed text-t2 mb-3">{{ health.brief }}</p>
+    {% if health.strengths or health.concerns %}
+    <div class="border-t border-surface/[0.06] pt-3 mt-auto space-y-2.5">
+        {% if health.strengths %}
+        <div>
+            <div class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 mb-1.5">Strengths</div>
+            <div class="space-y-1">
+                {% for s in health.strengths|slice:":5" %}
+                <div class="flex items-start gap-2">
+                    <span class="shrink-0 w-0.5 h-3 rounded-full bg-copper/50 mt-px"></span>
+                    <span class="text-[0.55rem] leading-snug text-t2">{{ s }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if health.concerns %}
+        <div>
+            <div class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 mb-1.5">Concerns</div>
+            <div class="space-y-1">
+                {% for c in health.concerns|slice:":5" %}
+                <div class="flex items-start gap-2">
+                    <span class="shrink-0 w-0.5 h-3 rounded-full bg-surface/[0.15] mt-px"></span>
+                    <span class="text-[0.55rem] leading-snug text-t3">{{ c }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% else %}
+<!-- Unavailable / placeholder -->
+<div class="p-5 sm:p-6">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <i data-lucide="heart-pulse" class="size-3.5 text-t4"></i>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Financial Health</span>
+        </div>
+        <div class="flex items-center gap-1" title="Score pending">
+            {% for _ in "12345" %}
+            <div class="size-1.5 rounded-full bg-surface/[0.08]"></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="font-serif text-2xl text-t4 mb-2">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 5</span></div>
+    <p class="text-[0.65rem] leading-relaxed text-t4">Revenue, margins, cash flow, debt levels, and funding activity.</p>
+</div>
+{% endif %}

@@ -3,11 +3,13 @@ import hashlib
 import logging
 
 from agents import RunConfig, Runner
+from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.utils import timezone
 
 from analyst.agents.provider import get_model_provider
+from analyst.grounding import agent_grounding
 from analyst.agents.sentiment_agent import SentimentAnalysis, sentiment_agent
 from analyst.app_behaviour import (
     MAX_AGENT_TURNS,
@@ -128,7 +130,7 @@ def _run_agent(prompt: str) -> SentimentAnalysis:
     )
     result = asyncio.run(
         Runner.run(
-            sentiment_agent, input=prompt, run_config=config, max_turns=MAX_AGENT_TURNS
+            sentiment_agent, input=prompt + agent_grounding(), run_config=config, max_turns=MAX_AGENT_TURNS
         )
     )
     return result.final_output
@@ -179,7 +181,7 @@ def get_asset_sentiment(asset: Asset) -> dict | None:
         cache.set(fresh_key, True, SENTIMENT_FRESHNESS_TTL)
         cache.delete(lock_key)
         return data
-    except ConnectionError, RuntimeError, ValueError, TimeoutError:
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate sentiment for %s", asset.ticker)
         cache.delete(lock_key)
         return existing

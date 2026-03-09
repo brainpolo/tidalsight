@@ -4,7 +4,7 @@
         "builder": "RAILPACK"
     },
     "deploy": {
-        "startCommand": "celery -A tidalsight worker --beat --loglevel=info --concurrency=5",
-        "restartPolicyType": "on_failure"
+        "startCommand": "celery -A tidalsight worker --loglevel=info --concurrency=5 --max-tasks-per-child=50 --max-memory-per-child=400000",
+        "restartPolicyType": "ON_FAILURE"
     }
 }
