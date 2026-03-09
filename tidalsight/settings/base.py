@@ -36,6 +36,9 @@ BYTEPLUS_MODELARK_BASE_URL: str = "https://ark.ap-southeast.bytepluses.com/api/v
 # Brave Search
 BRAVE_SEARCH_API_KEY: str = os.environ["BRAVE_SEARCH_API_KEY"]
 
+# When off, asset creation won't trigger peer discovery (prevents recursive crawling)
+CRAWLER_ON: bool = os.environ.get("CRAWLER_ON", "true").lower() == "true"
+
 
 # Application definition -----------------------------------------------
 

@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 
+from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 from requests.exceptions import RequestException
@@ -83,7 +84,8 @@ def get_or_create_asset(ticker: str) -> Asset:
             try:
                 from analyst.tasks import discover_peers, generate_asset_description
 
-                discover_peers.delay(asset.id)
+                if settings.CRAWLER_ON:
+                    discover_peers.delay(asset.id)
                 generate_asset_description.delay(asset.id)
             except Exception:
                 logger.warning(

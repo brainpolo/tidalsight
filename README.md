@@ -4,7 +4,7 @@ A real-time market intelligence platform that combines financial data, community
 
 ## Core Features
 
-- **Self-expanding asset network** — The universe of tracked assets grows autonomously. When a user visits any asset, an LLM agent discovers its peers and competitors, which become first-class assets themselves. Each new asset triggers further discovery, creating an organically expanding knowledge graph seeded from a single ticker.
+- **Self-expanding asset network** — The universe of tracked assets grows autonomously. When a user visits any asset, an LLM agent discovers its peers and competitors, which become first-class assets themselves. Each new asset triggers further discovery, creating an organically expanding knowledge graph seeded from a single ticker. This recursive crawl can be disabled by setting `CRAWLER_ON=false` in your environment, which stops peer discovery from firing on new asset creation while still allowing manual peer backfills.
 - **AI community sentiment** — Aggregates Reddit, Hacker News, and news articles, then runs an LLM agent to produce a sentiment score, label, brief, and key themes per asset. Fingerprinted against source posts so it only regenerates when the conversation changes.
 - **AI market digest** — A global market brief synthesised from the latest community posts across all sources, regenerated hourly with the same source-fingerprint optimisation.
 - **Infinite-scroll daily prices** — Cursor-based pagination streams the full price history as the user scrolls, with positive-day statistics computed across 30d/90d/1y/5y/all-time windows.
