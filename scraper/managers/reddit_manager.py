@@ -42,7 +42,7 @@ def _resolve_assets(title: str, body: str) -> list[Asset]:
             assets.append(asset)
             logger.info("Resolved ticker '%s' -> %s", ticker, asset)
         except ValueError, ConnectionError:
-            logger.info("Could not resolve ticker '%s', skipping", ticker)
+            logger.debug("Could not resolve ticker '%s', skipping", ticker)
 
     return assets
 

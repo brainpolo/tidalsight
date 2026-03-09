@@ -97,12 +97,12 @@ def sync_asset_news(asset: Asset, freshness: str = BRAVE_NEWS_DEFAULT_FRESHNESS)
     """
     cache_key = f"news:asset:{asset.ticker}"
     if cache.get(cache_key):
-        logger.info("News for %s still fresh, skipping", asset.ticker)
+        logger.debug("News for %s still fresh, skipping", asset.ticker)
         return 0
 
     lock_key = f"sync:news:{asset.ticker}"
     if not cache.add(lock_key, True, SYNC_LOCK_TTL):
-        logger.info("News sync for %s already in progress, skipping", asset.ticker)
+        logger.debug("News sync for %s already in progress, skipping", asset.ticker)
         return 0
 
     try:

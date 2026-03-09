@@ -62,7 +62,7 @@ def get_or_create_asset(ticker: str) -> Asset:
     lock_key = f"sync:asset_create:{ticker}"
     if not cache.add(lock_key, True, SYNC_LOCK_TTL):
         # Another request is already creating this asset — wait for it to appear
-        logger.info(
+        logger.debug(
             "Asset creation for %s already in progress, retrying DB lookup", ticker
         )
         try:
@@ -86,7 +86,9 @@ def get_or_create_asset(ticker: str) -> Asset:
                 discover_peers.delay(asset.id)
                 generate_asset_description.delay(asset.id)
             except Exception:
-                logger.warning("Failed to queue post-creation tasks for %s", ticker)
+                logger.warning(
+                    "Failed to queue post-creation tasks for %s", ticker, exc_info=True
+                )
         return asset
     finally:
         cache.delete(lock_key)
@@ -101,12 +103,12 @@ def _sync_prices(asset: Asset, ticker: str, period: str, interval: str) -> int:
 
     latest = asset.prices.first()
     if latest and (timezone.now() - latest.timestamp).total_seconds() < staleness:
-        logger.info("Prices for %s (%s) still fresh, skipping", ticker, interval)
+        logger.debug("Prices for %s (%s) still fresh, skipping", ticker, interval)
         return 0
 
     lock_key = f"sync:prices:{ticker}:{interval}"
     if not cache.add(lock_key, True, SYNC_LOCK_TTL):
-        logger.info(
+        logger.debug(
             "Price sync for %s (%s) already in progress, skipping", ticker, interval
         )
         return 0
@@ -238,12 +240,12 @@ def sync_fundamentals(ticker: str) -> Fundamental | None:
         and (timezone.now() - latest.fetched_at).total_seconds()
         < FUNDAMENTALS_STALENESS_SECONDS
     ):
-        logger.info("Fundamentals for %s still fresh, skipping", ticker)
+        logger.debug("Fundamentals for %s still fresh, skipping", ticker)
         return latest
 
     lock_key = f"sync:fundamentals:{ticker}"
     if not cache.add(lock_key, True, SYNC_LOCK_TTL):
-        logger.info("Fundamentals sync for %s already in progress, skipping", ticker)
+        logger.debug("Fundamentals sync for %s already in progress, skipping", ticker)
         return latest
 
     try:

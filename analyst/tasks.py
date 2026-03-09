@@ -20,23 +20,26 @@ logger = logging.getLogger(__name__)
 @shared_task(ignore_result=True)
 def generate_asset_description(asset_id: int) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info("Task generate_asset_description started for %s", asset.ticker)
     generate_description(asset)
 
 
 @shared_task
 def discover_peers(asset_id: int) -> int:
     asset = Asset.objects.get(id=asset_id)
+    logger.info("Task discover_peers started for %s", asset.ticker)
     peers = sync_peers(asset)
     return len(peers)
 
 
 @shared_task
 def generate_market_digest():
+    logger.info("Task generate_market_digest started")
     digest = get_market_digest()
     if digest:
-        logger.info("generate_market_digest: digest refreshed")
+        logger.info("Task generate_market_digest: digest refreshed")
     else:
-        logger.warning("generate_market_digest: no digest generated")
+        logger.warning("Task generate_market_digest: no digest generated")
     return bool(digest)
 
 
@@ -46,18 +49,21 @@ def generate_market_digest():
 @shared_task(ignore_result=True)
 def analyse_sentiment(asset_id: int) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info("Task analyse_sentiment started for %s", asset.ticker)
     get_asset_sentiment(asset)
 
 
 @shared_task(ignore_result=True)
 def analyse_financial_health(asset_id: int) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info("Task analyse_financial_health started for %s", asset.ticker)
     get_financial_health(asset)
 
 
 @shared_task(ignore_result=True)
 def analyse_external_risk(asset_id: int) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info("Task analyse_external_risk started for %s", asset.ticker)
     get_external_risk(asset)
 
 
@@ -69,6 +75,9 @@ def analyse_valuation(
     price_target: float | None,
 ) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info(
+        "Task analyse_valuation started for %s (user %s)", asset.ticker, user_id
+    )
     get_valuation(asset, user_id, user_note, price_target)
 
 
@@ -80,6 +89,9 @@ def analyse_product_flywheel(
     price_target: float | None,
 ) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info(
+        "Task analyse_product_flywheel started for %s (user %s)", asset.ticker, user_id
+    )
     get_product_flywheel(asset, user_id, user_note, price_target)
 
 
@@ -91,6 +103,9 @@ def analyse_leadership(
     price_target: float | None,
 ) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info(
+        "Task analyse_leadership started for %s (user %s)", asset.ticker, user_id
+    )
     get_leadership(asset, user_id, user_note, price_target)
 
 
@@ -101,4 +116,5 @@ def analyse_overall(
     sections: dict[str, dict],
 ) -> None:
     asset = Asset.objects.get(id=asset_id)
+    logger.info("Task analyse_overall started for %s (user %s)", asset.ticker, user_id)
     get_overall_assessment(asset, user_id, sections)

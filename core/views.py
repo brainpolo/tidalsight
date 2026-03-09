@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -132,6 +133,8 @@ from scraper.managers.asset_manager import (
 )
 from scraper.models import Asset, AssetView, PriceHistory
 from scraper.tasks import backfill_full_prices, fetch_asset_news
+
+logger = logging.getLogger(__name__)
 
 
 async def _cached(key: str, compute, ttl: int = HOME_COUNTS_CACHE_TTL):
@@ -310,6 +313,7 @@ async def asset_detail(request, ticker):
     try:
         asset = await sync_to_async(get_or_create_asset)(ticker)
     except ValueError, ConnectionError:
+        logger.warning("Asset unavailable: %s", ticker, exc_info=True)
         return render(
             request, "core/asset_unavailable.html", {"ticker": ticker}, status=503
         )

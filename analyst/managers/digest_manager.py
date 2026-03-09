@@ -144,12 +144,12 @@ def get_market_digest() -> dict | None:
 
     # If the digest is still fresh, return it immediately
     if existing and cache.get(DIGEST_FRESH_KEY):
-        logger.info("Market digest served from cache (fresh)")
+        logger.debug("Market digest served from cache (fresh)")
         return existing
 
     # Digest is stale or missing — try to regenerate (on-demand fallback)
     if not cache.add(DIGEST_LOCK_KEY, True, DIGEST_LOCK_TTL):
-        logger.info("Market digest generation already in progress, serving stale")
+        logger.debug("Market digest generation already in progress, serving stale")
         return existing
 
     reddit_posts, hn_posts, news_articles = _fetch_sources()
@@ -162,7 +162,7 @@ def get_market_digest() -> dict | None:
     # Skip regeneration if sources haven't changed
     fingerprint = _source_fingerprint(reddit_posts, hn_posts, news_articles)
     if existing and existing.get("source_hash") == fingerprint:
-        logger.info("Digest sources unchanged, refreshing TTL")
+        logger.debug("Digest sources unchanged, refreshing TTL")
         cache.set(DIGEST_FRESH_KEY, True, DIGEST_FRESHNESS_TTL)
         cache.delete(DIGEST_LOCK_KEY)
         return existing

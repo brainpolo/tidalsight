@@ -21,7 +21,7 @@ def sync_peers(asset: Asset) -> list[Asset]:
 
     lock_key = f"sync:peers:{asset.ticker}"
     if not cache.add(lock_key, True, PEER_SYNC_LOCK_TTL):
-        logger.info("Peer sync for %s already in progress, skipping", asset.ticker)
+        logger.debug("Peer sync for %s already in progress, skipping", asset.ticker)
         return list(asset.peers.all())
 
     try:

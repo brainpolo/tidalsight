@@ -164,7 +164,7 @@ def get_overall_assessment(
     fingerprint = _source_fingerprint(sections)
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.info(
+        logger.debug(
             "Overall assessment for %s (user %s) served from cache",
             asset.ticker,
             user_id,
@@ -172,7 +172,7 @@ def get_overall_assessment(
         return existing
 
     if not cache.add(lock_key, True, OVERALL_ASSESSMENT_LOCK_TTL):
-        logger.info(
+        logger.debug(
             "Overall assessment generation for %s already in progress", asset.ticker
         )
         return existing

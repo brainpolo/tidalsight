@@ -103,7 +103,7 @@ def get_product_flywheel(
     fingerprint = _source_fingerprint(user_note, price_target)
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.info(
+        logger.debug(
             "Product Flywheel for %s (user %s) served from cache",
             asset.ticker,
             user_id,
@@ -111,7 +111,7 @@ def get_product_flywheel(
         return existing
 
     if not cache.add(lock_key, True, PRODUCT_FLYWHEEL_LOCK_TTL):
-        logger.info(
+        logger.debug(
             "Product Flywheel generation for %s already in progress", asset.ticker
         )
         return existing

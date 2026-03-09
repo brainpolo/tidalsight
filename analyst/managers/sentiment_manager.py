@@ -146,11 +146,11 @@ def get_asset_sentiment(asset: Asset) -> dict | None:
     existing = cache.get(data_key)
 
     if existing and cache.get(fresh_key):
-        logger.info("Sentiment for %s served from cache (fresh)", asset.ticker)
+        logger.debug("Sentiment for %s served from cache (fresh)", asset.ticker)
         return existing
 
     if not cache.add(lock_key, True, SENTIMENT_LOCK_TTL):
-        logger.info("Sentiment generation for %s already in progress", asset.ticker)
+        logger.debug("Sentiment generation for %s already in progress", asset.ticker)
         return existing
 
     try:
@@ -165,7 +165,7 @@ def get_asset_sentiment(asset: Asset) -> dict | None:
         fingerprint = _source_fingerprint(reddit_posts, hn_posts, news_articles)
 
         if existing and existing.get("source_hash") == fingerprint:
-            logger.info(
+            logger.debug(
                 "Sentiment sources unchanged for %s, refreshing TTL", asset.ticker
             )
             cache.set(fresh_key, True, SENTIMENT_FRESHNESS_TTL)

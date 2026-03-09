@@ -100,13 +100,13 @@ def get_leadership(
     fingerprint = _source_fingerprint(user_note, price_target)
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.info(
+        logger.debug(
             "Leadership for %s (user %s) served from cache", asset.ticker, user_id
         )
         return existing
 
     if not cache.add(lock_key, True, LEADERSHIP_LOCK_TTL):
-        logger.info("Leadership generation for %s already in progress", asset.ticker)
+        logger.debug("Leadership generation for %s already in progress", asset.ticker)
         return existing
 
     try:

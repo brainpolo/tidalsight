@@ -135,19 +135,19 @@ def get_financial_health(asset: Asset) -> dict | None:
     # Early check: if fundamentals haven't changed, serve cache immediately
     fundamental = asset.fundamentals.first()
     if not fundamental:
-        logger.info("No fundamentals for %s, skipping health assessment", asset.ticker)
+        logger.debug("No fundamentals for %s, skipping health assessment", asset.ticker)
         return None
 
     fingerprint = _source_fingerprint(fundamental)
 
     if existing and existing.get("source_hash") == fingerprint:
-        logger.info(
+        logger.debug(
             "Financial health for %s served from cache (unchanged)", asset.ticker
         )
         return existing
 
     if not cache.add(lock_key, True, FINANCIAL_HEALTH_LOCK_TTL):
-        logger.info(
+        logger.debug(
             "Financial health generation for %s already in progress", asset.ticker
         )
         return existing
@@ -160,7 +160,7 @@ def get_financial_health(asset: Asset) -> dict | None:
             if getattr(fundamental, field, None) is not None
         )
         if available < 3:
-            logger.info(
+            logger.debug(
                 "Only %d fundamental fields for %s, skipping health assessment",
                 available,
                 asset.ticker,

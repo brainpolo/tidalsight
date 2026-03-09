@@ -35,6 +35,13 @@ def fetch_price_history(
     interval: str = "1d",
     start: datetime | None = None,
 ) -> list[dict]:
+    logger.debug(
+        "Fetching price history for %s (period=%s, interval=%s, start=%s)",
+        ticker,
+        period,
+        interval,
+        start,
+    )
     stock = yf.Ticker(ticker)
     if start:
         df = stock.history(start=start, interval=interval)
@@ -42,6 +49,7 @@ def fetch_price_history(
         df = stock.history(period=period, interval=interval)
 
     if df.empty:
+        logger.debug("No price history returned for %s", ticker)
         return []
 
     rows = []
@@ -63,14 +71,17 @@ def fetch_price_history(
             }
         )
 
+    logger.debug("Fetched %d price rows for %s", len(rows), ticker)
     return rows
 
 
 def fetch_fundamentals(ticker: str) -> dict | None:
+    logger.debug("Fetching fundamentals for %s", ticker)
     stock = yf.Ticker(ticker)
     info = stock.info
 
     if not info or info.get("regularMarketPrice") is None:
+        logger.debug("No fundamental data available for %s", ticker)
         return None
 
     return {
@@ -97,10 +108,12 @@ def fetch_fundamentals(ticker: str) -> dict | None:
 
 
 def fetch_asset_info(ticker: str) -> dict | None:
+    logger.debug("Fetching asset info for %s", ticker)
     stock = yf.Ticker(ticker)
     info = stock.info
 
     if not info or info.get("regularMarketPrice") is None:
+        logger.debug("No asset info available for %s", ticker)
         return None
 
     quote_type = info.get("quoteType", "").upper()
@@ -153,7 +166,9 @@ def search_tickers(query: str, max_results: int = 6) -> list[dict]:
         resp.raise_for_status()
         data = resp.json()
     except requests.RequestException, ValueError:
-        logger.warning("Yahoo Finance search failed for query: %s", query)
+        logger.warning(
+            "Yahoo Finance search failed for query: %s", query, exc_info=True
+        )
         return []
 
     results = []

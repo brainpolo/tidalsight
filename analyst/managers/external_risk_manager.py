@@ -55,11 +55,13 @@ def get_external_risk(asset: Asset) -> dict | None:
     existing = cache.get(data_key)
 
     if existing and cache.get(fresh_key):
-        logger.info("External risk for %s served from cache (fresh)", asset.ticker)
+        logger.debug("External risk for %s served from cache (fresh)", asset.ticker)
         return existing
 
     if not cache.add(lock_key, True, EXTERNAL_RISK_LOCK_TTL):
-        logger.info("External risk generation for %s already in progress", asset.ticker)
+        logger.debug(
+            "External risk generation for %s already in progress", asset.ticker
+        )
         return existing
 
     try:

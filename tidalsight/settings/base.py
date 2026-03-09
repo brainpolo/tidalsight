@@ -4,10 +4,13 @@ Django base settings for tidalsight project.
 Settings common to all environments.
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Any
 
+from axiom_py import Client
+from axiom_py.logging import AxiomHandler
 from django.utils.csp import CSP
 from dotenv import load_dotenv
 
@@ -105,7 +108,32 @@ STATIC_ROOT: Path = BASE_DIR / "staticfiles"
 STATICFILES_DIRS: list[Path] = [BASE_DIR / "static"]
 
 
+# Axiom — centralized log ingestion (graceful: app works without it)
+_axiom_handler = None
+_AXIOM_TOKEN = os.environ.get("AXIOM_TOKEN")
+_AXIOM_ORG_ID = os.environ.get("AXIOM_ORG_ID")
+AXIOM_DATASET: str = os.environ.get("AXIOM_DATASET", "tidalsight")
+
+if _AXIOM_TOKEN and _AXIOM_ORG_ID:
+    try:
+        _axiom_handler = AxiomHandler(
+            client=Client(
+                token=_AXIOM_TOKEN,
+                org_id=_AXIOM_ORG_ID,
+                edge_url="https://eu-central-1.aws.edge.axiom.co",
+            ),
+            dataset=AXIOM_DATASET,
+            level=logging.INFO,
+        )
+        logging.getLogger(__name__).info("Axiom logging successfully configured.")
+    except Exception:
+        logging.getLogger(__name__).warning(
+            "Failed to initialise Axiom handler, continuing without it"
+        )
+
 # Logging
+_LOG_HANDLERS: list[str] = ["console", "axiom"] if _axiom_handler else ["console"]
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -124,13 +152,26 @@ LOGGING = {
             "tracebacks_suppress": ["django"],
             "show_path": True,
         },
+        **({"axiom": {"()": lambda: _axiom_handler}} if _axiom_handler else {}),
     },
     "loggers": {
-        "analyst": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "scraper": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "core": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "analyst": {
+            "handlers": _LOG_HANDLERS,
+            "level": "INFO",
+            "propagate": False,
+        },
+        "scraper": {
+            "handlers": _LOG_HANDLERS,
+            "level": "INFO",
+            "propagate": False,
+        },
+        "core": {
+            "handlers": _LOG_HANDLERS,
+            "level": "INFO",
+            "propagate": False,
+        },
         "django.request": {
-            "handlers": ["console"],
+            "handlers": _LOG_HANDLERS,
             "level": "WARNING",
             "propagate": False,
         },

@@ -52,7 +52,7 @@ def generate_description(asset: Asset) -> str | None:
 
     lock_key = _lock_key(asset.ticker)
     if not cache.add(lock_key, True, DESCRIPTION_LOCK_TTL):
-        logger.info("Description generation for %s already in progress", asset.ticker)
+        logger.debug("Description generation for %s already in progress", asset.ticker)
         return None
 
     try:

@@ -166,12 +166,12 @@ def get_valuation(
 
     fundamental = asset.fundamentals.first()
     if not fundamental:
-        logger.info("No fundamentals for %s, skipping valuation", asset.ticker)
+        logger.debug("No fundamentals for %s, skipping valuation", asset.ticker)
         return None
 
     latest_price = asset.prices.first()
     if not latest_price:
-        logger.info("No price data for %s, skipping valuation", asset.ticker)
+        logger.debug("No price data for %s, skipping valuation", asset.ticker)
         return None
 
     fingerprint = _source_fingerprint(
@@ -179,19 +179,19 @@ def get_valuation(
     )
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.info(
+        logger.debug(
             "Valuation for %s (user %s) served from cache", asset.ticker, user_id
         )
         return existing
 
     if not cache.add(lock_key, True, VALUATION_LOCK_TTL):
-        logger.info("Valuation generation for %s already in progress", asset.ticker)
+        logger.debug("Valuation generation for %s already in progress", asset.ticker)
         return existing
 
     try:
         valuations = compute_valuations(asset, fundamental, latest_price)
         if len(valuations) < 2:
-            logger.info(
+            logger.debug(
                 "Only %d valuation models for %s, skipping",
                 len(valuations),
                 asset.ticker,
