@@ -25,14 +25,18 @@ SENTIMENT_FRESHNESS_TTL = 43200  # 12 hours
 SENTIMENT_DATA_TTL = 86400  # 24 hours
 SENTIMENT_LOCK_TTL = 300  # 5 minutes
 
-FINANCIAL_HEALTH_DATA_TTL = 60 * 60 * 24 * 30  # 30 days — eviction fallback only, fingerprint drives invalidation
+FINANCIAL_HEALTH_DATA_TTL = (
+    60 * 60 * 24 * 30
+)  # 30 days — eviction fallback only, fingerprint drives invalidation
 FINANCIAL_HEALTH_LOCK_TTL = 300  # 5 minutes
 
 EXTERNAL_RISK_FRESHNESS_TTL = 60 * 60 * 24 * 14  # 2 weeks
 EXTERNAL_RISK_DATA_TTL = 60 * 60 * 24 * 60  # 2 months
 EXTERNAL_RISK_LOCK_TTL = 300  # 5 minutes
 
-VALUATION_FRESHNESS_TTL = 60 * 60 * 24 * 7  # 1 week — minimum time between regenerations
+VALUATION_FRESHNESS_TTL = (
+    60 * 60 * 24 * 7
+)  # 1 week — minimum time between regenerations
 VALUATION_DATA_TTL = 60 * 60 * 24 * 90  # 3 months — eviction fallback
 VALUATION_LOCK_TTL = 300  # 5 minutes
 
@@ -44,7 +48,9 @@ LEADERSHIP_FRESHNESS_TTL = 60 * 60 * 24 * 7  # 1 week
 LEADERSHIP_DATA_TTL = 60 * 60 * 24 * 60  # 2 months
 LEADERSHIP_LOCK_TTL = 300  # 5 minutes
 
-OVERALL_ASSESSMENT_DATA_TTL = 60 * 60 * 24 * 30  # 30 days — eviction fallback, fingerprint drives invalidation
+OVERALL_ASSESSMENT_DATA_TTL = (
+    60 * 60 * 24 * 30
+)  # 30 days — eviction fallback, fingerprint drives invalidation
 OVERALL_ASSESSMENT_LOCK_TTL = 300  # 5 minutes
 
 DESCRIPTION_FRESHNESS_DAYS = 90  # 3 months — how often to regenerate

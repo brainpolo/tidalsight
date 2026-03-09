@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0014_add_asset_description'),
+        ("scraper", "0014_add_asset_description"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='asset',
-            name='description_updated_at',
+            model_name="asset",
+            name="description_updated_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

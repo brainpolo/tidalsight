@@ -10,7 +10,6 @@ from django.utils import timezone
 
 from analyst.agents.market_digest import MarketDigest, market_digest_agent
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.app_behaviour import (
     DIGEST_DATA_TTL,
     DIGEST_FRESHNESS_TTL,
@@ -26,6 +25,7 @@ from analyst.app_behaviour import (
     REDDIT_POST_BODY_TRUNCATION,
     REDDIT_POSTS_FOR_DIGEST,
 )
+from analyst.grounding import agent_grounding
 from scraper.models import HNComment, HNPost, NewsArticle, RedditComment, RedditPost
 
 logger = logging.getLogger(__name__)

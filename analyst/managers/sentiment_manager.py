@@ -9,7 +9,6 @@ from django.db.models import Prefetch
 from django.utils import timezone
 
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.agents.sentiment_agent import SentimentAnalysis, sentiment_agent
 from analyst.app_behaviour import (
     MAX_AGENT_TURNS,
@@ -22,6 +21,7 @@ from analyst.app_behaviour import (
     SENTIMENT_MAX_POSTS,
     SENTIMENT_REDDIT_COMMENTS_PER_POST,
 )
+from analyst.grounding import agent_grounding
 from scraper.models import (
     Asset,
     HNComment,
@@ -130,7 +130,10 @@ def _run_agent(prompt: str) -> SentimentAnalysis:
     )
     result = asyncio.run(
         Runner.run(
-            sentiment_agent, input=prompt + agent_grounding(), run_config=config, max_turns=MAX_AGENT_TURNS
+            sentiment_agent,
+            input=prompt + agent_grounding(),
+            run_config=config,
+            max_turns=MAX_AGENT_TURNS,
         )
     )
     return result.final_output

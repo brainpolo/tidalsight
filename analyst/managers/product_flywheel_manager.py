@@ -13,13 +13,13 @@ from analyst.agents.product_flywheel_agent import (
     product_flywheel_agent,
 )
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.app_behaviour import (
     MAX_AGENT_TURNS,
     PRODUCT_FLYWHEEL_DATA_TTL,
     PRODUCT_FLYWHEEL_FRESHNESS_TTL,
     PRODUCT_FLYWHEEL_LOCK_TTL,
 )
+from analyst.grounding import agent_grounding
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)

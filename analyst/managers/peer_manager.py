@@ -7,8 +7,8 @@ from django.core.cache import cache
 
 from analyst.agents.peer_discovery import PeerDiscovery, peer_discovery_agent
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.app_behaviour import MAX_AGENT_TURNS, PEER_SYNC_LOCK_TTL, PEER_TARGET_COUNT
+from analyst.grounding import agent_grounding
 from scraper.managers.asset_manager import get_or_create_asset
 from scraper.models import Asset
 

@@ -9,7 +9,6 @@ from django.core.cache import cache
 from django.utils import timezone
 
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.agents.valuation_agent import ValuationAssessment, valuation_agent
 from analyst.app_behaviour import (
     MAX_AGENT_TURNS,
@@ -17,6 +16,7 @@ from analyst.app_behaviour import (
     VALUATION_FRESHNESS_TTL,
     VALUATION_LOCK_TTL,
 )
+from analyst.grounding import agent_grounding
 from core.managers.valuation_manager import compute_valuations
 from core.templatetags.formatting import abbreviate
 from scraper.models import Asset, Fundamental
@@ -179,7 +179,9 @@ def get_valuation(
     )
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.info("Valuation for %s (user %s) served from cache", asset.ticker, user_id)
+        logger.info(
+            "Valuation for %s (user %s) served from cache", asset.ticker, user_id
+        )
         return existing
 
     if not cache.add(lock_key, True, VALUATION_LOCK_TTL):

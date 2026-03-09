@@ -4,25 +4,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0011_update_asset_view_user_and_indexes'),
+        ("scraper", "0011_update_asset_view_user_and_indexes"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='fundamental',
-            name='current_ratio',
-            field=models.DecimalField(blank=True, decimal_places=4, max_digits=12, null=True),
+            model_name="fundamental",
+            name="current_ratio",
+            field=models.DecimalField(
+                blank=True, decimal_places=4, max_digits=12, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='fundamental',
-            name='earnings_growth',
-            field=models.DecimalField(blank=True, decimal_places=6, max_digits=8, null=True),
+            model_name="fundamental",
+            name="earnings_growth",
+            field=models.DecimalField(
+                blank=True, decimal_places=6, max_digits=8, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='fundamental',
-            name='revenue_growth',
-            field=models.DecimalField(blank=True, decimal_places=6, max_digits=8, null=True),
+            model_name="fundamental",
+            name="revenue_growth",
+            field=models.DecimalField(
+                blank=True, decimal_places=6, max_digits=8, null=True
+            ),
         ),
     ]

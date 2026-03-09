@@ -13,7 +13,9 @@ _manifest: dict[str, dict] | None = None
 def _load_manifest() -> dict[str, dict]:
     global _manifest
     if _manifest is None:
-        manifest_path = Path(settings.STATICFILES_DIRS[0]) / "dist" / ".vite" / "manifest.json"
+        manifest_path = (
+            Path(settings.STATICFILES_DIRS[0]) / "dist" / ".vite" / "manifest.json"
+        )
         with open(manifest_path) as f:
             _manifest = json.load(f)
     return _manifest

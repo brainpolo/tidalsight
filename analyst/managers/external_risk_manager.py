@@ -6,15 +6,18 @@ from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.external_risk_agent import ExternalRiskAssessment, external_risk_agent
+from analyst.agents.external_risk_agent import (
+    ExternalRiskAssessment,
+    external_risk_agent,
+)
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.app_behaviour import (
     EXTERNAL_RISK_DATA_TTL,
     EXTERNAL_RISK_FRESHNESS_TTL,
     EXTERNAL_RISK_LOCK_TTL,
     MAX_AGENT_TURNS,
 )
+from analyst.grounding import agent_grounding
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -56,9 +59,7 @@ def get_external_risk(asset: Asset) -> dict | None:
         return existing
 
     if not cache.add(lock_key, True, EXTERNAL_RISK_LOCK_TTL):
-        logger.info(
-            "External risk generation for %s already in progress", asset.ticker
-        )
+        logger.info("External risk generation for %s already in progress", asset.ticker)
         return existing
 
     try:

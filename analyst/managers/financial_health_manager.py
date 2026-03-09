@@ -12,12 +12,12 @@ from analyst.agents.financial_health_agent import (
     financial_health_agent,
 )
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.app_behaviour import (
     FINANCIAL_HEALTH_DATA_TTL,
     FINANCIAL_HEALTH_LOCK_TTL,
     MAX_AGENT_TURNS,
 )
+from analyst.grounding import agent_grounding
 from core.templatetags.formatting import abbreviate
 from scraper.models import Asset, Fundamental
 
@@ -141,7 +141,9 @@ def get_financial_health(asset: Asset) -> dict | None:
     fingerprint = _source_fingerprint(fundamental)
 
     if existing and existing.get("source_hash") == fingerprint:
-        logger.info("Financial health for %s served from cache (unchanged)", asset.ticker)
+        logger.info(
+            "Financial health for %s served from cache (unchanged)", asset.ticker
+        )
         return existing
 
     if not cache.add(lock_key, True, FINANCIAL_HEALTH_LOCK_TTL):

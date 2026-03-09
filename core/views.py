@@ -380,7 +380,7 @@ async def asset_detail(request, ticker):
     if cached_sentiment and "sentiment_score" in cached_sentiment:
         # Normalise -1..1 → 0..5
         sentiment_score_5 = round((cached_sentiment["sentiment_score"] + 1) * 2.5, 1)
-        sentiment_filled_dots = int(round(sentiment_score_5))
+        sentiment_filled_dots = round(sentiment_score_5)
         sentiment_brief = cached_sentiment.get("brief", "")
         sentiment_label = cached_sentiment.get("sentiment_label", "")
         sentiment_themes = cached_sentiment.get("key_themes", [])
@@ -516,7 +516,8 @@ async def asset_description(request, ticker):
         # Silently refresh if older than 90 days
         if (
             not asset.description_updated_at
-            or (timezone.now() - asset.description_updated_at).days > DESCRIPTION_FRESHNESS_DAYS
+            or (timezone.now() - asset.description_updated_at).days
+            > DESCRIPTION_FRESHNESS_DAYS
         ):
             generate_asset_description.delay(asset.id)
         return render(
@@ -664,16 +665,17 @@ async def report_card_financial_health(request, ticker):
     # Check if cached score is still valid (fingerprint matches current fundamentals)
     if cached:
         fundamental = await asset.fundamentals.afirst()
-        if fundamental:
-            if cached.get("source_hash") == financial_health_fingerprint(fundamental):
-                filled_dots = int(round(cached["score"]))
-                response = render(
-                    request,
-                    "core/partials/report_card_financial_health.html",
-                    {"health": cached, "filled_dots": filled_dots},
-                )
-                response["HX-Trigger"] = "section-scored"
-                return response
+        if fundamental and cached.get("source_hash") == financial_health_fingerprint(
+            fundamental
+        ):
+            filled_dots = round(cached["score"])
+            response = render(
+                request,
+                "core/partials/report_card_financial_health.html",
+                {"health": cached, "filled_dots": filled_dots},
+            )
+            response["HX-Trigger"] = "section-scored"
+            return response
 
     has_fundamentals = await asset.fundamentals.aexists()
     if not has_fundamentals:
@@ -687,7 +689,11 @@ async def report_card_financial_health(request, ticker):
     return render(
         request,
         "core/partials/report_card_financial_health.html",
-        {"loading": True, "ticker": ticker, "poll_interval": REPORT_SECTION_POLL_INTERVAL_S},
+        {
+            "loading": True,
+            "ticker": ticker,
+            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+        },
     )
 
 
@@ -706,7 +712,7 @@ async def report_card_external_risk(request, ticker):
     cached = await cache.aget(data_key)
 
     if cached and await cache.aget(fresh_key):
-        filled_dots = int(round(cached["score"]))
+        filled_dots = round(cached["score"])
         response = render(
             request,
             "core/partials/report_card_external_risk.html",
@@ -719,7 +725,11 @@ async def report_card_external_risk(request, ticker):
     return render(
         request,
         "core/partials/report_card_external_risk.html",
-        {"loading": True, "ticker": ticker, "poll_interval": REPORT_SECTION_POLL_INTERVAL_S},
+        {
+            "loading": True,
+            "ticker": ticker,
+            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+        },
     )
 
 
@@ -758,7 +768,7 @@ async def report_card_valuation(request, ticker):
                 fundamental, float(latest_price.close), user_note, price_target
             )
             if valuation_is_cache_valid(cached, fp):
-                filled_dots = int(round(cached["score"]))
+                filled_dots = round(cached["score"])
                 response = render(
                     request,
                     "core/partials/report_card_valuation.html",
@@ -779,7 +789,11 @@ async def report_card_valuation(request, ticker):
     return render(
         request,
         "core/partials/report_card_valuation.html",
-        {"loading": True, "ticker": ticker, "poll_interval": REPORT_SECTION_POLL_INTERVAL_S},
+        {
+            "loading": True,
+            "ticker": ticker,
+            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+        },
     )
 
 
@@ -813,7 +827,7 @@ async def report_card_product_flywheel(request, ticker):
     if cached:
         fp = product_flywheel_fingerprint(user_note, price_target)
         if product_flywheel_is_cache_valid(cached, fp):
-            filled_dots = int(round(cached["score"]))
+            filled_dots = round(cached["score"])
             response = render(
                 request,
                 "core/partials/report_card_product_flywheel.html",
@@ -826,7 +840,11 @@ async def report_card_product_flywheel(request, ticker):
     return render(
         request,
         "core/partials/report_card_product_flywheel.html",
-        {"loading": True, "ticker": ticker, "poll_interval": REPORT_SECTION_POLL_INTERVAL_S},
+        {
+            "loading": True,
+            "ticker": ticker,
+            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+        },
     )
 
 
@@ -860,7 +878,7 @@ async def report_card_leadership(request, ticker):
     if cached:
         fp = leadership_fingerprint(user_note, price_target)
         if leadership_is_cache_valid(cached, fp):
-            filled_dots = int(round(cached["score"]))
+            filled_dots = round(cached["score"])
             response = render(
                 request,
                 "core/partials/report_card_leadership.html",
@@ -873,7 +891,11 @@ async def report_card_leadership(request, ticker):
     return render(
         request,
         "core/partials/report_card_leadership.html",
-        {"loading": True, "ticker": ticker, "poll_interval": REPORT_SECTION_POLL_INTERVAL_S},
+        {
+            "loading": True,
+            "ticker": ticker,
+            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+        },
     )
 
 
@@ -936,7 +958,11 @@ async def report_card_overall(request, ticker):
 
     # Need all 6 sections
     if len(sections) < 6:
-        partial_total = round(sum(s.get("score", 0) for s in sections.values()), 1) if sections else None
+        partial_total = (
+            round(sum(s.get("score", 0) for s in sections.values()), 1)
+            if sections
+            else None
+        )
         return render(
             request,
             "core/partials/report_card_overall.html",
@@ -1046,10 +1072,7 @@ async def _positive_day_stats(asset, now):
                      (SELECT COUNT(*) FROM stats WHERE up = 1))
         ) AS t(days, total, positive);
     """
-    cutoffs = [
-        now - timedelta(days=d)
-        for d in (30, 90, 365, 1825)
-    ]
+    cutoffs = [now - timedelta(days=d) for d in (30, 90, 365, 1825)]
     params = [asset.id]
     for c in cutoffs:
         params.extend([c, c])
@@ -1154,9 +1177,13 @@ async def asset_prices(request, ticker):
         )
 
     # Positive-day stats — single raw SQL query instead of loading full history.
-    positive_30d, positive_90d, positive_1y, positive_5y, positive_all = (
-        await _positive_day_stats(asset, now)
-    )
+    (
+        positive_30d,
+        positive_90d,
+        positive_1y,
+        positive_5y,
+        positive_all,
+    ) = await _positive_day_stats(asset, now)
 
     return render(
         request,

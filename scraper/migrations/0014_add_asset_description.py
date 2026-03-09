@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0013_widen_percentage_fields'),
+        ("scraper", "0013_widen_percentage_fields"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='asset',
-            name='description',
+            model_name="asset",
+            name="description",
             field=models.TextField(blank=True),
         ),
     ]

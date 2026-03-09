@@ -10,13 +10,13 @@ from django.utils import timezone
 
 from analyst.agents.leadership_agent import LeadershipAssessment, leadership_agent
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.app_behaviour import (
     LEADERSHIP_DATA_TTL,
     LEADERSHIP_FRESHNESS_TTL,
     LEADERSHIP_LOCK_TTL,
     MAX_AGENT_TURNS,
 )
+from analyst.grounding import agent_grounding
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -106,16 +106,12 @@ def get_leadership(
         return existing
 
     if not cache.add(lock_key, True, LEADERSHIP_LOCK_TTL):
-        logger.info(
-            "Leadership generation for %s already in progress", asset.ticker
-        )
+        logger.info("Leadership generation for %s already in progress", asset.ticker)
         return existing
 
     try:
         prompt = _build_prompt(asset, user_note, price_target)
-        logger.info(
-            "Generating Leadership for %s (user %s)...", asset.ticker, user_id
-        )
+        logger.info("Generating Leadership for %s (user %s)...", asset.ticker, user_id)
 
         assessment = _run_agent(prompt)
         data = assessment.model_dump()

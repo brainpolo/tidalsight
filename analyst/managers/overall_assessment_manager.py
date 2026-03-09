@@ -13,12 +13,12 @@ from analyst.agents.overall_assessment_agent import (
     overall_assessment_agent,
 )
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
 from analyst.app_behaviour import (
     MAX_AGENT_TURNS,
     OVERALL_ASSESSMENT_DATA_TTL,
     OVERALL_ASSESSMENT_LOCK_TTL,
 )
+from analyst.grounding import agent_grounding
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -55,9 +55,7 @@ def _source_fingerprint(sections: dict[str, dict]) -> str:
     """Hash all 6 section results to detect any change."""
     parts = []
     for name in sorted(sections):
-        filtered = {
-            k: v for k, v in sections[name].items() if k not in _META_FIELDS
-        }
+        filtered = {k: v for k, v in sections[name].items() if k not in _META_FIELDS}
         parts.append(f"{name}:{json.dumps(filtered, sort_keys=True, default=str)}")
     return hashlib.md5("|".join(parts).encode()).hexdigest()
 
@@ -116,7 +114,9 @@ def _build_prompt(
         _append_list_field(lines, section, "bear_cases", "Bear Cases")
         _append_list_field(lines, section, "flywheel_strengths", "Flywheel Strengths")
         _append_list_field(lines, section, "moat_risks", "Moat Risks")
-        _append_list_field(lines, section, "leadership_strengths", "Leadership Strengths")
+        _append_list_field(
+            lines, section, "leadership_strengths", "Leadership Strengths"
+        )
         _append_list_field(lines, section, "leadership_risks", "Leadership Risks")
         lines.append("")
 
@@ -153,7 +153,9 @@ def get_overall_assessment(
 ) -> dict | None:
     """Return cached overall assessment, regenerating when any section changes."""
     if len(sections) < 6:
-        logger.info("Only %d/6 sections for %s, skipping overall", len(sections), asset.ticker)
+        logger.info(
+            "Only %d/6 sections for %s, skipping overall", len(sections), asset.ticker
+        )
         return None
 
     data_key, lock_key = _cache_keys(user_id, asset.ticker)
@@ -162,11 +164,17 @@ def get_overall_assessment(
     fingerprint = _source_fingerprint(sections)
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.info("Overall assessment for %s (user %s) served from cache", asset.ticker, user_id)
+        logger.info(
+            "Overall assessment for %s (user %s) served from cache",
+            asset.ticker,
+            user_id,
+        )
         return existing
 
     if not cache.add(lock_key, True, OVERALL_ASSESSMENT_LOCK_TTL):
-        logger.info("Overall assessment generation for %s already in progress", asset.ticker)
+        logger.info(
+            "Overall assessment generation for %s already in progress", asset.ticker
+        )
         return existing
 
     try:
@@ -177,7 +185,9 @@ def get_overall_assessment(
         verdict = compute_verdict(total_score)
 
         prompt = _build_prompt(asset, current_price, total_score, verdict, sections)
-        logger.info("Generating overall assessment for %s (user %s)...", asset.ticker, user_id)
+        logger.info(
+            "Generating overall assessment for %s (user %s)...", asset.ticker, user_id
+        )
 
         assessment = _run_agent(prompt)
         data = assessment.model_dump()

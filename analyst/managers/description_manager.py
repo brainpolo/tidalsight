@@ -4,17 +4,16 @@ import logging
 from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
+from django.utils import timezone
 
 from analyst.agents.description_agent import description_agent
 from analyst.agents.provider import get_model_provider
-from analyst.grounding import agent_grounding
-from django.utils import timezone
-
 from analyst.app_behaviour import (
     DESCRIPTION_FRESHNESS_DAYS,
     DESCRIPTION_LOCK_TTL,
     MAX_AGENT_TURNS,
 )
+from analyst.grounding import agent_grounding
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,8 @@ def generate_description(asset: Asset) -> str | None:
     if (
         asset.description
         and asset.description_updated_at
-        and (timezone.now() - asset.description_updated_at).days <= DESCRIPTION_FRESHNESS_DAYS
+        and (timezone.now() - asset.description_updated_at).days
+        <= DESCRIPTION_FRESHNESS_DAYS
     ):
         return asset.description
 
@@ -69,7 +69,7 @@ def generate_description(asset: Asset) -> str | None:
         asset.save(update_fields=["description", "description_updated_at"])
         cache.delete(lock_key)
         return description
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate description for %s", asset.ticker)
         cache.delete(lock_key)
         return None

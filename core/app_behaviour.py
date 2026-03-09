@@ -21,4 +21,6 @@ TRENDING_REFRESH_INTERVAL = 300  # seconds — HTMX polling interval
 TRENDING_PERIOD_H = 168  # 7 days
 VIEW_COOLDOWN_H = 1  # hours before same visitor/user can count as a new view
 
-REPORT_SECTION_POLL_INTERVAL_S = 5  # seconds — HTMX polling interval for report card sections
+REPORT_SECTION_POLL_INTERVAL_S = (
+    5  # seconds — HTMX polling interval for report card sections
+)

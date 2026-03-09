@@ -61,8 +61,9 @@ def fetch_asset_news(asset_id: int):
 def sync_crypto_prices():
     """Sync prices for crypto assets only (24/7 markets)."""
     tickers = list(
-        Asset.objects.filter(is_active=True, asset_class=Asset.AssetClass.CRYPTO)
-        .values_list("ticker", flat=True)
+        Asset.objects.filter(
+            is_active=True, asset_class=Asset.AssetClass.CRYPTO
+        ).values_list("ticker", flat=True)
     )
     total = 0
     for ticker in tickers:
@@ -70,9 +71,7 @@ def sync_crypto_prices():
             total += sync_all_prices(ticker)
         except Exception:
             logger.exception("Failed to sync prices for %s", ticker)
-    logger.info(
-        "sync_crypto_prices: %d new rows across %d assets", total, len(tickers)
-    )
+    logger.info("sync_crypto_prices: %d new rows across %d assets", total, len(tickers))
     return total
 
 
@@ -114,5 +113,9 @@ def sync_watched_asset_fundamentals():
                 updated += 1
         except Exception:
             logger.exception("Failed to sync fundamentals for %s", ticker)
-    logger.info("sync_watched_asset_fundamentals: %d/%d watched assets updated", updated, len(tickers))
+    logger.info(
+        "sync_watched_asset_fundamentals: %d/%d watched assets updated",
+        updated,
+        len(tickers),
+    )
     return updated
