@@ -38,13 +38,19 @@ def fetch_price_history(
 
     rows = []
     for ts, row in df.iterrows():
+        open_ = _to_decimal(row.get("Open"))
+        high = _to_decimal(row.get("High"))
+        low = _to_decimal(row.get("Low"))
+        close = _to_decimal(row.get("Close"))
+        if open_ is None or high is None or low is None or close is None:
+            continue
         rows.append(
             {
-                "open": _to_decimal(row.get("Open")),
-                "high": _to_decimal(row.get("High")),
-                "low": _to_decimal(row.get("Low")),
-                "close": _to_decimal(row.get("Close")),
-                "volume": _to_decimal(row.get("Volume")),
+                "open": open_,
+                "high": high,
+                "low": low,
+                "close": close,
+                "volume": _to_decimal(row.get("Volume"), default=Decimal("0")),
                 "timestamp": ts.to_pydatetime(),
             }
         )

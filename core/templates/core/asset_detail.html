@@ -679,8 +679,8 @@
         <div class="divider"></div>
     </div>
 
-    <!-- Recent Prices (HTMX partial) -->
-    <div hx-get="{% url 'core:asset_prices' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML"></div>
+    <!-- Recent Prices (HTMX partial — waits for header to finish syncing prices) -->
+    <div hx-get="{% url 'core:asset_prices' asset.ticker %}" hx-trigger="prices-synced from:body" hx-swap="innerHTML"></div>
 
     {% include "core/components/footer.html" %}
 </div>

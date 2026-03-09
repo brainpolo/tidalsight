@@ -15,6 +15,11 @@ app = Celery("tidalsight")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
+# IMPORTANT: Do not add scheduled tasks that make LLM/AI calls across all assets.
+# With 2k+ assets, even a single AI call per asset on a cron will be extremely
+# expensive. AI-powered features (sentiment, peer discovery) should remain
+# on-demand via user visits. If a scheduled AI task is truly needed, scope it
+# as narrowly as possible (e.g. a single global digest, not per-asset).
 app.conf.beat_schedule = {
     "fetch Reddit posts every 2 hours": {
         "task": "scraper.tasks.fetch_reddit",
@@ -39,9 +44,5 @@ app.conf.beat_schedule = {
     "refresh market digest hourly": {
         "task": "analyst.tasks.generate_market_digest",
         "schedule": crontab(minute=50),
-    },
-    "refresh sentiment every 12 hours": {
-        "task": "analyst.tasks.refresh_all_sentiments",
-        "schedule": crontab(minute=0, hour="*/12"),
     },
 }

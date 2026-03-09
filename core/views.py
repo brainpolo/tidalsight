@@ -1,5 +1,6 @@
 import asyncio
 import json
+import threading
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -29,7 +30,8 @@ from django.views.decorators.http import require_POST
 from analyst.app_behaviour import DIGEST_REFRESH_INTERVAL, SENTIMENT_MIN_POSTS
 from analyst.managers.digest_manager import get_market_digest
 from analyst.managers.sentiment_manager import _cache_keys as sentiment_cache_keys
-from analyst.tasks import analyze_asset_sentiment, discover_peers
+from analyst.managers.sentiment_manager import get_asset_sentiment
+from analyst.tasks import discover_peers
 from core.app_behaviour import (
     ASSET_DETAIL_FAVICON_SIZE,
     ASSET_DETAIL_HN_POSTS,
@@ -488,7 +490,7 @@ async def asset_peers(request, ticker):
 
 
 async def asset_sentiment(request, ticker):
-    """Partial: AI sentiment gauge. Fires Celery task if not cached."""
+    """Partial: AI sentiment gauge. Runs agent in background thread if not cached."""
     ticker = ticker.upper()
     asset = await Asset.objects.filter(ticker=ticker).afirst()
     if not asset:
@@ -517,7 +519,10 @@ async def asset_sentiment(request, ticker):
             request, "core/partials/asset_sentiment.html", {"insufficient": True}
         )
 
-    analyze_asset_sentiment.delay(asset.id)
+    # Fire-and-forget in a background thread on the web server itself,
+    # keeping Celery workers free for heavy scraping/sync tasks.
+    # The cache lock inside get_asset_sentiment prevents concurrent runs.
+    threading.Thread(target=get_asset_sentiment, args=(asset,), daemon=True).start()
     response = render(request, "core/partials/asset_sentiment.html", {"loading": True})
     response["HX-Trigger-After-Settle"] = '{"retrySentiment": true}'
     return response

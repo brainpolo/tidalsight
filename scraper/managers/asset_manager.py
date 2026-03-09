@@ -43,6 +43,12 @@ def _bulk_insert_prices(asset: Asset, rows: list[dict]) -> int:
             volume=row["volume"],
         )
         for row in rows
+        # yfinance returns null OHLC with volume=0 for delisted, halted,
+        # or illiquid tickers — skip these as they contain no real data.
+        if row["open"] is not None
+        and row["high"] is not None
+        and row["low"] is not None
+        and row["close"] is not None
     ]
     return len(PriceHistory.objects.bulk_create(objects, ignore_conflicts=True))
 

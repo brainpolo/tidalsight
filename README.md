@@ -1,6 +1,16 @@
 # Tidalsight
 
-A Django web application.
+A real-time market intelligence platform that combines financial data, community sentiment, and AI-powered analysis into a single view per asset.
+
+## Core Features
+
+- **Self-expanding asset network** — The universe of tracked assets grows autonomously. When a user visits any asset, an LLM agent discovers its peers and competitors, which become first-class assets themselves. Each new asset triggers further discovery, creating an organically expanding knowledge graph seeded from a single ticker.
+- **AI community sentiment** — Aggregates Reddit, Hacker News, and news articles, then runs an LLM agent to produce a sentiment score, label, brief, and key themes per asset. Fingerprinted against source posts so it only regenerates when the conversation changes.
+- **AI market digest** — A global market brief synthesised from the latest community posts across all sources, regenerated hourly with the same source-fingerprint optimisation.
+- **Infinite-scroll daily prices** — Cursor-based pagination streams the full price history as the user scrolls, with positive-day statistics computed across 30d/90d/1y/5y/all-time windows.
+- **Interactive price chart** — Canvas-rendered chart with range switching (1D–ALL), RSI gauge, price target overlay, click-to-measure, and PNG export.
+- **Personalisation** — Watchlists, price targets, and private notes per asset that feed into AI-generated analysis.
+- **Zero-config data pipeline** — Celery Beat continuously ingests prices, fundamentals, Reddit, Hacker News, and news. New assets get quick-synced on first visit, then backfilled in the background.
 
 ## Architecture
 
@@ -58,6 +68,7 @@ Celery Beat runs the following tasks automatically in production:
 | `fetch_reddit` | Every 2 hours | Scrape 18 financial subreddits for ticker mentions |
 | `fetch_hn` | Every 4 hours | Fetch top Hacker News stories and match to assets |
 | `fetch_news` | Every 6 hours | Fetch news articles from Brave News Search |
+| `generate_market_digest` | Every hour | Regenerate the AI market digest (skipped if sources unchanged) |
 
 The Celery worker runs as a separate Railway service using `celery_railway.json`. Task results are persisted to Postgres via `django-celery-results` and viewable in Django admin.
 
