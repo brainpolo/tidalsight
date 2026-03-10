@@ -561,8 +561,8 @@
                 <rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/>
             </svg>
             <span class="text-t3">Looks like you're browsing as a guest &mdash;
-            <a href="{% url 'core:sign_up' %}" class="text-copper hover:text-copper-light transition-colors font-medium">sign up for free</a>
-            and you'll get watchlists, price alerts, AI briefs, portfolio tracking, and a fully personalised experience.</span>
+            <a href="{% url 'core:sign_up' %}" class="text-copper hover:text-copper-light transition-colors font-medium">sign up</a>
+            to create watchlists, get personalised briefs, and add your own notes for more targeted insights.</span>
         </div>
     </div>
     {% endif %}
@@ -632,7 +632,7 @@
     <!-- Report Card -->
         <section class="py-6 sm:py-10">
             <div class="flex items-center gap-3 mb-6 sm:mb-8">
-                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">At a Glance &mdash; TidalSight Report</div>
+                <div class="text-[0.75rem] font-semibold tracking-[0.14em] uppercase text-t3">At a Glance &mdash; TidalSight Report</div>
                 <div class="flex-1 h-px bg-surface/[0.04]"></div>
             </div>
 
@@ -646,8 +646,8 @@
             <div class="mb-6 rounded-lg border border-surface/[0.04] overflow-hidden">
                 <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-surface/[0.015] border-b border-surface/[0.04]">
                     <i data-lucide="shield-check" class="size-3.5 text-t4"></i>
-                    <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3">Hygiene Factors</span>
-                    <span class="text-[0.5rem] text-t4/60 italic">governed by external factors and public information (what the data shows)</span>
+                    <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-t3">Hygiene Factors</span>
+                    <span class="text-[0.6rem] text-t3/60 italic">governed by external factors and public information (what the data shows)</span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 {% if asset.asset_class == 'equity' %}lg:grid-cols-3{% endif %} gap-px bg-surface/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 
@@ -681,8 +681,8 @@
             <div class="mb-0 rounded-lg border border-copper/[0.08] overflow-hidden">
                 <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-copper/[0.02] border-b border-copper/[0.06]">
                     <i data-lucide="flame" class="size-3.5 text-copper/70"></i>
-                    <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-copper/80">Motivators</span>
-                    <span class="text-[0.5rem] text-t4/60 italic">governed by internal factors (where your thesis lives) — your notes contribute to a more refined analysis</span>
+                    <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-copper/80">Motivators</span>
+                    <span class="text-[0.6rem] text-t3/60 italic">governed by internal factors (where your thesis lives) — your notes contribute to a more refined analysis</span>
                 </div>
                 <div id="rc-motivators" class="grid grid-cols-1 sm:grid-cols-2 {% if asset.asset_class == 'equity' %}lg:grid-cols-3{% endif %} gap-px bg-copper/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 

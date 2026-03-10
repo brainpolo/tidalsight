@@ -14,7 +14,7 @@
 {% elif peers %}
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pt-3 pb-1">
     <div class="flex items-start gap-3 overflow-x-auto scrollbar-hide justify-center">
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 shrink-0 pt-1.5">Peers</span>
+        <span class="text-[0.55rem] font-semibold tracking-[0.16em] uppercase text-t4 dark:text-t3/50 shrink-0 self-stretch flex items-center justify-center [writing-mode:vertical-lr] rotate-180 border-l border-surface/[0.08] pl-3">Peers</span>
         <div class="flex items-start gap-1 min-w-0">
             {% for peer in peers %}
             <a href="{% url 'core:asset_detail' peer.asset.ticker %}"
