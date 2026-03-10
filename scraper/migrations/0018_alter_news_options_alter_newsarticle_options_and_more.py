@@ -4,32 +4,31 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0017_increase_url_max_length'),
+        ("scraper", "0017_increase_url_max_length"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='news',
-            options={'ordering': ['-posted_at'], 'verbose_name_plural': 'news'},
+            name="news",
+            options={"ordering": ["-posted_at"], "verbose_name_plural": "news"},
         ),
         migrations.AlterModelOptions(
-            name='newsarticle',
-            options={'ordering': ['-posted_at']},
+            name="newsarticle",
+            options={"ordering": ["-posted_at"]},
         ),
         migrations.AlterModelOptions(
-            name='newsassetimpact',
-            options={'ordering': ['-news__posted_at']},
+            name="newsassetimpact",
+            options={"ordering": ["-news__posted_at"]},
         ),
         migrations.RenameField(
-            model_name='news',
-            old_name='published_at',
-            new_name='posted_at',
+            model_name="news",
+            old_name="published_at",
+            new_name="posted_at",
         ),
         migrations.RenameField(
-            model_name='newsarticle',
-            old_name='published_at',
-            new_name='posted_at',
+            model_name="newsarticle",
+            old_name="published_at",
+            new_name="posted_at",
         ),
     ]

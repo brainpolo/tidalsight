@@ -1485,17 +1485,40 @@ async def asset_community(request, ticker):
     # Merge into a single chronological feed
     mentions = []
     for p in reddit_posts:
-        mentions.append({"type": "reddit", "title": p.title, "url": p.url,
-                         "date": p.posted_at, "score": p.score,
-                         "num_comments": p.num_comments,
-                         "subreddit": p.subreddit, "author": p.author})
+        mentions.append(
+            {
+                "type": "reddit",
+                "title": p.title,
+                "url": p.url,
+                "date": p.posted_at,
+                "score": p.score,
+                "num_comments": p.num_comments,
+                "subreddit": p.subreddit,
+                "author": p.author,
+            }
+        )
     for p in hn_posts:
-        mentions.append({"type": "hn", "title": p.title, "url": p.url,
-                         "date": p.posted_at, "score": p.score,
-                         "num_comments": p.num_comments, "author": p.author})
+        mentions.append(
+            {
+                "type": "hn",
+                "title": p.title,
+                "url": p.url,
+                "date": p.posted_at,
+                "score": p.score,
+                "num_comments": p.num_comments,
+                "author": p.author,
+            }
+        )
     for a in news_articles:
-        mentions.append({"type": "news", "title": a.title, "url": a.url,
-                         "date": a.posted_at, "source": a.source})
+        mentions.append(
+            {
+                "type": "news",
+                "title": a.title,
+                "url": a.url,
+                "date": a.posted_at,
+                "source": a.source,
+            }
+        )
     _min_dt = datetime.min.replace(tzinfo=UTC)
     mentions.sort(key=lambda m: m["date"] or _min_dt, reverse=True)
 
