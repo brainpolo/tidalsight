@@ -42,7 +42,7 @@
 
     <!-- Fixed asset context banner -->
     <div id="assetBanner" class="asset-banner fixed top-[calc(1.75rem+53px)] sm:top-[calc(2rem+57px)] left-0 right-0 z-30">
-        <div class="max-w-[1120px] mx-auto px-4 sm:px-10 xl:pr-[calc(240px+2rem+2.5rem)]">
+        <div class="max-w-[1120px] mx-auto px-4 sm:px-10 {% if request.user.is_authenticated %}xl:pr-[calc(240px+2rem+2.5rem)]{% endif %}">
             <div class="banner-bar py-2 sm:py-2.5 flex items-center justify-center gap-2 sm:gap-3 bg-page/90 backdrop-blur-md border-b border-surface/[0.06] opacity-0 -translate-y-2 transition-all duration-200 ease-out">
                 {% if asset.website %}
                 <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz=32"
@@ -555,7 +555,7 @@
     </div>
 
     {% if not request.user.is_authenticated %}
-    <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pb-6">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-10 py-6">
         <div class="bg-copper/[0.03] border border-copper/[0.08] rounded-lg px-4 sm:px-5 py-3 flex items-center gap-3 text-[0.75rem] text-t2">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-copper shrink-0">
                 <rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/>
@@ -949,6 +949,7 @@
             if (document.querySelectorAll('[data-section]').length >= expected) {
                 var b = document.getElementById('rc-processing-banner');
                 if (b) { b.style.opacity = '0'; b.style.marginBottom = '0'; b.style.padding = '0'; b.style.maxHeight = '0'; b.style.borderColor = 'transparent'; }
+            }
         }, 2000);
     });
 })();
