@@ -36,9 +36,9 @@ MOTIVATOR_WEIGHT = 1.0
 # Deterministic verdict ranges (weighted total out of 30)
 _VERDICT_RANGES = [
     (12, "Strong Sell"),
-    (15, "Sell"),
-    (22, "Hold"),
-    (26, "Buy"),
+    (16, "Sell"),
+    (21, "Hold"),
+    (25, "Buy"),
     (30, "Strong Buy"),
 ]
 
@@ -197,6 +197,8 @@ def _generate_assessment(
         assessment = _run_agent(prompt)
         fingerprint = _source_fingerprint(sections)
         data = assessment.model_dump()
+        data["score"] = round(total_score)
+        data["verdict"] = verdict
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 

@@ -70,6 +70,14 @@
         <div class="divider mt-4"></div>
     </section>
 
+    {# ── View tabs (authenticated only) ── #}
+    {% if user.is_authenticated %}
+    <div class="flex items-center gap-4 mb-5">
+        <a href="?view=public" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 transition-colors {% if active_view == 'public' %}text-heading border-copper{% else %}text-t3 border-transparent hover:text-t2{% endif %}">Public</a>
+        <a href="?view=yours" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 transition-colors {% if active_view == 'yours' %}text-heading border-copper{% else %}text-t3 border-transparent hover:text-t2{% endif %}">Yours</a>
+    </div>
+    {% endif %}
+
     {# ── Filter tabs ── #}
     <div class="flex items-center gap-1 mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0" id="filterTabs">
         <button data-filter="all" class="filter-tab active text-[0.6rem] font-semibold tracking-[0.12em] uppercase px-3 py-1.5 border-b-2 border-transparent text-t3 hover:text-t2 cursor-pointer whitespace-nowrap">All</button>
@@ -120,6 +128,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-heading group-hover:text-copper transition-colors">{{ asset.ticker }}</span>
                             <span class="text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.04] text-t4">{{ asset.get_asset_class_display }}</span>
+                            {% if asset.is_personalized %}<span class="text-[0.45rem] font-semibold tracking-[0.08em] uppercase px-1 py-0.5 rounded-sm bg-copper/10 text-copper">Personalised</span>{% endif %}
                         </div>
                         <span class="text-[0.6rem] text-t3 truncate block">{{ asset.name }}</span>
                     </div>
@@ -138,13 +147,7 @@
 
                 {# Verdict #}
                 <div class="flex justify-end">
-                    {% if asset.verdict == "Strong Buy" or asset.verdict == "Buy" %}
-                    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ asset.verdict }}</span>
-                    {% elif asset.verdict == "Strong Sell" or asset.verdict == "Sell" %}
-                    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ asset.verdict }}</span>
-                    {% else %}
-                    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ asset.verdict }}</span>
-                    {% endif %}
+                    {% include "core/components/verdict_badge.html" with verdict=asset.verdict size="sm" %}
                 </div>
 
                 {# Price + daily change #}
@@ -197,13 +200,8 @@
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-semibold text-heading">{{ asset.ticker }}</span>
-                        {% if asset.verdict == "Strong Buy" or asset.verdict == "Buy" %}
-                        <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-emerald-500/10 text-emerald-400">{{ asset.verdict }}</span>
-                        {% elif asset.verdict == "Strong Sell" or asset.verdict == "Sell" %}
-                        <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-red-500/10 text-red-400">{{ asset.verdict }}</span>
-                        {% else %}
-                        <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-surface/[0.06] text-t3">{{ asset.verdict }}</span>
-                        {% endif %}
+                        {% include "core/components/verdict_badge.html" with verdict=asset.verdict size="xs" %}
+                        {% if asset.is_personalized %}<span class="text-[0.4rem] font-semibold tracking-[0.06em] uppercase px-1 py-px rounded-sm bg-copper/10 text-copper">Personalised</span>{% endif %}
                     </div>
                     <span class="text-[0.55rem] text-t3 truncate block">{{ asset.name }}</span>
                 </div>

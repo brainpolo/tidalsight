@@ -56,6 +56,7 @@
                             </div>
                             <div class="flex items-center gap-2 sm:gap-3 mt-1 sm:mt-1.5 flex-wrap">
                                 <span class="text-[0.6rem] sm:text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-t3">{{ asset.ticker }}</span>
+                                {% include "core/components/verdict_badge.html" with verdict=verdict size="md" %}
                                 {% if asset.website %}
                                 <span class="text-t4">&middot;</span>
                                 <a href="{{ asset.website }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[0.6rem] sm:text-[0.65rem] text-t3 hover:text-copper transition-colors">

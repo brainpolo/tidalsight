@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from collections import defaultdict
@@ -175,6 +176,11 @@ async def home(request):
 
 async def rankings(request):
     """Rankings page: assets ranked by report card score."""
+    view = request.GET.get("view", "public")
+    is_authenticated = request.user.is_authenticated
+    if not is_authenticated:
+        view = "public"
+
     ranked = [
         a
         async for a in Asset.objects.filter(is_active=True, report_card_score__gt=0)
@@ -193,10 +199,44 @@ async def rankings(request):
         .order_by("-report_card_score", "ticker")
     ]
 
+    if view == "yours" and is_authenticated:
+        # Find assets where the user has notes or a price target
+        personalized_asset_ids = set()
+        async for ua in (
+            UserAsset.objects.filter(user=request.user)
+            .exclude(note="", price_target__isnull=True)
+            .only("asset_id")
+        ):
+            personalized_asset_ids.add(ua.asset_id)
+
+        if personalized_asset_ids:
+            # Batch cache lookups for personalized overall scores
+            ticker_asset_map = {
+                a.ticker: a for a in ranked if a.id in personalized_asset_ids
+            }
+            cache_tasks = {}
+            for ticker in ticker_asset_map:
+                data_key, _ = overall_user_cache_keys(request.user.id, ticker)
+                cache_tasks[ticker] = cache.aget(data_key)
+
+            results = await asyncio.gather(*cache_tasks.values())
+            for ticker, cached in zip(cache_tasks.keys(), results, strict=True):
+                if cached and "score" in cached:
+                    asset = ticker_asset_map[ticker]
+                    asset.report_card_score = cached["score"]
+                    if cached.get("target_price") is not None:
+                        asset.target_price = cached["target_price"]
+                    asset.is_personalized = True
+
+            # Re-sort after overlaying personalized scores
+            ranked.sort(key=lambda a: (-a.report_card_score, a.ticker))
+
     for i, asset in enumerate(ranked, 1):
         asset.rank = i
         asset.verdict = compute_verdict(asset.report_card_score)
         asset.daily_change = pct_change(asset.latest_close, asset.prev_close)
+        if not hasattr(asset, "is_personalized"):
+            asset.is_personalized = False
         if asset.target_price and asset.latest_close:
             asset.upside = float(
                 (asset.target_price - asset.latest_close) / asset.latest_close * 100
@@ -204,7 +244,14 @@ async def rankings(request):
         else:
             asset.upside = None
 
-    return render(request, "core/rankings.html", {"ranked_assets": ranked})
+    return render(
+        request,
+        "core/rankings.html",
+        {
+            "ranked_assets": ranked,
+            "active_view": view,
+        },
+    )
 
 
 @login_required
@@ -275,7 +322,11 @@ async def strategy(request):
 
 
 async def market_digest(request):
-    digest = await sync_to_async(get_market_digest)()
+    try:
+        digest = await sync_to_async(get_market_digest)()
+    except Exception:
+        logger.exception("Market digest generation failed in view")
+        digest = None
     if digest and digest.get("generated_at"):
         digest["generated_at"] = datetime.fromisoformat(digest["generated_at"])
     return render(request, "core/partials/market_digest.html", {"digest": digest})
@@ -438,6 +489,9 @@ async def asset_detail(request, ticker):
             "user_note": user_note,
             "report_section_poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
             "user_has_notes": bool(user_note or price_target is not None),
+            "verdict": compute_verdict(asset.report_card_score)
+            if asset.report_card_score
+            else None,
         },
     )
 

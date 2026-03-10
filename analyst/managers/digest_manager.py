@@ -5,7 +5,6 @@ import logging
 from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
-from django.db.models import Prefetch
 from django.utils import timezone
 from openai import APIStatusError
 
@@ -15,20 +14,16 @@ from analyst.app_behaviour import (
     DIGEST_DATA_TTL,
     DIGEST_FRESHNESS_TTL,
     DIGEST_LOCK_TTL,
-    HN_COMMENT_BODY_TRUNCATION,
-    HN_COMMENTS_PER_POST_FOR_DIGEST,
     HN_POSTS_FOR_DIGEST,
     MAX_AGENT_TURNS,
     NEWS_ARTICLE_DESCRIPTION_TRUNCATION,
     NEWS_ARTICLES_FOR_DIGEST,
-    REDDIT_COMMENT_BODY_TRUNCATION,
-    REDDIT_COMMENTS_PER_POST_FOR_DIGEST,
     REDDIT_POST_BODY_TRUNCATION,
     REDDIT_POSTS_FOR_DIGEST,
     cache_key,
 )
 from analyst.grounding import agent_grounding
-from scraper.models import HNComment, HNPost, NewsArticle, RedditComment, RedditPost
+from scraper.models import HNPost, NewsArticle, RedditPost
 
 logger = logging.getLogger(__name__)
 
@@ -56,21 +51,9 @@ def _source_fingerprint(
 def _fetch_sources() -> tuple[list[RedditPost], list[HNPost], list[NewsArticle]]:
     """Fetch all source posts for the digest in one pass."""
     reddit_posts = list(
-        RedditPost.objects.order_by("-posted_at").prefetch_related(
-            Prefetch(
-                "comments",
-                queryset=RedditComment.objects.order_by("-score"),
-            ),
-        )[:REDDIT_POSTS_FOR_DIGEST]
+        RedditPost.objects.order_by("-posted_at")[:REDDIT_POSTS_FOR_DIGEST]
     )
-    hn_posts = list(
-        HNPost.objects.order_by("-posted_at").prefetch_related(
-            Prefetch(
-                "comments",
-                queryset=HNComment.objects.order_by("-posted_at"),
-            ),
-        )[:HN_POSTS_FOR_DIGEST]
-    )
+    hn_posts = list(HNPost.objects.order_by("-posted_at")[:HN_POSTS_FOR_DIGEST])
     news_articles = list(
         NewsArticle.objects.order_by("-published_at")[:NEWS_ARTICLES_FOR_DIGEST]
     )
@@ -97,18 +80,12 @@ def _build_prompt(
             )
             if p.body:
                 lines.append(f"  {p.body[:REDDIT_POST_BODY_TRUNCATION]}")
-            for c in p.comments.all()[:REDDIT_COMMENTS_PER_POST_FOR_DIGEST]:
-                lines.append(
-                    f"    > {c.author} (score:{c.score}): {c.body[:REDDIT_COMMENT_BODY_TRUNCATION]}"
-                )
         sections.append("\n".join(lines))
 
     if hn_posts:
         lines = ["## Hacker News Discussions"]
         for p in hn_posts:
             lines.append(f"[HN] (score:{p.score}, comments:{p.num_comments}) {p.title}")
-            for c in p.comments.all()[:HN_COMMENTS_PER_POST_FOR_DIGEST]:
-                lines.append(f"    > {c.author}: {c.body[:HN_COMMENT_BODY_TRUNCATION]}")
         sections.append("\n".join(lines))
 
     if news_articles:
@@ -186,7 +163,11 @@ def get_market_digest() -> dict | None:
         ModelBehaviorError,
         APIStatusError,
     ):
-        logger.exception("Failed to generate market digest")
+        logger.exception(
+            "Failed to generate market digest. Prompt (%d chars):\n%s",
+            len(prompt),
+            prompt[:2000],
+        )
         cache.delete(DIGEST_LOCK_KEY)
         return existing
 

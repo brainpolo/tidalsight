@@ -1,0 +1,43 @@
+{% comment %}
+Reusable verdict badge. Pass `verdict` (str) and optional `size` ("sm", "md", "lg").
+  sm  = rankings table (desktop)
+  xs  = rankings table (mobile)
+  md  = asset detail header
+  lg  = report card overall
+Default: sm
+{% endcomment %}
+{% if verdict %}
+{% if size == "xs" %}
+    {% if verdict == "Strong Buy" or verdict == "Buy" %}
+    <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-emerald-500/10 text-emerald-400">{{ verdict }}</span>
+    {% elif verdict == "Strong Sell" or verdict == "Sell" %}
+    <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-red-500/10 text-red-400">{{ verdict }}</span>
+    {% else %}
+    <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-surface/[0.06] text-t3">{{ verdict }}</span>
+    {% endif %}
+{% elif size == "md" %}
+    {% if verdict == "Strong Buy" or verdict == "Buy" %}
+    <span class="text-[0.6rem] font-semibold tracking-[0.06em] uppercase px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/15">{{ verdict }}</span>
+    {% elif verdict == "Strong Sell" or verdict == "Sell" %}
+    <span class="text-[0.6rem] font-semibold tracking-[0.06em] uppercase px-2 py-0.5 rounded-sm bg-red-500/10 text-red-400 border border-red-500/15">{{ verdict }}</span>
+    {% else %}
+    <span class="text-[0.6rem] font-semibold tracking-[0.06em] uppercase px-2 py-0.5 rounded-sm bg-surface/[0.08] text-t2 border border-surface/[0.06]">{{ verdict }}</span>
+    {% endif %}
+{% elif size == "lg" %}
+    {% if verdict == "Strong Buy" or verdict == "Buy" %}
+    <span class="text-sm font-semibold tracking-[0.06em] uppercase px-3 py-1 rounded-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/15">{{ verdict }}</span>
+    {% elif verdict == "Strong Sell" or verdict == "Sell" %}
+    <span class="text-sm font-semibold tracking-[0.06em] uppercase px-3 py-1 rounded-sm bg-red-500/10 text-red-400 border border-red-500/15">{{ verdict }}</span>
+    {% else %}
+    <span class="text-sm font-semibold tracking-[0.06em] uppercase px-3 py-1 rounded-sm bg-surface/[0.08] text-t2 border border-surface/[0.06]">{{ verdict }}</span>
+    {% endif %}
+{% else %}
+    {% if verdict == "Strong Buy" or verdict == "Buy" %}
+    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ verdict }}</span>
+    {% elif verdict == "Strong Sell" or verdict == "Sell" %}
+    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ verdict }}</span>
+    {% else %}
+    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ verdict }}</span>
+    {% endif %}
+{% endif %}
+{% endif %}
