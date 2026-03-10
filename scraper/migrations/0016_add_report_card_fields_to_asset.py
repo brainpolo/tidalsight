@@ -4,25 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0015_add_asset_description_updated_at'),
+        ("scraper", "0015_add_asset_description_updated_at"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='asset',
-            name='report_card_score',
+            model_name="asset",
+            name="report_card_score",
             field=models.PositiveSmallIntegerField(db_index=True, default=0),
         ),
         migrations.AddField(
-            model_name='asset',
-            name='report_card_updated_at',
+            model_name="asset",
+            name="report_card_updated_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='asset',
-            name='target_price',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=20, null=True),
+            model_name="asset",
+            name="target_price",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=20, null=True
+            ),
         ),
     ]

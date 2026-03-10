@@ -60,7 +60,7 @@ def _fingerprint_value(val) -> str:
             return str(round(float(val), 10))
         if isinstance(val, (int, float)):
             return str(round(float(val), 10))
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         pass
     return str(val)
 

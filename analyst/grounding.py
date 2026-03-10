@@ -39,12 +39,48 @@ SCORING_RUBRIC = (
 # Deterministic label mapping per section — computed from score, never LLM-generated.
 # Each list is (upper_bound_exclusive, label).
 SECTION_LABELS: dict[str, list[tuple[float, str]]] = {
-    "finance": [(1.5, "Critical"), (2.0, "Weak"), (3.0, "Fair"), (3.5, "Strong"), (999, "Excellent")],
-    "sentiment": [(1.5, "Very Bearish"), (2.0, "Bearish"), (3.0, "Neutral"), (3.5, "Bullish"), (999, "Very Bullish")],
-    "risk": [(1.5, "Critical"), (2.0, "Elevated"), (3.0, "Moderate"), (3.5, "Low"), (999, "Minimal")],
-    "valuation": [(1.5, "Deeply Overvalued"), (2.0, "Overvalued"), (3.0, "Fair"), (3.5, "Undervalued"), (999, "Deeply Undervalued")],
-    "product": [(1.5, "Absent"), (2.0, "Weak"), (3.0, "Developing"), (3.5, "Strong"), (999, "Exceptional")],
-    "people": [(1.5, "Weak"), (2.0, "Concerning"), (3.0, "Capable"), (3.5, "Strong"), (999, "Exceptional")],
+    "finance": [
+        (1.5, "Critical"),
+        (2.0, "Weak"),
+        (3.0, "Fair"),
+        (3.5, "Strong"),
+        (999, "Excellent"),
+    ],
+    "sentiment": [
+        (1.5, "Very Bearish"),
+        (2.0, "Bearish"),
+        (3.0, "Neutral"),
+        (3.5, "Bullish"),
+        (999, "Very Bullish"),
+    ],
+    "risk": [
+        (1.5, "Critical"),
+        (2.0, "Elevated"),
+        (3.0, "Moderate"),
+        (3.5, "Low"),
+        (999, "Minimal"),
+    ],
+    "valuation": [
+        (1.5, "Deeply Overvalued"),
+        (2.0, "Overvalued"),
+        (3.0, "Fair"),
+        (3.5, "Undervalued"),
+        (999, "Deeply Undervalued"),
+    ],
+    "product": [
+        (1.5, "Absent"),
+        (2.0, "Weak"),
+        (3.0, "Developing"),
+        (3.5, "Strong"),
+        (999, "Exceptional"),
+    ],
+    "people": [
+        (1.5, "Weak"),
+        (2.0, "Concerning"),
+        (3.0, "Capable"),
+        (3.5, "Strong"),
+        (999, "Exceptional"),
+    ],
 }
 
 

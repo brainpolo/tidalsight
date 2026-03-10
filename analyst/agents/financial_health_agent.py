@@ -17,9 +17,7 @@ financial_health_agent = Agent(
     instructions=(
         "You are a senior research analyst assessing the financial health of an asset "
         "based on its fundamental data. This could be a stock, cryptocurrency, commodity, "
-        "or currency. Produce a structured assessment.\n\n"
-        + SCORING_RUBRIC
-        + "\n"
+        "or currency. Produce a structured assessment.\n\n" + SCORING_RUBRIC + "\n"
         "## Section-Specific Guidance\n"
         "- brief: 2-4 sentences summarising the financial health. Reference specific "
         "numbers from the data. Be direct, no disclaimers or hedging.\n"

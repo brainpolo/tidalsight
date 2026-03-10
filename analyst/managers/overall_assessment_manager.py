@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # Fields excluded from fingerprint to avoid self-referential invalidation
 _META_FIELDS = {"source_hash", "generated_at", "is_revised"}
 
-# Hygiene factors are weighted 1.5×, motivators 1.0× → max 30
+# Hygiene factors are weighted 1.5x, motivators 1.0x -> max 30
 HYGIENE_SECTIONS = ("finance", "sentiment", "risk")
 MOTIVATOR_SECTIONS = ("valuation", "product", "people")
 HYGIENE_WEIGHT = 1.5
@@ -44,7 +44,7 @@ _VERDICT_RANGES = [
 
 
 def compute_weighted_score(sections: dict[str, dict]) -> float:
-    """Compute weighted total: hygiene × 1.5, motivators × 1.0."""
+    """Compute weighted total: hygiene x 1.5, motivators x 1.0."""
     total = 0.0
     for key in HYGIENE_SECTIONS:
         total += sections.get(key, {}).get("score", 0) * HYGIENE_WEIGHT
@@ -139,9 +139,7 @@ def _build_prompt(
         _append_list_field(lines, section, "bear_cases", "Bear Cases")
         _append_list_field(lines, section, "flywheel_strengths", "Flywheel Strengths")
         _append_list_field(lines, section, "moat_risks", "Moat Risks")
-        _append_list_field(
-            lines, section, "people_strengths", "People Strengths"
-        )
+        _append_list_field(lines, section, "people_strengths", "People Strengths")
         _append_list_field(lines, section, "people_risks", "People Risks")
         lines.append("")
 
@@ -213,7 +211,7 @@ def _generate_assessment(
             )
 
         return data
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate overall assessment for %s", asset.ticker)
         cache.delete(lock_key)
         return existing
@@ -226,7 +224,9 @@ def get_base_overall_assessment(
     """Return base overall assessment (no user influence). Persists score to DB."""
     if len(sections) < 6:
         logger.info(
-            "Only %d/6 sections for %s, skipping base overall", len(sections), asset.ticker
+            "Only %d/6 sections for %s, skipping base overall",
+            len(sections),
+            asset.ticker,
         )
         return None
 

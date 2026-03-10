@@ -125,8 +125,10 @@ def get_base_product_flywheel(asset: Asset) -> dict | None:
         cache.set(data_key, data, PRODUCT_FLYWHEEL_DATA_TTL)
         cache.delete(lock_key)
         return data
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
-        logger.exception("Failed to generate base product flywheel for %s", asset.ticker)
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
+        logger.exception(
+            "Failed to generate base product flywheel for %s", asset.ticker
+        )
         cache.delete(lock_key)
         return existing
 
@@ -176,9 +178,7 @@ def get_product_flywheel(
             asset.ticker,
             user_id,
         )
-        revised = revise_assessment(
-            "product", base, user_note, price_target, asset
-        )
+        revised = revise_assessment("product", base, user_note, price_target, asset)
         revised["source_hash"] = rev_fp
         revised["generated_at"] = timezone.now().isoformat()
         revised["is_revised"] = True
@@ -186,7 +186,7 @@ def get_product_flywheel(
         cache.set(rev_data_key, revised, PRODUCT_FLYWHEEL_DATA_TTL)
         cache.delete(rev_lock_key)
         return revised
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception(
             "Failed to revise product flywheel for %s (user %s), falling back to base",
             asset.ticker,

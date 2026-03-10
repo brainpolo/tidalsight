@@ -104,9 +104,7 @@ def get_base_people(asset: Asset) -> dict | None:
         return existing
 
     if not cache.add(lock_key, True, LEADERSHIP_LOCK_TTL):
-        logger.debug(
-            "Base people generation for %s already in progress", asset.ticker
-        )
+        logger.debug("Base people generation for %s already in progress", asset.ticker)
         return existing
 
     try:
@@ -122,8 +120,10 @@ def get_base_people(asset: Asset) -> dict | None:
         cache.set(data_key, data, LEADERSHIP_DATA_TTL)
         cache.delete(lock_key)
         return data
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
-        logger.exception("Failed to generate base people assessment for %s", asset.ticker)
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
+        logger.exception(
+            "Failed to generate base people assessment for %s", asset.ticker
+        )
         cache.delete(lock_key)
         return existing
 
@@ -173,9 +173,7 @@ def get_people(
             asset.ticker,
             user_id,
         )
-        revised = revise_assessment(
-            "people", base, user_note, price_target, asset
-        )
+        revised = revise_assessment("people", base, user_note, price_target, asset)
         revised["source_hash"] = rev_fp
         revised["generated_at"] = timezone.now().isoformat()
         revised["is_revised"] = True
@@ -183,7 +181,7 @@ def get_people(
         cache.set(rev_data_key, revised, LEADERSHIP_DATA_TTL)
         cache.delete(rev_lock_key)
         return revised
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception(
             "Failed to revise people for %s (user %s), falling back to base",
             asset.ticker,

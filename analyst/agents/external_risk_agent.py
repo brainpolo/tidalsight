@@ -26,9 +26,7 @@ external_risk_agent = Agent(
         "2. Regulatory exposure — pending regulation, lawsuits, antitrust actions, "
         "government investigations, compliance risks.\n"
         "3. Geopolitical risk — supply chain concentration, trade war exposure, "
-        "sanctions risk, geographic revenue concentration.\n\n"
-        + SCORING_RUBRIC
-        + "\n"
+        "sanctions risk, geographic revenue concentration.\n\n" + SCORING_RUBRIC + "\n"
         "**Important: HIGHER scores mean LESS risk (safer).** A score of 1 means "
         "severe existential risk; a score of 4 means minimal risk with a dominant "
         "defensible position.\n\n"

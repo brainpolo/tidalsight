@@ -185,7 +185,9 @@ def _sector_avg_ps(asset):
 def compute_rsi(asset, period: int = RSI_PERIOD) -> float | None:
     """Compute RSI from the most recent daily closing prices."""
     closes = list(
-        asset.prices.order_by("-timestamp").values_list("close", flat=True)[: period + 1]
+        asset.prices.order_by("-timestamp").values_list("close", flat=True)[
+            : period + 1
+        ]
     )
     if len(closes) < period + 1:
         return None

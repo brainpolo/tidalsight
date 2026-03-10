@@ -44,39 +44,62 @@ from analyst.managers.financial_health_manager import (
 )
 from analyst.managers.leadership_manager import (
     _base_cache_keys as people_base_cache_keys,
+)
+from analyst.managers.leadership_manager import (
     _base_source_fingerprint as people_base_fingerprint,
+)
+from analyst.managers.leadership_manager import (
     _is_cache_valid as people_is_cache_valid,
+)
+from analyst.managers.leadership_manager import (
     _revision_cache_keys as people_revision_cache_keys,
-    _revision_source_fingerprint as people_revision_fingerprint,
 )
 from analyst.managers.overall_assessment_manager import (
     _base_cache_keys as overall_base_cache_keys,
+)
+from analyst.managers.overall_assessment_manager import (
     _is_cache_valid as overall_is_cache_valid,
+)
+from analyst.managers.overall_assessment_manager import (
     _source_fingerprint as overall_fingerprint,
+)
+from analyst.managers.overall_assessment_manager import (
     _user_cache_keys as overall_user_cache_keys,
+)
+from analyst.managers.overall_assessment_manager import (
     compute_verdict,
     compute_weighted_score,
 )
 from analyst.managers.product_flywheel_manager import (
     _base_cache_keys as product_flywheel_base_cache_keys,
+)
+from analyst.managers.product_flywheel_manager import (
     _base_source_fingerprint as product_flywheel_base_fingerprint,
+)
+from analyst.managers.product_flywheel_manager import (
     _is_cache_valid as product_flywheel_is_cache_valid,
+)
+from analyst.managers.product_flywheel_manager import (
     _revision_cache_keys as product_flywheel_revision_cache_keys,
-    _revision_source_fingerprint as product_flywheel_revision_fingerprint,
 )
 from analyst.managers.sentiment_manager import _cache_keys as sentiment_cache_keys
 from analyst.managers.valuation_score_manager import (
     _base_cache_keys as valuation_base_cache_keys,
+)
+from analyst.managers.valuation_score_manager import (
     _base_source_fingerprint as valuation_base_fingerprint,
+)
+from analyst.managers.valuation_score_manager import (
     _is_cache_valid as valuation_is_cache_valid,
+)
+from analyst.managers.valuation_score_manager import (
     _revision_cache_keys as valuation_revision_cache_keys,
-    _revision_source_fingerprint as valuation_revision_fingerprint,
 )
 from analyst.tasks import (
     analyse_external_risk,
     analyse_financial_health,
-    analyse_people,
     analyse_overall,
+    analyse_people,
     analyse_product_flywheel,
     analyse_sentiment,
     analyse_valuation,
@@ -154,9 +177,7 @@ async def rankings(request):
     """Rankings page: assets ranked by report card score."""
     ranked = [
         a
-        async for a in Asset.objects.filter(
-            is_active=True, report_card_score__gt=0
-        )
+        async for a in Asset.objects.filter(is_active=True, report_card_score__gt=0)
         .annotate(
             latest_close=Subquery(
                 PriceHistory.objects.filter(asset=OuterRef("pk"))
@@ -178,9 +199,7 @@ async def rankings(request):
         asset.daily_change = pct_change(asset.latest_close, asset.prev_close)
         if asset.target_price and asset.latest_close:
             asset.upside = float(
-                (asset.target_price - asset.latest_close)
-                / asset.latest_close
-                * 100
+                (asset.target_price - asset.latest_close) / asset.latest_close * 100
             )
         else:
             asset.upside = None
@@ -660,9 +679,7 @@ async def report_card_sentiment(request, ticker):
     ticker = ticker.upper()
     asset = await Asset.objects.filter(ticker=ticker).afirst()
     if not asset:
-        return render(
-            request, "core/partials/report_card_sentiment.html", {}
-        )
+        return render(request, "core/partials/report_card_sentiment.html", {})
 
     data_key, fresh_key, _ = sentiment_cache_keys(ticker)
     cached = await cache.aget(data_key)
@@ -683,9 +700,7 @@ async def report_card_sentiment(request, ticker):
         + await asset.news_articles.acount()
     )
     if total < SENTIMENT_MIN_POSTS:
-        return render(
-            request, "core/partials/report_card_sentiment.html", {}
-        )
+        return render(request, "core/partials/report_card_sentiment.html", {})
 
     analyse_sentiment.delay(asset.id)
     response = render(
@@ -718,10 +733,9 @@ async def report_card_financial_health(request, ticker):
 
     # Serve cached score when valid (fingerprint matches) or when we have any cached score (show immediately, refresh in background if stale)
     if cached and "score" in cached:
-        fingerprint_ok = (
-            fundamental
-            and cached.get("source_hash") == financial_health_fingerprint(fundamental)
-        )
+        fingerprint_ok = fundamental and cached.get(
+            "source_hash"
+        ) == financial_health_fingerprint(fundamental)
         if fingerprint_ok:
             filled_dots = round(cached["score"])
             response = render(
@@ -731,7 +745,7 @@ async def report_card_financial_health(request, ticker):
             )
             response["HX-Trigger"] = "section-scored"
             return response
-        # Cached data exists but fingerprint mismatch (e.g. fundamentals updated): show cache immediately so user doesn't wait 10–30s
+        # Cached data exists but fingerprint mismatch (e.g. fundamentals updated): show cache immediately so user doesn't wait 10-30s
         filled_dots = round(cached["score"])
         response = render(
             request,
@@ -842,7 +856,12 @@ async def report_card_valuation(request, ticker):
             response = render(
                 request,
                 "core/partials/report_card_valuation.html",
-                {"valuation": cached, "filled_dots": filled_dots, "view_mode": view_mode, "ticker": ticker},
+                {
+                    "valuation": cached,
+                    "filled_dots": filled_dots,
+                    "view_mode": view_mode,
+                    "ticker": ticker,
+                },
             )
             response["HX-Trigger"] = "section-scored"
             return response
@@ -852,15 +871,18 @@ async def report_card_valuation(request, ticker):
         latest_price = await asset.prices.afirst()
         if fundamental and latest_price:
             rsi = await sync_to_async(compute_rsi)(asset)
-            fp = valuation_base_fingerprint(
-                fundamental, float(latest_price.close), rsi
-            )
+            fp = valuation_base_fingerprint(fundamental, float(latest_price.close), rsi)
             if valuation_is_cache_valid(cached, fp):
                 filled_dots = round(cached["score"])
                 response = render(
                     request,
                     "core/partials/report_card_valuation.html",
-                    {"valuation": cached, "filled_dots": filled_dots, "view_mode": view_mode, "ticker": ticker},
+                    {
+                        "valuation": cached,
+                        "filled_dots": filled_dots,
+                        "view_mode": view_mode,
+                        "ticker": ticker,
+                    },
                 )
                 response["HX-Trigger"] = "section-scored"
                 return response
@@ -929,7 +951,12 @@ async def report_card_product_flywheel(request, ticker):
             response = render(
                 request,
                 "core/partials/report_card_product_flywheel.html",
-                {"flywheel": cached, "filled_dots": filled_dots, "view_mode": view_mode, "ticker": ticker},
+                {
+                    "flywheel": cached,
+                    "filled_dots": filled_dots,
+                    "view_mode": view_mode,
+                    "ticker": ticker,
+                },
             )
             response["HX-Trigger"] = "section-scored"
             return response
@@ -940,7 +967,12 @@ async def report_card_product_flywheel(request, ticker):
                 response = render(
                     request,
                     "core/partials/report_card_product_flywheel.html",
-                    {"flywheel": cached, "filled_dots": filled_dots, "view_mode": view_mode, "ticker": ticker},
+                    {
+                        "flywheel": cached,
+                        "filled_dots": filled_dots,
+                        "view_mode": view_mode,
+                        "ticker": ticker,
+                    },
                 )
                 response["HX-Trigger"] = "section-scored"
                 return response
@@ -1001,7 +1033,12 @@ async def report_card_people(request, ticker):
             response = render(
                 request,
                 "core/partials/report_card_people.html",
-                {"people": cached, "filled_dots": filled_dots, "view_mode": view_mode, "ticker": ticker},
+                {
+                    "people": cached,
+                    "filled_dots": filled_dots,
+                    "view_mode": view_mode,
+                    "ticker": ticker,
+                },
             )
             response["HX-Trigger"] = "section-scored"
             return response
@@ -1012,7 +1049,12 @@ async def report_card_people(request, ticker):
                 response = render(
                     request,
                     "core/partials/report_card_people.html",
-                    {"people": cached, "filled_dots": filled_dots, "view_mode": view_mode, "ticker": ticker},
+                    {
+                        "people": cached,
+                        "filled_dots": filled_dots,
+                        "view_mode": view_mode,
+                        "ticker": ticker,
+                    },
                 )
                 response["HX-Trigger"] = "section-scored"
                 return response

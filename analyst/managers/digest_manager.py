@@ -5,9 +5,9 @@ import logging
 from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
-from openai import APIStatusError
 from django.db.models import Prefetch
 from django.utils import timezone
+from openai import APIStatusError
 
 from analyst.agents.market_digest import MarketDigest, market_digest_agent
 from analyst.agents.provider import get_model_provider
@@ -178,7 +178,14 @@ def get_market_digest() -> dict | None:
 
     try:
         digest = _run_agent(prompt)
-    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError, APIStatusError:
+    except (
+        ConnectionError,
+        RuntimeError,
+        ValueError,
+        TimeoutError,
+        ModelBehaviorError,
+        APIStatusError,
+    ):
         logger.exception("Failed to generate market digest")
         cache.delete(DIGEST_LOCK_KEY)
         return existing

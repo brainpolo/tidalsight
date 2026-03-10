@@ -3,7 +3,6 @@ import json
 import logging
 
 from agents import RunConfig, Runner
-from agents.exceptions import ModelBehaviorError
 
 from analyst.agents.provider import get_model_provider
 from analyst.agents.revision_agent import REVISION_AGENTS
@@ -24,9 +23,7 @@ def _build_revision_prompt(
     price_target: float | None,
     asset: Asset,
 ) -> str:
-    base_clean = {
-        k: v for k, v in base_assessment.items() if k not in _META_FIELDS
-    }
+    base_clean = {k: v for k, v in base_assessment.items() if k not in _META_FIELDS}
 
     lines = [
         f"# Revision Request: {section_name.replace('_', ' ').title()}",

@@ -183,16 +183,16 @@ def get_base_valuation(asset: Asset) -> dict | None:
 
     rsi = compute_rsi(asset)
 
-    fingerprint = _base_source_fingerprint(
-        fundamental, float(latest_price.close), rsi
-    )
+    fingerprint = _base_source_fingerprint(fundamental, float(latest_price.close), rsi)
 
     if existing and _is_cache_valid(existing, fingerprint):
         logger.debug("Base valuation for %s served from cache", asset.ticker)
         return existing
 
     if not cache.add(lock_key, True, VALUATION_LOCK_TTL):
-        logger.debug("Base valuation generation for %s already in progress", asset.ticker)
+        logger.debug(
+            "Base valuation generation for %s already in progress", asset.ticker
+        )
         return existing
 
     try:
@@ -218,7 +218,7 @@ def get_base_valuation(asset: Asset) -> dict | None:
         cache.set(data_key, data, VALUATION_DATA_TTL)
         cache.delete(lock_key)
         return data
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate base valuation for %s", asset.ticker)
         cache.delete(lock_key)
         return existing
@@ -267,9 +267,7 @@ def get_valuation(
         logger.info(
             "Generating valuation revision for %s (user %s)...", asset.ticker, user_id
         )
-        revised = revise_assessment(
-            "valuation", base, user_note, price_target, asset
-        )
+        revised = revise_assessment("valuation", base, user_note, price_target, asset)
         revised["source_hash"] = rev_fp
         revised["generated_at"] = timezone.now().isoformat()
         revised["is_revised"] = True
@@ -277,7 +275,7 @@ def get_valuation(
         cache.set(rev_data_key, revised, VALUATION_DATA_TTL)
         cache.delete(rev_lock_key)
         return revised
-    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception(
             "Failed to revise valuation for %s (user %s), falling back to base",
             asset.ticker,

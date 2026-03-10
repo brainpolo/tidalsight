@@ -103,9 +103,7 @@ def analyse_people(
     price_target: float | None,
 ) -> None:
     asset = Asset.objects.get(id=asset_id)
-    logger.info(
-        "Task analyse_people started for %s (user %s)", asset.ticker, user_id
-    )
+    logger.info("Task analyse_people started for %s (user %s)", asset.ticker, user_id)
     get_people(asset, user_id, user_note, price_target)
 
 
