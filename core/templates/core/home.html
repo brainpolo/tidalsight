@@ -67,29 +67,6 @@
         50% { transform: translate(-20px, -10px) rotate(-2deg); }
     }
 
-    /* Step numbers */
-    .how-num {
-        background: linear-gradient(180deg, rgba(200,121,65,0.15), rgba(200,121,65,0));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    /* Asset hover underline */
-    .asset::after {
-        content: '';
-        position: absolute;
-        bottom: 0; left: 32px; right: 32px;
-        height: 2px; border-radius: 1px;
-        transform: scaleX(0);
-        transform-origin: left;
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .asset:hover::after { transform: scaleX(1); }
-    .asset-equities::after { background: var(--color-sea-light); }
-    .asset-crypto::after { background: var(--color-copper); }
-    .asset-gold::after { background: var(--color-copper-light); }
-    .asset-more::after { background: var(--ts-t2); }
 
 </style>
 {% endblock %}
@@ -173,16 +150,12 @@
                             </h1>
                             <div class="mb-8 h-px bg-gradient-to-r from-surface/[0.06] to-transparent"></div>
                             {% include "core/components/asset_search_widget.html" %}
-                            <div class="mt-8 flex items-center gap-6">
-                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-t3">
-                                    <span>Powered by</span>
-                                    <span class="font-medium text-t2 border border-surface/[0.06] rounded px-2.5 py-1 bg-surface/[0.02]">BytePlus ModelArk</span>
-                                </div>
-                                <div class="w-px h-3 bg-surface/[0.06]"></div>
-                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-t3">
-                                    <span><span class="text-t2 font-medium">{{ asset_count }}</span> assets</span>
-                                    <span><span class="text-t2 font-medium">{{ post_count }}</span> posts</span>
-                                </div>
+                            <div class="mt-8 flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-t4">
+                                <span><span class="text-t3 font-medium">{{ asset_count }}</span> assets tracked</span>
+                                <span class="text-surface/[0.12]">&middot;</span>
+                                <span><span class="text-t3 font-medium">{{ post_count }}</span> posts analysed</span>
+                                <span class="text-surface/[0.12]">&middot;</span>
+                                <span>Powered by <span class="text-t3">ModelArk</span></span>
                             </div>
                         </div>
                         <div class="flex-1 min-w-[240px] max-lg:w-full"
@@ -228,35 +201,38 @@
                 {% else %}
                 {# ── Guest: original splash layout ── #}
                 <section class="pt-12 pb-[30vh]">
-                    <div class="flex items-start justify-between gap-20 max-lg:flex-col max-lg:gap-14">
+                    <div class="flex items-start justify-between gap-12 max-lg:flex-col max-lg:gap-14">
                         <!-- Left: Hero copy + search -->
-                        <div class="max-w-[540px] shrink-0">
+                        <div class="max-w-[380px] shrink-0">
                             <h1 class="font-serif font-normal text-[clamp(3.2rem,7.5vw,5.8rem)] leading-[1.05] tracking-tight text-t1 mb-10">
                                 The market<br>moves in <em class="italic text-copper-light">tides</em>
                             </h1>
-                            <p class="text-lg font-light leading-relaxed text-t2 max-w-[480px]">
-                                Continuous intelligence across stocks, equities, commodities, and currencies.
-                                We surface actionable buy, sell, and hold signals from market data and public
-                                social sentiment &mdash; so you move before the market does.
+                            <p class="text-[0.95rem] font-light leading-relaxed text-t2 max-w-[400px]">
+                                Continuous intelligence from multi-agent AI. Market data, social sentiment,
+                                and fundamentals &mdash; distilled into buy, sell, and hold signals across
+                                every major asset class.
                             </p>
-                            <div class="mt-10 mb-8 h-px bg-gradient-to-r from-surface/[0.06] to-transparent"></div>
+                            <div class="mt-5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-surface/[0.06] bg-surface/[0.02]">
+                                <span class="text-[0.6rem] tracking-[0.04em] text-t4">Powered by</span>
+                                <span class="text-[0.6rem] tracking-[0.04em] text-t3 font-medium">BytePlus ModelArk</span>
+                            </div>
+                            <div class="mt-8 mb-6 h-px bg-gradient-to-r from-surface/[0.06] to-transparent"></div>
+                            <p class="text-[0.7rem] font-medium tracking-[0.06em] text-t3 mb-4">Explore any asset</p>
                             {% include "core/components/asset_search_widget.html" %}
-                            <div class="mt-8 flex items-center gap-6">
-                                <div class="flex items-center gap-2.5 text-[0.7rem] tracking-[0.04em] text-t3">
-                                    <span>Powered by</span>
-                                    <span class="font-medium text-t2 border border-surface/[0.06] rounded px-2.5 py-1 bg-surface/[0.02]">BytePlus ModelArk</span>
-                                </div>
-                                <div class="w-px h-3 bg-surface/[0.06]"></div>
-                                <div class="flex items-center gap-4 text-[0.65rem] tracking-[0.06em] text-t3">
-                                    <span><span class="text-t2 font-medium">{{ asset_count }}</span> assets</span>
-                                    <span><span class="text-t2 font-medium">{{ post_count }}</span> posts</span>
-                                </div>
+                            <div class="mt-6 flex items-center gap-3">
+                                <a href="{% url 'core:sign_up' %}" class="text-[0.7rem] font-medium tracking-[0.06em] px-6 py-2.5 border border-copper/25 rounded text-copper hover:text-copper-light hover:border-copper/50 transition-all">Get started</a>
+                                <span class="text-[0.6rem] text-t4">or search above</span>
+                            </div>
+                            <div class="mt-8 flex items-center gap-4 text-[0.6rem] tracking-[0.06em] text-t4">
+                                <span><span class="text-t3 font-medium">{{ asset_count }}</span> assets tracked</span>
+                                <span class="text-surface/[0.12]">&middot;</span>
+                                <span><span class="text-t3 font-medium">{{ post_count }}</span> posts analysed</span>
                             </div>
                         </div>
                         <!-- Right: Market Digest -->
-                        <div class="flex-1 max-lg:w-full">
+                        <div class="flex-1 min-w-0 max-lg:w-full">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
+                                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
                                 <div class="h-px flex-1 bg-surface/[0.04]"></div>
                             </div>
                             <div hx-get="{% url 'core:market_digest' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
@@ -279,73 +255,10 @@
         </div>
     </div>
 
-    <div class="divider"></div>
-
     {% if not request.user.is_authenticated %}
-    <!-- Assets -->
-    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
-        <section class="py-20 reveal">
-            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-12">Coverage</div>
-            <div class="grid grid-cols-4 gap-px bg-surface/[0.04] rounded-sm overflow-hidden max-sm:grid-cols-2">
-                <div class="asset asset-equities relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
-                    <div class="font-serif text-[2rem] leading-none text-sea-light">S&P</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Stocks</div>
-                </div>
-                <div class="asset asset-crypto relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
-                    <div class="font-serif text-[2rem] leading-none text-copper">FTSE</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Equities</div>
-                </div>
-                <div class="asset asset-gold relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
-                    <div class="font-serif text-[2rem] leading-none text-copper-light">Au</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Commodities</div>
-                </div>
-                <div class="asset asset-more relative bg-page py-11 px-8 flex flex-col gap-4 transition-colors duration-[400ms] hover:bg-hover">
-                    <div class="font-serif text-[2rem] leading-none text-heading">FX</div>
-                    <div class="text-xs font-medium tracking-[0.06em] uppercase text-t3">Currencies</div>
-                </div>
-            </div>
-        </section>
-    </div>
-
     <div class="divider"></div>
-
-    <!-- How it works -->
-    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
-        <section class="py-20 pb-24 reveal">
-            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-14">How it works</div>
-            <div class="grid grid-cols-3 gap-16 max-md:grid-cols-1 max-md:gap-12">
-                <div>
-                    <div class="how-num font-serif text-[3.5rem] leading-none mb-5 select-none">01</div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-3 -tracking-[0.01em]">Collect</h3>
-                    <p class="text-sm font-light text-t3 leading-relaxed">Structured and unstructured data ingested from news wires, social platforms, regulatory filings, and public markets &mdash; continuously.</p>
-                </div>
-                <div>
-                    <div class="how-num font-serif text-[3.5rem] leading-none mb-5 select-none">02</div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-3 -tracking-[0.01em]">Analyse</h3>
-                    <p class="text-sm font-light text-t3 leading-relaxed">Proprietary models distill volume into signal, isolating sentiment shifts and cross-asset correlations as they emerge.</p>
-                </div>
-                <div>
-                    <div class="how-num font-serif text-[3.5rem] leading-none mb-5 select-none">03</div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-3 -tracking-[0.01em]">Surface</h3>
-                    <p class="text-sm font-light text-t3 leading-relaxed">Actionable intelligence delivered in real time &mdash; positioned to inform allocation decisions before consensus forms.</p>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- Statement -->
-    <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
-        <section class="py-24 text-center reveal">
-            <p class="font-serif text-[clamp(1.6rem,3.5vw,2.6rem)] font-normal leading-snug text-t2 max-w-[640px] mx-auto">
-                <strong class="text-copper-light font-normal">Conviction requires clarity.</strong> We provide the intelligence. You make the call.
-            </p>
-        </section>
-    </div>
     {% endif %}
 
-    {% include "core/components/footer.html" %}
 </div>
 {% endblock %}
 

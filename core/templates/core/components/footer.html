@@ -1,10 +1,23 @@
 <div class="divider"></div>
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
-    <footer class="py-6 sm:py-8 flex items-center justify-between">
-        <span class="text-[0.65rem] sm:text-[0.7rem] text-t3 tracking-wide">TidalSight by Aditya Dedhia</span>
-        <div class="flex items-center gap-4 sm:gap-6">
-            <a href="{% url 'core:strategy' %}" class="text-[0.65rem] sm:text-[0.7rem] text-t3 hover:text-t2 tracking-wide transition-colors">Strategy</a>
-            <span class="text-[0.65rem] sm:text-[0.7rem] text-t3 tracking-wide">2026</span>
+    <footer class="py-10 sm:py-12">
+        <div class="flex items-start justify-between gap-8 max-sm:flex-col max-sm:gap-6">
+            <div class="flex flex-col gap-2">
+                <span class="text-[0.7rem] font-medium text-t2 tracking-wide">TidalSight</span>
+                <span class="text-[0.6rem] text-t4 tracking-wide">by Aditya Dedhia &middot; 2026</span>
+            </div>
+            <div class="flex items-center gap-6 sm:gap-8">
+                <a href="{% url 'core:strategy' %}" class="text-[0.65rem] text-t3 hover:text-t2 tracking-wide transition-colors">Strategy</a>
+                <a href="{% url 'core:rankings' %}" class="text-[0.65rem] text-t3 hover:text-t2 tracking-wide transition-colors">Rankings</a>
+                <a href="{% url 'sitemap' %}" class="text-[0.65rem] text-t3 hover:text-t2 tracking-wide transition-colors">Sitemap</a>
+            </div>
+        </div>
+        <div class="mt-8 pt-6 border-t border-surface/[0.04]">
+            <p class="text-[0.6rem] font-light text-t4 leading-relaxed max-w-[640px]">
+                TidalSight is an analytical tool and does not constitute financial advice.
+                Past performance does not guarantee future results. Always conduct your own
+                due diligence before making investment decisions. Powered by BytePlus ModelArk.
+            </p>
         </div>
     </footer>
 </div>

@@ -28,8 +28,8 @@ DATABASES = {
         "PORT": "5432",
         "OPTIONS": {
             "pool": {
-                "min_size": 2,
-                "max_size": 6,
+                "min_size": 1,
+                "max_size": 3,
             },
         },
     }

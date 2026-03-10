@@ -1,3 +1,5 @@
+from core.app_behaviour import RSI_PERIOD
+
 # Graham Growth formula constants
 GRAHAM_BASE_PE = 8.5
 GRAHAM_GROWTH_MULTIPLIER = 2
@@ -178,6 +180,28 @@ def _sector_avg_ps(asset):
     if asset_class == "equity":
         return SECTOR_AVG_PS.get("technology", BROAD_MARKET_AVG_PS)
     return BROAD_MARKET_AVG_PS
+
+
+def compute_rsi(asset, period: int = RSI_PERIOD) -> float | None:
+    """Compute RSI from the most recent daily closing prices."""
+    closes = list(
+        asset.prices.order_by("-timestamp").values_list("close", flat=True)[: period + 1]
+    )
+    if len(closes) < period + 1:
+        return None
+    # Reverse to oldest-first for delta calculation
+    prices = [float(c) for c in reversed(closes)]
+    gains, losses = [], []
+    for i in range(1, len(prices)):
+        delta = prices[i] - prices[i - 1]
+        gains.append(max(delta, 0.0))
+        losses.append(max(-delta, 0.0))
+    avg_gain = sum(gains) / period
+    avg_loss = sum(losses) / period
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return round(100 - (100 / (1 + rs)), 1)
 
 
 def _annualized_growth(asset):

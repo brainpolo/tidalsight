@@ -1,11 +1,11 @@
 {% if digest %}
 <!-- Headline -->
-<div class="font-serif text-base text-heading leading-snug tracking-tight mb-6">{{ digest.headline }}</div>
+<div class="font-serif text-lg text-heading leading-snug tracking-tight mb-6">{{ digest.headline }}</div>
 
 <!-- Themes -->
 <div class="space-y-3.5 mb-6">
     {% for theme in digest.themes %}
-    <div class="flex items-start gap-3 text-[0.78rem] leading-relaxed text-t2">
+    <div class="flex items-start gap-3 text-[0.85rem] leading-relaxed text-t2">
         <span class="text-copper/60 text-[0.65rem] mt-1 shrink-0 font-medium">{{ forloop.counter|stringformat:"02d" }}</span>
         <span>{{ theme }}</span>
     </div>
@@ -16,9 +16,16 @@
 <div class="pt-5 border-t border-surface/[0.04]">
     <div class="flex items-start gap-3">
         <span class="inline-flex items-center px-2.5 py-1 rounded-sm text-[0.6rem] font-semibold tracking-[0.1em] uppercase shrink-0 mt-px {% if digest.sentiment == 'Bullish' %}bg-sea/10 text-sea-light border border-sea/15{% elif digest.sentiment == 'Bearish' %}bg-copper/10 text-copper border border-copper/15{% else %}bg-surface/[0.04] text-t2 border border-surface/[0.06]{% endif %}">{{ digest.sentiment }}</span>
-        <span class="text-[0.78rem] text-t3 leading-relaxed">{{ digest.sentiment_reason }}</span>
+        <span class="text-[0.85rem] text-t3 leading-relaxed">{{ digest.sentiment_reason }}</span>
     </div>
 </div>
+
+{% if digest.outlook %}
+<!-- Outlook -->
+<div class="pt-5 border-t border-surface/[0.04]">
+    <p class="text-[0.85rem] text-t2 leading-relaxed font-serif italic">{{ digest.outlook }}</p>
+</div>
+{% endif %}
 
 {% if not user.is_authenticated %}
 <div class="mt-6 pt-5 border-t border-surface/[0.04]">

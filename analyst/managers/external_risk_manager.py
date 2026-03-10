@@ -16,8 +16,9 @@ from analyst.app_behaviour import (
     EXTERNAL_RISK_FRESHNESS_TTL,
     EXTERNAL_RISK_LOCK_TTL,
     MAX_AGENT_TURNS,
+    cache_key,
 )
-from analyst.grounding import agent_grounding
+from analyst.grounding import agent_grounding, compute_label
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -25,9 +26,9 @@ logger = logging.getLogger(__name__)
 
 def _cache_keys(ticker: str) -> tuple[str, str, str]:
     return (
-        f"external_risk:{ticker}:data",
-        f"external_risk:{ticker}:fresh",
-        f"external_risk:{ticker}:lock",
+        cache_key("report", "risk", ticker, "data"),
+        cache_key("report", "risk", ticker, "fresh"),
+        cache_key("report", "risk", ticker, "lock"),
     )
 
 
@@ -69,6 +70,7 @@ def get_external_risk(asset: Asset) -> dict | None:
 
         assessment = _run_agent(asset.ticker, asset.name)
         data = assessment.model_dump()
+        data["label"] = compute_label("risk", data["score"])
         data["generated_at"] = timezone.now().isoformat()
 
         cache.set(data_key, data, EXTERNAL_RISK_DATA_TTL)

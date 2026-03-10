@@ -1,15 +1,18 @@
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
     <section class="py-10">
         <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-6">Peers</div>
-        <div class="flex gap-3 overflow-hidden">
+        <div class="flex gap-4 overflow-hidden">
             {% for _ in "123456" %}
-            <div class="shrink-0 w-[160px] border border-surface/[0.04] rounded-sm p-4">
-                <div class="flex items-center gap-2 mb-2">
-                    <div class="size-5 rounded bg-surface/[0.04] skel-bar" style="animation-delay:{{ forloop.counter0 }}00ms"></div>
-                    <div class="h-3 w-10 bg-surface/[0.06] skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+            <div class="shrink-0 w-[200px] border border-surface/[0.04] rounded-sm p-5">
+                <div class="flex items-center gap-2.5 mb-4">
+                    <div class="size-6 rounded bg-surface/[0.04] skel-bar" style="animation-delay:{{ forloop.counter0 }}00ms"></div>
+                    <div class="h-3.5 w-14 bg-surface/[0.06] skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
                 </div>
-                <div class="h-2.5 w-20 bg-surface/[0.04] skel-bar mb-2" style="animation-delay:{{ forloop.counter }}50ms"></div>
-                <div class="h-3 w-14 bg-surface/[0.04] skel-bar" style="animation-delay:{{ forloop.counter }}50ms"></div>
+                <div class="h-2.5 w-24 bg-surface/[0.04] skel-bar mb-3" style="animation-delay:{{ forloop.counter }}50ms"></div>
+                <div class="flex items-center gap-2 mt-4">
+                    <div class="h-3.5 w-16 bg-surface/[0.04] skel-bar" style="animation-delay:{{ forloop.counter }}80ms"></div>
+                    <div class="h-3 w-10 bg-surface/[0.04] skel-bar" style="animation-delay:{{ forloop.counter }}20ms"></div>
+                </div>
             </div>
             {% endfor %}
         </div>

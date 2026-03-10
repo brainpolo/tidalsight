@@ -20,8 +20,9 @@ from analyst.app_behaviour import (
     SENTIMENT_LOCK_TTL,
     SENTIMENT_MAX_POSTS,
     SENTIMENT_REDDIT_COMMENTS_PER_POST,
+    cache_key,
 )
-from analyst.grounding import agent_grounding
+from analyst.grounding import agent_grounding, compute_label
 from scraper.models import (
     Asset,
     HNComment,
@@ -36,9 +37,9 @@ logger = logging.getLogger(__name__)
 
 def _cache_keys(ticker: str) -> tuple[str, str, str]:
     return (
-        f"sentiment:{ticker}:data",
-        f"sentiment:{ticker}:fresh",
-        f"sentiment:{ticker}:lock",
+        cache_key("report", "sentiment", ticker, "data"),
+        cache_key("report", "sentiment", ticker, "fresh"),
+        cache_key("report", "sentiment", ticker, "lock"),
     )
 
 
@@ -177,6 +178,7 @@ def get_asset_sentiment(asset: Asset) -> dict | None:
 
         sentiment = _run_agent(prompt)
         data = sentiment.model_dump()
+        data["label"] = compute_label("sentiment", data["score"])
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 

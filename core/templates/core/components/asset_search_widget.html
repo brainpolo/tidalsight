@@ -1,44 +1,60 @@
 {% if compact %}
 {# Compact mode: inline search bar for asset pages #}
+<div class="search-compact-wrap" id="tickerFormWrap">
 <form class="search-compact" id="tickerForm" autocomplete="off">
-    <svg class="search-compact-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="search-compact-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/>
     </svg>
-    <div class="search-input-wrapper">
-        <input
-            type="text"
-            id="tickerInput"
-            class="search-compact-input"
-            placeholder="Search by ticker or name..."
-            spellcheck="false"
-            name="q"
-            hx-get="{% url 'core:asset_search' %}"
-            hx-trigger="input changed delay:250ms"
-            hx-target="#searchResults"
-            hx-swap="innerHTML"
-        >
-        <div id="searchResults" class="search-results-dropdown"></div>
-    </div>
+    <input
+        type="text"
+        id="tickerInput"
+        class="search-compact-input"
+        placeholder="Search by ticker or name..."
+        spellcheck="false"
+        name="q"
+        hx-get="{% url 'core:asset_search' %}"
+        hx-trigger="input changed delay:250ms"
+        hx-target="#searchResults"
+        hx-swap="innerHTML"
+    >
     <kbd class="search-kbd">&#8984;K</kbd>
 </form>
+<div id="searchResults" class="search-compact-results"></div>
+</div>
 
 <style>
+    .search-compact-wrap {
+        position: relative;
+        width: 260px;
+    }
     .search-compact {
         display: flex;
         align-items: center;
         gap: 8px;
-        border-bottom: 1px solid var(--ts-divider);
-        transition: border-color 0.3s ease;
-        width: 200px;
+        padding: 7px 12px;
+        border-radius: 4px;
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 8%, transparent);
+        background: color-mix(in srgb, var(--ts-surface) 3%, transparent);
+        transition: border-color 0.2s, background 0.2s, border-radius 0.15s;
+        width: 100%;
+    }
+    .search-compact:hover {
+        border-color: color-mix(in srgb, var(--ts-surface) 14%, transparent);
     }
     .search-compact:focus-within {
-        border-color: var(--color-copper);
+        border-color: color-mix(in srgb, var(--ts-surface) 16%, transparent);
+        background: color-mix(in srgb, var(--ts-surface) 5%, transparent);
+    }
+    /* When results are showing, square off bottom corners to connect */
+    .search-compact-wrap.has-results .search-compact {
+        border-radius: 4px 4px 0 0;
+        border-bottom-color: color-mix(in srgb, var(--ts-surface) 4%, transparent);
     }
     .search-compact:focus-within .search-kbd {
         display: none;
     }
     .search-compact-icon {
-        color: var(--ts-t3);
+        color: var(--ts-t4);
         flex-shrink: 0;
     }
     .search-compact-input {
@@ -46,27 +62,41 @@
         background: none;
         border: none;
         outline: none;
-        font-family: 'Inter', sans-serif;
         font-size: 0.75rem;
         color: var(--ts-t1);
-        padding: 6px 0;
+        padding: 0;
         min-width: 0;
     }
     .search-compact-input::placeholder {
         color: var(--ts-t4);
+        font-size: 0.7rem;
     }
     .search-kbd {
-        font-family: 'Inter', sans-serif;
-        font-size: 0.55rem;
+        font-size: 0.5rem;
         font-weight: 500;
         color: var(--ts-t3);
-        background: color-mix(in srgb, var(--ts-surface) 4%, transparent);
-        border: 1px solid color-mix(in srgb, var(--ts-surface) 6%, transparent);
+        background: color-mix(in srgb, var(--ts-surface) 8%, transparent);
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 12%, transparent);
         border-radius: 3px;
-        padding: 2px 5px;
+        padding: 2px 6px;
         line-height: 1;
         flex-shrink: 0;
         pointer-events: none;
+    }
+    .search-compact-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+    }
+    .search-compact-results:empty {
+        display: none;
+    }
+    .search-compact-results .search-results-list {
+        border-radius: 0 0 4px 4px;
+        border-top: none;
+        margin: 0;
     }
 </style>
 {% else %}
@@ -218,12 +248,11 @@
         display: none;
     }
     .search-results-list {
-        background: var(--ts-dropdown);
-        border: 1px solid color-mix(in srgb, var(--ts-surface) 8%, transparent);
-        border-radius: 6px;
+        background: var(--ts-page);
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 10%, transparent);
+        border-radius: 4px;
         overflow-y: auto;
         max-height: min(420px, 60vh);
-        box-shadow: 0 12px 40px color-mix(in srgb, var(--ts-surface) 20%, transparent);
         list-style: none;
         margin: 0;
         padding: 4px;
@@ -383,15 +412,29 @@
             } else if (e.key === 'Escape') {
                 resultsEl.innerHTML = '';
                 activeIdx = -1;
+                updateHasResults();
             }
         });
 
-        // Position dropdown below input (fixed positioning)
+        // Position dropdown below input
+        // Compact mode uses absolute positioning (no JS needed)
+        // Widget mode uses fixed positioning
+        var wrap = document.getElementById('tickerFormWrap');
+        var isCompact = !!wrap;
+
         function positionDropdown() {
             if (!resultsEl.innerHTML.trim()) return;
-            const rect = input.getBoundingClientRect();
+            if (isCompact) return; // absolute positioning handles it
+            var rect = input.getBoundingClientRect();
             resultsEl.style.top = (rect.bottom + 6) + 'px';
             resultsEl.style.left = rect.left + 'px';
+        }
+
+        function updateHasResults() {
+            if (wrap) {
+                var has = !!resultsEl.innerHTML.trim();
+                wrap.classList.toggle('has-results', has);
+            }
         }
 
         // Reset active index when new results arrive
@@ -399,14 +442,16 @@
             if (e.detail.target === resultsEl) {
                 activeIdx = -1;
                 positionDropdown();
+                updateHasResults();
             }
         });
 
         // Dismiss dropdown on click outside
         document.addEventListener('click', function(e) {
-            if (!e.target.closest('#tickerForm') && !e.target.closest('#searchResults')) {
+            if (!e.target.closest('#tickerForm') && !e.target.closest('#tickerFormWrap') && !e.target.closest('#searchResults')) {
                 resultsEl.innerHTML = '';
                 activeIdx = -1;
+                updateHasResults();
             }
         });
     })();

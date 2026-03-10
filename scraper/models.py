@@ -53,6 +53,11 @@ class Asset(models.Model):
     description_updated_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     views = models.PositiveIntegerField(default=0, db_index=True)
+    report_card_score = models.PositiveSmallIntegerField(default=0, db_index=True)
+    target_price = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True
+    )
+    report_card_updated_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

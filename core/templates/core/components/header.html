@@ -1,9 +1,10 @@
 {% load static %}
+<div id="siteHeader" class="sticky top-7 sm:top-8 z-40 bg-page/80 backdrop-blur-md border-b border-transparent transition-[border-color] duration-300">
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
-    <header class="flex items-center justify-between py-4 sm:py-8 gap-4 sm:gap-12">
-        <div class="flex items-center gap-4 sm:gap-8 min-w-0">
-            <a href="{% url 'core:home' %}" class="flex items-center font-serif text-2xl sm:text-3xl text-t1 tracking-tight hover:text-copper-light transition-colors shrink-0">
-                <img src="{% static 'favicon.webp' %}" alt="" class="size-14 sm:size-16 -mr-0.5 sm:-mr-1">TidalSight
+    <header class="flex items-center justify-between py-2 gap-4 sm:gap-10">
+        <div class="flex items-center gap-4 sm:gap-6 min-w-0">
+            <a href="{% url 'core:home' %}" class="flex items-center font-serif text-xl sm:text-2xl text-t1 tracking-tight hover:text-copper-light transition-colors shrink-0">
+                <img src="{% static 'favicon.webp' %}" alt="" class="size-9 sm:size-10 -mr-0.5">TidalSight
             </a>
             {% if show_search %}<div class="hidden sm:block">{% include "core/components/asset_search_widget.html" with compact=True %}</div>{% endif %}
         </div>
@@ -11,6 +12,7 @@
         {# Desktop nav #}
         <nav class="hidden md:flex items-center gap-6 lg:gap-8">
             <a href="{% url 'core:strategy' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="compass" class="size-3.5"></i> strategy</a>
+            <a href="{% url 'core:rankings' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="trophy" class="size-3.5"></i> rankings</a>
             {% if user.is_authenticated %}
                 {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="shield" class="size-3.5"></i> admin</a>{% endif %}
                 <a href="{% url 'core:profile' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t2 hover:text-t1 transition-colors"><i data-lucide="user" class="size-3.5"></i> {{ user.first_name|default:user.username }}</a>
@@ -86,6 +88,7 @@
                 {% endif %}
                 <div class="flex flex-col">
                     <a href="{% url 'core:strategy' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t3 active:text-t2 transition-colors py-3"><i data-lucide="compass" class="size-4"></i> Strategy</a>
+                    <a href="{% url 'core:rankings' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t3 active:text-t2 transition-colors py-3"><i data-lucide="trophy" class="size-4"></i> Rankings</a>
                     {% if user.is_authenticated %}
                         {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t3 active:text-t2 transition-colors py-3"><i data-lucide="shield" class="size-4"></i> Admin</a>{% endif %}
                         <a href="{% url 'core:profile' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t2 active:text-t1 transition-colors py-3"><i data-lucide="user" class="size-4"></i> {{ user.first_name|default:user.username }}</a>
@@ -98,6 +101,7 @@
             </div>
         </div>
     </nav>
+</div>
 </div>
 
 <script>
@@ -190,5 +194,18 @@
     var stored = getStored();
     applyTheme(stored);
     updateIcons(stored);
+
+    // Sticky header border on scroll
+    var header = document.getElementById('siteHeader');
+    if (header) {
+        var scrolled = false;
+        window.addEventListener('scroll', function() {
+            var isScrolled = window.scrollY > 10;
+            if (isScrolled !== scrolled) {
+                scrolled = isScrolled;
+                header.style.borderColor = scrolled ? 'var(--ts-divider)' : 'transparent';
+            }
+        }, { passive: true });
+    }
 })();
 </script>

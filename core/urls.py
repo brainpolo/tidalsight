@@ -14,6 +14,7 @@ app_name = "core"
 urlpatterns = [
     path("", views.home, name="home"),
     path("strategy/", views.strategy, name="strategy"),
+    path("rankings/", views.rankings, name="rankings"),
     path("watchlist/", views.home_watchlist, name="home_watchlist"),
     path("search/", views.asset_search, name="asset_search"),
     path("assets/<str:ticker>/", views.asset_detail, name="asset_detail"),
@@ -43,6 +44,11 @@ urlpatterns = [
         "assets/<str:ticker>/community/", views.asset_community, name="asset_community"
     ),
     path(
+        "assets/<str:ticker>/report-card/sentiment/",
+        views.report_card_sentiment,
+        name="report_card_sentiment",
+    ),
+    path(
         "assets/<str:ticker>/report-card/financial-health/",
         views.report_card_financial_health,
         name="report_card_financial_health",
@@ -63,14 +69,19 @@ urlpatterns = [
         name="report_card_product_flywheel",
     ),
     path(
-        "assets/<str:ticker>/report-card/leadership/",
-        views.report_card_leadership,
-        name="report_card_leadership",
+        "assets/<str:ticker>/report-card/people/",
+        views.report_card_people,
+        name="report_card_people",
     ),
     path(
         "assets/<str:ticker>/report-card/overall/",
         views.report_card_overall,
         name="report_card_overall",
+    ),
+    path(
+        "assets/<str:ticker>/report-card/<str:section>/regenerate/",
+        views.regenerate_report_card,
+        name="regenerate_report_card",
     ),
     path("assets/<str:ticker>/prices/", views.asset_prices, name="asset_prices"),
     path(

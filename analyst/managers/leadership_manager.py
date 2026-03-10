@@ -8,33 +8,47 @@ from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.leadership_agent import LeadershipAssessment, leadership_agent
+from analyst.agents.leadership_agent import PeopleAssessment, people_agent
 from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
     LEADERSHIP_DATA_TTL,
     LEADERSHIP_FRESHNESS_TTL,
     LEADERSHIP_LOCK_TTL,
     MAX_AGENT_TURNS,
+    REVISION_LOCK_TTL,
+    cache_key,
 )
-from analyst.grounding import agent_grounding
+from analyst.grounding import agent_grounding, compute_label
+from analyst.managers.revision_manager import revise_assessment
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
 
 
-def _cache_keys(user_id: int, ticker: str) -> tuple[str, str]:
+def _base_cache_keys(ticker: str) -> tuple[str, str]:
     return (
-        f"leadership:{user_id}:{ticker}:data",
-        f"leadership:{user_id}:{ticker}:lock",
+        cache_key("report", "people", "base", ticker, "data"),
+        cache_key("report", "people", "base", ticker, "lock"),
     )
 
 
-def _source_fingerprint(user_note: str, price_target: float | None) -> str:
-    """Hash user inputs that affect the assessment."""
-    parts = [
-        f"note:{user_note}",
-        f"target:{price_target}",
-    ]
+def _revision_cache_keys(user_id: int, ticker: str) -> tuple[str, str]:
+    return (
+        cache_key("report", "people", "rev", user_id, ticker, "data"),
+        cache_key("report", "people", "rev", user_id, ticker, "lock"),
+    )
+
+
+def _base_source_fingerprint() -> str:
+    """Base has no varying inputs — agent does its own web research."""
+    return hashlib.md5(b"base").hexdigest()
+
+
+def _revision_source_fingerprint(
+    base_hash: str, user_note: str, price_target: float | None
+) -> str:
+    """Hash base assessment + user inputs for revision cache validity."""
+    parts = [f"base:{base_hash}", f"note:{user_note}", f"target:{price_target}"]
     return hashlib.md5("|".join(parts).encode()).hexdigest()
 
 
@@ -53,31 +67,22 @@ def _is_cache_valid(existing: dict, fingerprint: str) -> bool:
     return False
 
 
-def _build_prompt(
-    asset: Asset,
-    user_note: str,
-    price_target: float | None,
-) -> str:
-    """Build prompt with company info and user context. Agent does its own research."""
-    lines = [
-        f"Assess the leadership quality and hiring momentum for "
-        f"{asset.ticker} ({asset.name})."
-    ]
-    if user_note:
-        lines.append(f"\n## Investor's Notes\n{user_note}")
-    if price_target is not None:
-        lines.append(f"\n## Investor's Price Target: ${price_target:,.2f}")
-    return "\n".join(lines)
+def _build_prompt(asset: Asset) -> str:
+    """Build prompt with company info (no user context). Agent does its own research."""
+    return (
+        f"Assess the people quality — leadership, talent, hiring practices, "
+        f"and organisational culture — for {asset.ticker} ({asset.name})."
+    )
 
 
-def _run_agent(prompt: str) -> LeadershipAssessment:
+def _run_agent(prompt: str) -> PeopleAssessment:
     config = RunConfig(
         model_provider=get_model_provider(),
         tracing_disabled=True,
     )
     result = asyncio.run(
         Runner.run(
-            leadership_agent,
+            people_agent,
             input=prompt + agent_grounding(),
             run_config=config,
             max_turns=MAX_AGENT_TURNS,
@@ -86,42 +91,103 @@ def _run_agent(prompt: str) -> LeadershipAssessment:
     return result.final_output
 
 
-def get_leadership(
-    asset: Asset,
-    user_id: int,
-    user_note: str,
-    price_target: float | None,
-) -> dict | None:
-    """Return cached leadership assessment, regenerating when stale or inputs change."""
-    data_key, lock_key = _cache_keys(user_id, asset.ticker)
+def get_base_people(asset: Asset) -> dict | None:
+    """Return cached base people assessment (no user context), regenerating when stale."""
+    data_key, lock_key = _base_cache_keys(asset.ticker)
 
     existing = cache.get(data_key)
 
-    fingerprint = _source_fingerprint(user_note, price_target)
+    fingerprint = _base_source_fingerprint()
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.debug(
-            "Leadership for %s (user %s) served from cache", asset.ticker, user_id
-        )
+        logger.debug("Base people for %s served from cache", asset.ticker)
         return existing
 
     if not cache.add(lock_key, True, LEADERSHIP_LOCK_TTL):
-        logger.debug("Leadership generation for %s already in progress", asset.ticker)
+        logger.debug(
+            "Base people generation for %s already in progress", asset.ticker
+        )
         return existing
 
     try:
-        prompt = _build_prompt(asset, user_note, price_target)
-        logger.info("Generating Leadership for %s (user %s)...", asset.ticker, user_id)
+        prompt = _build_prompt(asset)
+        logger.info("Generating base people assessment for %s...", asset.ticker)
 
         assessment = _run_agent(prompt)
         data = assessment.model_dump()
+        data["label"] = compute_label("people", data["score"])
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 
         cache.set(data_key, data, LEADERSHIP_DATA_TTL)
         cache.delete(lock_key)
         return data
-    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
-        logger.exception("Failed to generate Leadership for %s", asset.ticker)
+    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+        logger.exception("Failed to generate base people assessment for %s", asset.ticker)
         cache.delete(lock_key)
         return existing
+
+
+def get_people(
+    asset: Asset,
+    user_id: int,
+    user_note: str,
+    price_target: float | None,
+) -> dict | None:
+    """Return effective people assessment: revised if user has notes, otherwise base."""
+    base = get_base_people(asset)
+    if base is None:
+        return None
+
+    # No user context → return base directly
+    if not user_note and price_target is None:
+        return base
+
+    # Check revision cache
+    rev_data_key, rev_lock_key = _revision_cache_keys(user_id, asset.ticker)
+    existing_rev = cache.get(rev_data_key)
+
+    rev_fp = _revision_source_fingerprint(
+        base.get("source_hash", ""), user_note, price_target
+    )
+
+    if existing_rev and existing_rev.get("source_hash") == rev_fp:
+        logger.debug(
+            "Revised people for %s (user %s) served from cache",
+            asset.ticker,
+            user_id,
+        )
+        return existing_rev
+
+    if not cache.add(rev_lock_key, True, REVISION_LOCK_TTL):
+        logger.debug(
+            "People revision for %s (user %s) already in progress",
+            asset.ticker,
+            user_id,
+        )
+        return existing_rev or base
+
+    try:
+        logger.info(
+            "Generating people revision for %s (user %s)...",
+            asset.ticker,
+            user_id,
+        )
+        revised = revise_assessment(
+            "people", base, user_note, price_target, asset
+        )
+        revised["source_hash"] = rev_fp
+        revised["generated_at"] = timezone.now().isoformat()
+        revised["is_revised"] = True
+
+        cache.set(rev_data_key, revised, LEADERSHIP_DATA_TTL)
+        cache.delete(rev_lock_key)
+        return revised
+    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+        logger.exception(
+            "Failed to revise people for %s (user %s), falling back to base",
+            asset.ticker,
+            user_id,
+        )
+        cache.delete(rev_lock_key)
+        return existing_rev or base

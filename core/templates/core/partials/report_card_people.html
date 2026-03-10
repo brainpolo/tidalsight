@@ -1,16 +1,16 @@
 {% if loading %}
 <!-- Loading skeleton — self-polls until agent finishes -->
-<div class="p-5 sm:p-6 border-l border-copper/[0.06]"
-     hx-get="{% url 'core:report_card_leadership' ticker %}"
+<div class="p-5 sm:p-6 sm:border-l border-copper/[0.06]"
+     hx-get="{% url 'core:report_card_people' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="load delay:{{ poll_interval }}s"
      hx-swap="outerHTML">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="users" class="size-3.5 text-t4"></i>
-            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Leadership</span>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">People</span>
         </div>
         <div class="flex items-center gap-1">
-            {% for _ in "12345" %}
+            {% for _ in "1234" %}
             <div class="size-1.5 rounded-full bg-surface/[0.08] animate-pulse"></div>
             {% endfor %}
         </div>
@@ -20,16 +20,26 @@
     <div class="h-3 w-3/4 bg-surface/[0.04] skel-bar"></div>
 </div>
 
-{% elif leadership %}
+{% elif people %}
 <!-- Scored card -->
-<div class="p-5 sm:p-6 border-l border-copper/[0.06]">
+<div class="p-5 sm:p-6 sm:border-l border-copper/[0.06]" data-section="people">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="users" class="size-3.5 text-t4"></i>
-            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Leadership</span>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">People</span>
+            {% if user.is_staff %}
+            <button hx-post="{% url 'core:regenerate_report_card' ticker 'people' %}"
+                    hx-target="closest [data-section]"
+                    hx-swap="outerHTML"
+                    hx-confirm="Regenerate people?"
+                    class="text-t4 hover:text-copper transition-colors cursor-pointer"
+                    title="Regenerate">
+                <i data-lucide="refresh-cw" class="size-3"></i>
+            </button>
+            {% endif %}
         </div>
-        <div class="flex items-center gap-1" title="{{ leadership.score }} / 5">
-            {% for i in "12345" %}
+        <div class="flex items-center gap-1" title="{{ people.score }} / 4">
+            {% for i in "1234" %}
                 {% if forloop.counter <= filled_dots %}
                 <div class="size-1.5 rounded-full bg-copper"></div>
                 {% else %}
@@ -39,23 +49,23 @@
         </div>
     </div>
     <div class="flex items-baseline gap-2 mb-2">
-        <div class="font-serif text-2xl text-heading">{{ leadership.score }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 5</span></div>
-        {% if leadership.label == "Exceptional" or leadership.label == "Strong" %}
-        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ leadership.label }}</span>
-        {% elif leadership.label == "Concerning" or leadership.label == "Weak" %}
-        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ leadership.label }}</span>
+        <div class="font-serif text-2xl text-heading">{{ people.score }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 4</span></div>
+        {% if people.label == "Exceptional" or people.label == "Strong" %}
+        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ people.label }}</span>
+        {% elif people.label == "Concerning" or people.label == "Weak" %}
+        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ people.label }}</span>
         {% else %}
-        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ leadership.label }}</span>
+        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ people.label }}</span>
         {% endif %}
     </div>
-    <p class="text-[0.65rem] leading-relaxed text-t2 mb-3">{{ leadership.brief }}</p>
-    {% if leadership.leadership_strengths or leadership.leadership_risks %}
+    <p class="text-[0.65rem] leading-relaxed text-t2 mb-3">{{ people.brief }}</p>
+    {% if people.people_strengths or people.people_risks %}
     <div class="border-t border-surface/[0.06] pt-3 mt-auto space-y-2.5">
-        {% if leadership.leadership_strengths %}
+        {% if people.people_strengths %}
         <div>
             <div class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 mb-1.5">Strengths</div>
             <div class="space-y-1">
-                {% for s in leadership.leadership_strengths|slice:":5" %}
+                {% for s in people.people_strengths|slice:":5" %}
                 <div class="flex items-start gap-2">
                     <span class="shrink-0 w-0.5 h-3 rounded-full bg-copper/50 mt-px"></span>
                     <span class="text-[0.55rem] leading-snug text-t2">{{ s }}</span>
@@ -64,11 +74,11 @@
             </div>
         </div>
         {% endif %}
-        {% if leadership.leadership_risks %}
+        {% if people.people_risks %}
         <div>
             <div class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 mb-1.5">Risks</div>
             <div class="space-y-1">
-                {% for r in leadership.leadership_risks|slice:":5" %}
+                {% for r in people.people_risks|slice:":5" %}
                 <div class="flex items-start gap-2">
                     <span class="shrink-0 w-0.5 h-3 rounded-full bg-surface/[0.15] mt-px"></span>
                     <span class="text-[0.55rem] leading-snug text-t3">{{ r }}</span>
@@ -83,19 +93,19 @@
 
 {% else %}
 <!-- Unavailable / placeholder -->
-<div class="p-5 sm:p-6 border-l border-copper/[0.06]">
+<div class="p-5 sm:p-6 sm:border-l border-copper/[0.06]">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="users" class="size-3.5 text-t4"></i>
-            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Leadership</span>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">People</span>
         </div>
         <div class="flex items-center gap-1" title="Score pending">
-            {% for _ in "12345" %}
+            {% for _ in "1234" %}
             <div class="size-1.5 rounded-full bg-surface/[0.08]"></div>
             {% endfor %}
         </div>
     </div>
-    <div class="font-serif text-2xl text-t4 mb-2">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 5</span></div>
-    <p class="text-[0.65rem] leading-relaxed text-t4">Executive track record, hiring signals, and team quality.</p>
+    <div class="font-serif text-2xl text-t4 mb-2">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 4</span></div>
+    <p class="text-[0.65rem] leading-relaxed text-t4">Leadership quality, talent calibre, hiring practices, and organisational culture.</p>
 </div>
 {% endif %}

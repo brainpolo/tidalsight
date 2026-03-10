@@ -9,7 +9,7 @@ DEFAULT_CHART_RANGE = "1W"
 
 HOME_COUNTS_CACHE_TTL = 600  # 10 minutes
 PRICES_CACHE_TTL = 3600  # 1 hour — matches hourly price sync interval
-PEERS_CACHE_TTL = 1800  # 30 minutes
+PEERS_CACHE_TTL = 3600  # 1 hour — matches price sync interval
 
 SEARCH_MAX_RESULTS = 6
 SEARCH_MIN_QUERY_LENGTH = 1

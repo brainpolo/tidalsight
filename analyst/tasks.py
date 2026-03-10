@@ -6,7 +6,7 @@ from analyst.managers.description_manager import generate_description
 from analyst.managers.digest_manager import get_market_digest
 from analyst.managers.external_risk_manager import get_external_risk
 from analyst.managers.financial_health_manager import get_financial_health
-from analyst.managers.leadership_manager import get_leadership
+from analyst.managers.leadership_manager import get_people
 from analyst.managers.overall_assessment_manager import get_overall_assessment
 from analyst.managers.peer_manager import sync_peers
 from analyst.managers.product_flywheel_manager import get_product_flywheel
@@ -96,7 +96,7 @@ def analyse_product_flywheel(
 
 
 @shared_task(ignore_result=True)
-def analyse_leadership(
+def analyse_people(
     asset_id: int,
     user_id: int,
     user_note: str,
@@ -104,9 +104,9 @@ def analyse_leadership(
 ) -> None:
     asset = Asset.objects.get(id=asset_id)
     logger.info(
-        "Task analyse_leadership started for %s (user %s)", asset.ticker, user_id
+        "Task analyse_people started for %s (user %s)", asset.ticker, user_id
     )
-    get_leadership(asset, user_id, user_note, price_target)
+    get_people(asset, user_id, user_note, price_target)
 
 
 @shared_task(ignore_result=True)

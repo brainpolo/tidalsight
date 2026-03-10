@@ -27,6 +27,19 @@ from scraper.models import Asset, Fundamental, PriceHistory
 logger = logging.getLogger(__name__)
 
 
+_PRICE_MAX = 10**12  # max_digits=20, decimal_places=8 → 10^(20-8)
+_VOLUME_MAX = 10**18  # max_digits=20, decimal_places=2 → 10^(20-2)
+
+
+def _values_in_range(row: dict) -> bool:
+    """Check that OHLCV values fit within the DB column limits."""
+    for field in ("open", "high", "low", "close"):
+        if row[field] is None or abs(row[field]) >= _PRICE_MAX:
+            return False
+    vol = row.get("volume")
+    return not (vol is not None and abs(vol) >= _VOLUME_MAX)
+
+
 def _bulk_insert_prices(asset: Asset, rows: list[dict]) -> int:
     """Construct PriceHistory objects from raw rows and bulk-insert them.
 
@@ -44,12 +57,7 @@ def _bulk_insert_prices(asset: Asset, rows: list[dict]) -> int:
             volume=row["volume"],
         )
         for row in rows
-        # yfinance returns null OHLC with volume=0 for delisted, halted,
-        # or illiquid tickers — skip these as they contain no real data.
-        if row["open"] is not None
-        and row["high"] is not None
-        and row["low"] is not None
-        and row["close"] is not None
+        if _values_in_range(row)
     ]
     return len(PriceHistory.objects.bulk_create(objects, ignore_conflicts=True))
 

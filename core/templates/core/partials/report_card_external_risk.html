@@ -1,16 +1,16 @@
 {% if loading %}
 <!-- Loading skeleton — self-polls until agent finishes -->
-<div class="p-5 sm:p-6 border-l border-surface/[0.04]"
+<div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]"
      hx-get="{% url 'core:report_card_external_risk' ticker %}"
      hx-trigger="load delay:{{ poll_interval }}s"
      hx-swap="outerHTML">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="shield-alert" class="size-3.5 text-t4"></i>
-            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">External Risk</span>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Risk</span>
         </div>
         <div class="flex items-center gap-1">
-            {% for _ in "12345" %}
+            {% for _ in "1234" %}
             <div class="size-1.5 rounded-full bg-surface/[0.08] animate-pulse"></div>
             {% endfor %}
         </div>
@@ -22,14 +22,24 @@
 
 {% elif risk %}
 <!-- Scored card -->
-<div class="p-5 sm:p-6 border-l border-surface/[0.04]">
+<div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]" data-section="risk">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="shield-alert" class="size-3.5 text-t4"></i>
-            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">External Risk</span>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Risk</span>
+            {% if user.is_staff %}
+            <button hx-post="{% url 'core:regenerate_report_card' ticker 'risk' %}"
+                    hx-target="closest [data-section]"
+                    hx-swap="outerHTML"
+                    hx-confirm="Regenerate risk?"
+                    class="text-t4 hover:text-copper transition-colors cursor-pointer"
+                    title="Regenerate">
+                <i data-lucide="refresh-cw" class="size-3"></i>
+            </button>
+            {% endif %}
         </div>
-        <div class="flex items-center gap-1" title="{{ risk.score }} / 5">
-            {% for i in "12345" %}
+        <div class="flex items-center gap-1" title="{{ risk.score }} / 4">
+            {% for i in "1234" %}
                 {% if forloop.counter <= filled_dots %}
                 <div class="size-1.5 rounded-full bg-copper"></div>
                 {% else %}
@@ -39,7 +49,7 @@
         </div>
     </div>
     <div class="flex items-baseline gap-2 mb-2">
-        <div class="font-serif text-2xl text-heading">{{ risk.score }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 5</span></div>
+        <div class="font-serif text-2xl text-heading">{{ risk.score }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 4</span></div>
         {% if risk.label == "Minimal" or risk.label == "Low" %}
         <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ risk.label }}</span>
         {% elif risk.label == "Critical" or risk.label == "Elevated" %}
@@ -66,19 +76,19 @@
 
 {% else %}
 <!-- Unavailable / placeholder -->
-<div class="p-5 sm:p-6 border-l border-surface/[0.04]">
+<div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="shield-alert" class="size-3.5 text-t4"></i>
-            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">External Risk</span>
+            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Risk</span>
         </div>
         <div class="flex items-center gap-1" title="Score pending">
-            {% for _ in "12345" %}
+            {% for _ in "1234" %}
             <div class="size-1.5 rounded-full bg-surface/[0.08]"></div>
             {% endfor %}
         </div>
     </div>
-    <div class="font-serif text-2xl text-t4 mb-2">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 5</span></div>
+    <div class="font-serif text-2xl text-t4 mb-2">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 4</span></div>
     <p class="text-[0.65rem] leading-relaxed text-t4">Competitors, regulatory exposure, and geopolitical risk.</p>
 </div>
 {% endif %}

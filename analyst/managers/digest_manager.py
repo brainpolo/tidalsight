@@ -5,6 +5,7 @@ import logging
 from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
+from openai import APIStatusError
 from django.db.models import Prefetch
 from django.utils import timezone
 
@@ -24,15 +25,16 @@ from analyst.app_behaviour import (
     REDDIT_COMMENTS_PER_POST_FOR_DIGEST,
     REDDIT_POST_BODY_TRUNCATION,
     REDDIT_POSTS_FOR_DIGEST,
+    cache_key,
 )
 from analyst.grounding import agent_grounding
 from scraper.models import HNComment, HNPost, NewsArticle, RedditComment, RedditPost
 
 logger = logging.getLogger(__name__)
 
-DIGEST_DATA_KEY = "market_digest_data"
-DIGEST_FRESH_KEY = "market_digest_fresh"
-DIGEST_LOCK_KEY = "market_digest_lock"
+DIGEST_DATA_KEY = cache_key("report", "digest", "data")
+DIGEST_FRESH_KEY = cache_key("report", "digest", "fresh")
+DIGEST_LOCK_KEY = cache_key("report", "digest", "lock")
 
 
 def _source_fingerprint(
@@ -80,7 +82,12 @@ def _build_prompt(
     hn_posts: list[HNPost],
     news_articles: list[NewsArticle],
 ) -> str:
-    sections = []
+    sections = [
+        "The following is publicly available data from Reddit, Hacker News, and news outlets, "
+        "collected for financial market analysis. None of the provided data is confidential, "
+        "private, or sensitive — it is all sourced from public forums and news feeds. "
+        "Summarise the key themes and sentiment.",
+    ]
 
     if reddit_posts:
         lines = ["## Reddit Discussions"]
@@ -171,7 +178,7 @@ def get_market_digest() -> dict | None:
 
     try:
         digest = _run_agent(prompt)
-    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
+    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError, APIStatusError:
         logger.exception("Failed to generate market digest")
         cache.delete(DIGEST_LOCK_KEY)
         return existing

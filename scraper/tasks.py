@@ -1,6 +1,8 @@
 import logging
+from datetime import timedelta
 
 from celery import shared_task
+from django.utils import timezone
 
 from scraper.constants import (
     REDDIT_DEFAULT_LIMIT,
@@ -14,7 +16,12 @@ from scraper.managers.asset_manager import (
 from scraper.managers.brave_news_manager import sync_asset_news, sync_news
 from scraper.managers.hn_manager import sync_hn_posts
 from scraper.managers.reddit_manager import sync_reddit_posts
-from scraper.models import Asset
+from scraper.models import Asset, AssetView
+
+# Top N assets by all-time views that always get price synced
+_TOP_VIEWED_LIMIT = 100
+# Weekly views window (7 days)
+_WEEKLY_VIEWS_DAYS = 7
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +64,56 @@ def fetch_asset_news(asset_id: int):
     return count
 
 
+def _relevant_asset_ids() -> set[int]:
+    """Return IDs of assets worth syncing prices for.
+
+    An asset qualifies if ANY of these hold:
+    1. In at least one user's watchlist
+    2. Has at least 1 view in the past 7 days
+    3. Is in the top 100 most-viewed assets all-time
+    """
+    weekly_cutoff = timezone.now() - timedelta(days=_WEEKLY_VIEWS_DAYS)
+
+    # Condition 1: in a watchlist
+    watched = set(
+        Asset.objects.filter(
+            is_active=True,
+            user_assets__in_watchlist=True,
+        ).values_list("id", flat=True)
+    )
+
+    # Condition 2: viewed in the last 7 days
+    recently_viewed = set(
+        AssetView.objects.filter(
+            viewed_at__gte=weekly_cutoff,
+            asset__is_active=True,
+        )
+        .values_list("asset_id", flat=True)
+        .distinct()
+    )
+
+    # Condition 3: top 100 all-time views
+    top_viewed = set(
+        Asset.objects.filter(is_active=True)
+        .order_by("-views")[:_TOP_VIEWED_LIMIT]
+        .values_list("id", flat=True)
+    )
+
+    return watched | recently_viewed | top_viewed
+
+
 @shared_task
 def sync_crypto_prices():
-    """Sync prices for crypto assets only (24/7 markets)."""
+    """Sync prices for relevant crypto assets (24/7 markets).
+
+    Only syncs assets that are watched, recently viewed, or in the top 100
+    most-viewed all-time — avoiding unnecessary API calls for idle assets.
+    """
+    relevant_ids = _relevant_asset_ids()
     tickers = list(
         Asset.objects.filter(
-            is_active=True, asset_class=Asset.AssetClass.CRYPTO
+            id__in=relevant_ids,
+            asset_class=Asset.AssetClass.CRYPTO,
         ).values_list("ticker", flat=True)
     )
     total = 0
@@ -77,9 +128,16 @@ def sync_crypto_prices():
 
 @shared_task
 def sync_traditional_prices():
-    """Sync prices for non-crypto assets (equity, commodity, etc.)."""
+    """Sync prices for relevant non-crypto assets (equity, commodity, etc.).
+
+    Only syncs assets that are watched, recently viewed, or in the top 100
+    most-viewed all-time — avoiding unnecessary API calls for idle assets.
+    """
+    relevant_ids = _relevant_asset_ids()
     tickers = list(
-        Asset.objects.filter(is_active=True)
+        Asset.objects.filter(
+            id__in=relevant_ids,
+        )
         .exclude(asset_class=Asset.AssetClass.CRYPTO)
         .values_list("ticker", flat=True)
     )

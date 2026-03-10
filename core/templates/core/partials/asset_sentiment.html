@@ -15,12 +15,12 @@
     <section class="pt-6 sm:pt-10 pb-4 sm:pb-6">
         <div class="flex items-center gap-2.5 mb-5 sm:mb-7">
             <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">Community Sentiment</div>
-            {% if sentiment.sentiment_label == "Very Bullish" or sentiment.sentiment_label == "Bullish" %}
-            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">{{ sentiment.sentiment_label }}</span>
-            {% elif sentiment.sentiment_label == "Very Bearish" or sentiment.sentiment_label == "Bearish" %}
-            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">{{ sentiment.sentiment_label }}</span>
+            {% if sentiment.label == "Very Bullish" or sentiment.label == "Bullish" %}
+            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">{{ sentiment.label }}</span>
+            {% elif sentiment.label == "Very Bearish" or sentiment.label == "Bearish" %}
+            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">{{ sentiment.label }}</span>
             {% else %}
-            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-neutral-500/15 text-neutral-400">{{ sentiment.sentiment_label }}</span>
+            <span class="text-[0.55rem] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-neutral-500/15 text-neutral-400">{{ sentiment.label }}</span>
             {% endif %}
         </div>
 

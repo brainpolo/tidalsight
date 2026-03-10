@@ -53,7 +53,18 @@ OVERALL_ASSESSMENT_DATA_TTL = (
 )  # 30 days — eviction fallback, fingerprint drives invalidation
 OVERALL_ASSESSMENT_LOCK_TTL = 300  # 5 minutes
 
+REVISION_LOCK_TTL = 60  # 1 minute — revisions are fast (MINI model, no tools)
+
 DESCRIPTION_FRESHNESS_DAYS = 90  # 3 months — how often to regenerate
 DESCRIPTION_LOCK_TTL = 300  # 5 minutes
 
 MAX_AGENT_TURNS = 50
+
+
+# ── Cache keys ──────────────────────────────────────────────────────
+
+CACHE_KEY_PREFIX = "ts"
+
+
+def cache_key(*parts: str | int) -> str:
+    return f"{CACHE_KEY_PREFIX}:" + ":".join(str(p) for p in parts)

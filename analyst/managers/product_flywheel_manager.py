@@ -18,26 +18,40 @@ from analyst.app_behaviour import (
     PRODUCT_FLYWHEEL_DATA_TTL,
     PRODUCT_FLYWHEEL_FRESHNESS_TTL,
     PRODUCT_FLYWHEEL_LOCK_TTL,
+    REVISION_LOCK_TTL,
+    cache_key,
 )
-from analyst.grounding import agent_grounding
+from analyst.grounding import agent_grounding, compute_label
+from analyst.managers.revision_manager import revise_assessment
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
 
 
-def _cache_keys(user_id: int, ticker: str) -> tuple[str, str]:
+def _base_cache_keys(ticker: str) -> tuple[str, str]:
     return (
-        f"product_flywheel:{user_id}:{ticker}:data",
-        f"product_flywheel:{user_id}:{ticker}:lock",
+        cache_key("report", "product", "base", ticker, "data"),
+        cache_key("report", "product", "base", ticker, "lock"),
     )
 
 
-def _source_fingerprint(user_note: str, price_target: float | None) -> str:
-    """Hash user inputs that affect the assessment."""
-    parts = [
-        f"note:{user_note}",
-        f"target:{price_target}",
-    ]
+def _revision_cache_keys(user_id: int, ticker: str) -> tuple[str, str]:
+    return (
+        cache_key("report", "product", "rev", user_id, ticker, "data"),
+        cache_key("report", "product", "rev", user_id, ticker, "lock"),
+    )
+
+
+def _base_source_fingerprint() -> str:
+    """Base has no varying inputs — agent does its own web research."""
+    return hashlib.md5(b"base").hexdigest()
+
+
+def _revision_source_fingerprint(
+    base_hash: str, user_note: str, price_target: float | None
+) -> str:
+    """Hash base assessment + user inputs for revision cache validity."""
+    parts = [f"base:{base_hash}", f"note:{user_note}", f"target:{price_target}"]
     return hashlib.md5("|".join(parts).encode()).hexdigest()
 
 
@@ -56,21 +70,12 @@ def _is_cache_valid(existing: dict, fingerprint: str) -> bool:
     return False
 
 
-def _build_prompt(
-    asset: Asset,
-    user_note: str,
-    price_target: float | None,
-) -> str:
-    """Build prompt with company info and user context. Agent does its own research."""
-    lines = [
+def _build_prompt(asset: Asset) -> str:
+    """Build prompt with company info (no user context). Agent does its own research."""
+    return (
         f"Assess the product flywheel and competitive moat for "
         f"{asset.ticker} ({asset.name})."
-    ]
-    if user_note:
-        lines.append(f"\n## Investor's Notes\n{user_note}")
-    if price_target is not None:
-        lines.append(f"\n## Investor's Price Target: ${price_target:,.2f}")
-    return "\n".join(lines)
+    )
 
 
 def _run_agent(prompt: str) -> ProductFlywheelAssessment:
@@ -89,48 +94,103 @@ def _run_agent(prompt: str) -> ProductFlywheelAssessment:
     return result.final_output
 
 
-def get_product_flywheel(
-    asset: Asset,
-    user_id: int,
-    user_note: str,
-    price_target: float | None,
-) -> dict | None:
-    """Return cached product flywheel assessment, regenerating when stale or inputs change."""
-    data_key, lock_key = _cache_keys(user_id, asset.ticker)
+def get_base_product_flywheel(asset: Asset) -> dict | None:
+    """Return cached base product flywheel (no user context), regenerating when stale."""
+    data_key, lock_key = _base_cache_keys(asset.ticker)
 
     existing = cache.get(data_key)
 
-    fingerprint = _source_fingerprint(user_note, price_target)
+    fingerprint = _base_source_fingerprint()
 
     if existing and _is_cache_valid(existing, fingerprint):
-        logger.debug(
-            "Product Flywheel for %s (user %s) served from cache",
-            asset.ticker,
-            user_id,
-        )
+        logger.debug("Base product flywheel for %s served from cache", asset.ticker)
         return existing
 
     if not cache.add(lock_key, True, PRODUCT_FLYWHEEL_LOCK_TTL):
         logger.debug(
-            "Product Flywheel generation for %s already in progress", asset.ticker
+            "Base product flywheel generation for %s already in progress", asset.ticker
         )
         return existing
 
     try:
-        prompt = _build_prompt(asset, user_note, price_target)
-        logger.info(
-            "Generating Product Flywheel for %s (user %s)...", asset.ticker, user_id
-        )
+        prompt = _build_prompt(asset)
+        logger.info("Generating base product flywheel for %s...", asset.ticker)
 
         assessment = _run_agent(prompt)
         data = assessment.model_dump()
+        data["label"] = compute_label("product", data["score"])
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 
         cache.set(data_key, data, PRODUCT_FLYWHEEL_DATA_TTL)
         cache.delete(lock_key)
         return data
-    except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
-        logger.exception("Failed to generate Product Flywheel for %s", asset.ticker)
+    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+        logger.exception("Failed to generate base product flywheel for %s", asset.ticker)
         cache.delete(lock_key)
         return existing
+
+
+def get_product_flywheel(
+    asset: Asset,
+    user_id: int,
+    user_note: str,
+    price_target: float | None,
+) -> dict | None:
+    """Return effective product flywheel: revised if user has notes, otherwise base."""
+    base = get_base_product_flywheel(asset)
+    if base is None:
+        return None
+
+    # No user context → return base directly
+    if not user_note and price_target is None:
+        return base
+
+    # Check revision cache
+    rev_data_key, rev_lock_key = _revision_cache_keys(user_id, asset.ticker)
+    existing_rev = cache.get(rev_data_key)
+
+    rev_fp = _revision_source_fingerprint(
+        base.get("source_hash", ""), user_note, price_target
+    )
+
+    if existing_rev and existing_rev.get("source_hash") == rev_fp:
+        logger.debug(
+            "Revised product flywheel for %s (user %s) served from cache",
+            asset.ticker,
+            user_id,
+        )
+        return existing_rev
+
+    if not cache.add(rev_lock_key, True, REVISION_LOCK_TTL):
+        logger.debug(
+            "Product flywheel revision for %s (user %s) already in progress",
+            asset.ticker,
+            user_id,
+        )
+        return existing_rev or base
+
+    try:
+        logger.info(
+            "Generating product flywheel revision for %s (user %s)...",
+            asset.ticker,
+            user_id,
+        )
+        revised = revise_assessment(
+            "product", base, user_note, price_target, asset
+        )
+        revised["source_hash"] = rev_fp
+        revised["generated_at"] = timezone.now().isoformat()
+        revised["is_revised"] = True
+
+        cache.set(rev_data_key, revised, PRODUCT_FLYWHEEL_DATA_TTL)
+        cache.delete(rev_lock_key)
+        return revised
+    except (ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError):
+        logger.exception(
+            "Failed to revise product flywheel for %s (user %s), falling back to base",
+            asset.ticker,
+            user_id,
+        )
+        cache.delete(rev_lock_key)
+        return existing_rev or base

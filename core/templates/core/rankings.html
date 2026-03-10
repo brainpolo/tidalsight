@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Rankings — TidalSight{% endblock %}
+
+{% block head %}
+<style>
+    .rank-row {
+        opacity: 0;
+        transform: translateY(8px);
+        animation: rank-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes rank-enter {
+        to { opacity: 1; transform: none; }
+    }
+
+    /* Score bar fill */
+    .score-fill {
+        transform-origin: left;
+        transform: scaleX(0);
+        animation: fill-bar 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fill-bar {
+        to { transform: scaleX(1); }
+    }
+
+    /* Podium glow for top 3 */
+    .rank-podium { position: relative; }
+    .rank-podium::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 2px;
+        opacity: 0;
+        animation: glow-in 1s ease forwards;
+    }
+    @keyframes glow-in { to { opacity: 1; } }
+    .rank-1::before { background: linear-gradient(90deg, rgba(200, 121, 65, 0.06), transparent 60%); }
+    .rank-2::before { background: linear-gradient(90deg, rgba(200, 121, 65, 0.03), transparent 50%); }
+    .rank-3::before { background: linear-gradient(90deg, rgba(200, 121, 65, 0.02), transparent 40%); }
+
+    /* Filter tabs */
+    .filter-tab {
+        transition: color 0.2s, border-color 0.2s;
+    }
+    .filter-tab.active {
+        color: var(--ts-heading);
+        border-color: var(--color-copper);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include "core/components/header.html" with show_search=True %}
+
+<div class="max-w-[1120px] mx-auto px-4 sm:px-10">
+
+    {# ── Header ── #}
+    <section class="pt-10 sm:pt-16 pb-6 sm:pb-10">
+        <div class="flex items-end justify-between gap-4 mb-2">
+            <div>
+                <h1 class="font-serif text-3xl sm:text-4xl text-heading tracking-tight">Rankings</h1>
+                <p class="text-[0.7rem] sm:text-xs text-t3 mt-2 max-w-md leading-relaxed">
+                    Assets ranked by AI-generated report card scores. Only fully scored assets appear.
+                </p>
+            </div>
+            <div class="hidden sm:flex items-baseline gap-2 shrink-0">
+                <span class="font-serif text-3xl text-heading">{{ ranked_assets|length }}</span>
+                <span class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase text-t4">Ranked</span>
+            </div>
+        </div>
+        <div class="divider mt-4"></div>
+    </section>
+
+    {# ── Filter tabs ── #}
+    <div class="flex items-center gap-1 mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0" id="filterTabs">
+        <button data-filter="all" class="filter-tab active text-[0.6rem] font-semibold tracking-[0.12em] uppercase px-3 py-1.5 border-b-2 border-transparent text-t3 hover:text-t2 cursor-pointer whitespace-nowrap">All</button>
+        <button data-filter="equity" class="filter-tab text-[0.6rem] font-semibold tracking-[0.12em] uppercase px-3 py-1.5 border-b-2 border-transparent text-t3 hover:text-t2 cursor-pointer whitespace-nowrap">Equities</button>
+        <button data-filter="crypto" class="filter-tab text-[0.6rem] font-semibold tracking-[0.12em] uppercase px-3 py-1.5 border-b-2 border-transparent text-t3 hover:text-t2 cursor-pointer whitespace-nowrap">Crypto</button>
+        <button data-filter="commodity" class="filter-tab text-[0.6rem] font-semibold tracking-[0.12em] uppercase px-3 py-1.5 border-b-2 border-transparent text-t3 hover:text-t2 cursor-pointer whitespace-nowrap">Commodities</button>
+        <button data-filter="currency" class="filter-tab text-[0.6rem] font-semibold tracking-[0.12em] uppercase px-3 py-1.5 border-b-2 border-transparent text-t3 hover:text-t2 cursor-pointer whitespace-nowrap">Currencies</button>
+    </div>
+
+    {# ── Column headers (desktop) ── #}
+    <div class="hidden sm:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-4 sm:px-6 pb-3 border-b border-surface/[0.06]">
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4">#</span>
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4">Asset</span>
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Score</span>
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Verdict</span>
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Price</span>
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Target</span>
+        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Upside</span>
+    </div>
+
+    {# ── Ranked list ── #}
+    <div id="rankingsList">
+    {% for asset in ranked_assets %}
+        <a href="{% url 'core:asset_detail' asset.ticker %}"
+           class="rank-row {% if asset.rank <= 3 %}rank-podium rank-{{ asset.rank }}{% endif %} group block relative border-b border-surface/[0.04] transition-colors duration-200 hover:bg-surface/[0.02]"
+           data-asset-class="{{ asset.asset_class }}"
+           style="animation-delay: {{ asset.rank|add:"-1" }}00ms">
+
+            {# ── Desktop row ── #}
+            <div class="hidden sm:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-4 sm:px-6 py-4">
+
+                {# Rank #}
+                <div class="flex items-center">
+                    {% if asset.rank == 1 %}
+                    <span data-rank class="font-serif text-xl text-copper">{{ asset.rank }}</span>
+                    {% elif asset.rank == 2 %}
+                    <span data-rank class="font-serif text-xl text-copper-light/70">{{ asset.rank }}</span>
+                    {% elif asset.rank == 3 %}
+                    <span data-rank class="font-serif text-xl text-copper-light/50">{{ asset.rank }}</span>
+                    {% else %}
+                    <span data-rank class="font-serif text-lg text-t4">{{ asset.rank }}</span>
+                    {% endif %}
+                </div>
+
+                {# Asset info #}
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-heading group-hover:text-copper transition-colors">{{ asset.ticker }}</span>
+                            <span class="text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.04] text-t4">{{ asset.get_asset_class_display }}</span>
+                        </div>
+                        <span class="text-[0.6rem] text-t3 truncate block">{{ asset.name }}</span>
+                    </div>
+                </div>
+
+                {# Score #}
+                <div class="text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        <div class="w-12 h-1 rounded-full bg-surface/[0.06] overflow-hidden">
+                            <div class="score-fill h-full rounded-full {% if asset.report_card_score >= 24 %}bg-emerald-400{% elif asset.report_card_score >= 15 %}bg-copper{% else %}bg-red-400{% endif %}"
+                                 style="width: {% widthratio asset.report_card_score 30 100 %}%; animation-delay: {{ asset.rank|add:"-1" }}50ms"></div>
+                        </div>
+                        <span class="font-serif text-sm text-heading tabular-nums">{{ asset.report_card_score }}<span class="text-[0.5rem] text-t4 ml-px">/30</span></span>
+                    </div>
+                </div>
+
+                {# Verdict #}
+                <div class="flex justify-end">
+                    {% if asset.verdict == "Strong Buy" or asset.verdict == "Buy" %}
+                    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ asset.verdict }}</span>
+                    {% elif asset.verdict == "Strong Sell" or asset.verdict == "Sell" %}
+                    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ asset.verdict }}</span>
+                    {% else %}
+                    <span class="text-[0.5rem] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ asset.verdict }}</span>
+                    {% endif %}
+                </div>
+
+                {# Price + daily change #}
+                <div class="text-right">
+                    {% if asset.latest_close %}
+                    <span class="text-xs text-heading tabular-nums">${{ asset.latest_close|floatformat:2 }}</span>
+                    {% if asset.daily_change != None %}
+                    <div class="text-[0.55rem] tabular-nums {% if asset.daily_change > 0 %}text-emerald-400{% elif asset.daily_change < 0 %}text-red-400{% else %}text-t4{% endif %}">
+                        {% if asset.daily_change > 0 %}+{% endif %}{{ asset.daily_change|floatformat:2 }}%
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-xs text-t4">&mdash;</span>
+                    {% endif %}
+                </div>
+
+                {# Target #}
+                <div class="text-right">
+                    {% if asset.target_price %}
+                    <span class="text-xs text-t2 tabular-nums">${{ asset.target_price|floatformat:2 }}</span>
+                    {% else %}
+                    <span class="text-xs text-t4">&mdash;</span>
+                    {% endif %}
+                </div>
+
+                {# Upside #}
+                <div class="text-right">
+                    {% if asset.upside != None %}
+                    <span class="text-xs font-medium tabular-nums {% if asset.upside > 0 %}text-emerald-400{% elif asset.upside < 0 %}text-red-400{% else %}text-t3{% endif %}">
+                        {% if asset.upside > 0 %}+{% endif %}{{ asset.upside|floatformat:1 }}%
+                    </span>
+                    {% else %}
+                    <span class="text-xs text-t4">&mdash;</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── Mobile row ── #}
+            <div class="sm:hidden flex items-center gap-3 px-4 py-3.5">
+                {# Rank #}
+                <div class="w-7 shrink-0">
+                    {% if asset.rank <= 3 %}
+                    <span data-rank class="font-serif text-lg text-copper">{{ asset.rank }}</span>
+                    {% else %}
+                    <span data-rank class="font-serif text-base text-t4">{{ asset.rank }}</span>
+                    {% endif %}
+                </div>
+
+                {# Asset + score #}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-heading">{{ asset.ticker }}</span>
+                        {% if asset.verdict == "Strong Buy" or asset.verdict == "Buy" %}
+                        <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-emerald-500/10 text-emerald-400">{{ asset.verdict }}</span>
+                        {% elif asset.verdict == "Strong Sell" or asset.verdict == "Sell" %}
+                        <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-red-500/10 text-red-400">{{ asset.verdict }}</span>
+                        {% else %}
+                        <span class="text-[0.45rem] font-semibold tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-surface/[0.06] text-t3">{{ asset.verdict }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-[0.55rem] text-t3 truncate block">{{ asset.name }}</span>
+                </div>
+
+                {# Score + price #}
+                <div class="text-right shrink-0">
+                    <div class="font-serif text-sm text-heading tabular-nums">{{ asset.report_card_score }}<span class="text-[0.5rem] text-t4">/30</span></div>
+                    {% if asset.latest_close %}
+                    <div class="text-[0.55rem] text-t3 tabular-nums">${{ asset.latest_close|floatformat:2 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+    {% empty %}
+        <div class="py-20 text-center">
+            <i data-lucide="bar-chart-3" class="size-8 text-t4 mx-auto mb-4"></i>
+            <p class="text-sm text-t3">No ranked assets yet.</p>
+            <p class="text-[0.65rem] text-t4 mt-1">Report card scores are generated as assets are analysed.</p>
+        </div>
+    {% endfor %}
+    </div>
+
+    {# ── Footer spacing ── #}
+    <div class="pb-16 sm:pb-24"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var tabs = document.querySelectorAll('#filterTabs .filter-tab');
+    var rows = document.querySelectorAll('#rankingsList > a');
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var filter = this.dataset.filter;
+
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+
+            var visibleRank = 0;
+            rows.forEach(function(row) {
+                var show = filter === 'all' || row.dataset.assetClass === filter;
+                row.style.display = show ? '' : 'none';
+                if (show) {
+                    visibleRank++;
+                    row.querySelectorAll('[data-rank]').forEach(function(el) {
+                        el.textContent = visibleRank;
+                    });
+                }
+            });
+        });
+    });
+
+    /* Cap animation delay for long lists */
+    rows.forEach(function(row, i) {
+        var delay = Math.min(i * 30, 600);
+        row.style.animationDelay = delay + 'ms';
+    });
+})();
+</script>
+{% endblock %}

@@ -16,8 +16,9 @@ from analyst.app_behaviour import (
     FINANCIAL_HEALTH_DATA_TTL,
     FINANCIAL_HEALTH_LOCK_TTL,
     MAX_AGENT_TURNS,
+    cache_key,
 )
-from analyst.grounding import agent_grounding
+from analyst.grounding import agent_grounding, compute_label
 from core.templatetags.formatting import abbreviate
 from scraper.models import Asset, Fundamental
 
@@ -43,18 +44,33 @@ HEALTH_FIELDS = [
 
 def _cache_keys(ticker: str) -> tuple[str, str, str]:
     return (
-        f"financial_health:{ticker}:data",
-        f"financial_health:{ticker}:fresh",
-        f"financial_health:{ticker}:lock",
+        cache_key("report", "finance", ticker, "data"),
+        cache_key("report", "finance", ticker, "fresh"),
+        cache_key("report", "finance", ticker, "lock"),
     )
 
 
+def _fingerprint_value(val) -> str:
+    """Normalize a value to a stable string so fingerprint is consistent across sync/async and Decimal repr."""
+    if val is None:
+        return "None"
+    try:
+        # Normalize decimals/numbers so DB vs in-memory repr doesn't cause cache misses
+        if hasattr(val, "__float__"):
+            return str(round(float(val), 10))
+        if isinstance(val, (int, float)):
+            return str(round(float(val), 10))
+    except (TypeError, ValueError):
+        pass
+    return str(val)
+
+
 def _source_fingerprint(fundamental: Fundamental) -> str:
-    """Hash the fundamental values to detect changes."""
+    """Hash the fundamental values to detect changes. Uses normalized values for stable cache hits."""
     parts = []
     for field in HEALTH_FIELDS:
         val = getattr(fundamental, field, None)
-        parts.append(f"{field}:{val}")
+        parts.append(f"{field}:{_fingerprint_value(val)}")
     return hashlib.md5("|".join(parts).encode()).hexdigest()
 
 
@@ -177,6 +193,7 @@ def get_financial_health(asset: Asset) -> dict | None:
 
         assessment = _run_agent(prompt)
         data = assessment.model_dump()
+        data["label"] = compute_label("finance", data["score"])
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 

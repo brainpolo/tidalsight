@@ -8,7 +8,6 @@
     @keyframes skelPulse { 0%, 100% { opacity: 0.06; } 50% { opacity: 0.03; } }
     .skel-bar { animation: skelPulse 2s ease-in-out infinite; border-radius: 2px; }
     .chart-range {
-        font-family: 'Inter', sans-serif;
         font-size: 0.6rem;
         font-weight: 500;
         letter-spacing: 0.06em;
@@ -21,11 +20,12 @@
         transition: color 0.2s, background 0.2s;
         -webkit-tap-highlight-color: transparent;
     }
-    @media (min-width: 640px) {
-        .chart-range { padding: 4px 10px; }
-    }
+    @media (min-width: 640px) { .chart-range { padding: 4px 10px; } }
     .chart-range:hover { color: var(--ts-t2); }
     .chart-range.active { color: var(--ts-t1); background: color-mix(in srgb, var(--ts-surface) 6%, transparent); }
+    .rc-view-btn { color: var(--ts-t4); cursor: pointer; border: none; }
+    .rc-view-btn:hover { color: var(--ts-t2); }
+    .rc-view-btn.active { color: var(--ts-t1); background: color-mix(in srgb, var(--ts-surface) 8%, transparent); }
 </style>
 {% endblock %}
 
@@ -90,8 +90,8 @@
                     </div>
                 </div>
                 <!-- Right: Chart -->
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-end gap-0.5 sm:gap-1 mb-3 overflow-x-auto scrollbar-hide">
+                <div class="flex-1 min-w-0 w-full">
+                    <div class="flex items-center justify-center lg:justify-end gap-0.5 sm:gap-1 mb-3 overflow-x-auto scrollbar-hide">
                         <button class="chart-range{% if default_chart_range == '1D' %} active{% endif %}" data-range="1D">1D</button>
                         <button class="chart-range{% if default_chart_range == '1W' %} active{% endif %}" data-range="1W">1W</button>
                         <button class="chart-range{% if default_chart_range == '1M' %} active{% endif %}" data-range="1M">1M</button>
@@ -603,14 +603,14 @@
                       placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
                       class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
             <div class="flex items-center justify-between mt-2">
-                <span class="text-[0.45rem] text-t4">Influences Valuation, Flywheel &amp; Leadership scores</span>
+                <span class="text-[0.45rem] text-t4">Influences Valuation, Flywheel &amp; People scores</span>
                 <button id="noteSaveBtnMobile" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>
             </div>
         </div>
         {% endif %}
 
         <!-- Main content column -->
-        <div class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1 w-full overflow-hidden">
 
     <!-- Report Card -->
         <section class="py-6 sm:py-10">
@@ -619,14 +619,20 @@
                 <div class="flex-1 h-px bg-surface/[0.04]"></div>
             </div>
 
+            <div id="rc-processing-banner"
+                 class="flex items-center gap-2 px-4 py-2.5 mb-5 rounded-sm border border-surface/[0.06] bg-surface/[0.02]">
+                <div class="size-1.5 rounded-full bg-copper/60 animate-pulse"></div>
+                <span class="text-[0.6rem] text-t3">Analysis in progress — scores will appear as they complete</span>
+            </div>
+
             <!-- Hygiene Factors -->
             <div class="mb-6 rounded-lg border border-surface/[0.04] overflow-hidden">
                 <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-surface/[0.015] border-b border-surface/[0.04]">
                     <i data-lucide="shield-check" class="size-3.5 text-t4"></i>
                     <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3">Hygiene Factors</span>
-                    <span class="text-[0.5rem] text-t4/60 italic">necessary conditions for investment viability</span>
+                    <span class="text-[0.5rem] text-t4/60 italic">governed by external factors and public information (what the data shows)</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-surface/[0.01] [&>*]:flex [&>*]:flex-col">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-surface/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 
                 <!-- 1. Financial Health (HTMX partial) -->
                 <div hx-get="{% url 'core:report_card_financial_health' asset.ticker %}"
@@ -635,52 +641,11 @@
                     {% include "core/partials/report_card_financial_health.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
-                <!-- 2. Sentiment -->
-                <div class="p-5 sm:p-6 border-l border-surface/[0.04]">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="message-circle" class="size-3.5 text-t4"></i>
-                            <span class="text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-t3">Sentiment</span>
-                        </div>
-                        <div class="flex items-center gap-1" title="{% if sentiment_score_5 != None %}{{ sentiment_score_5 }} / 5{% else %}Score pending{% endif %}">
-                            {% for i in "12345" %}
-                                {% if sentiment_score_5 != None and forloop.counter <= sentiment_filled_dots %}
-                                <div class="size-1.5 rounded-full bg-copper"></div>
-                                {% else %}
-                                <div class="size-1.5 rounded-full bg-surface/[0.08]"></div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% if sentiment_score_5 != None %}
-                    <div class="flex items-baseline gap-2 mb-2">
-                        <div class="font-serif text-2xl text-heading">{{ sentiment_score_5 }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 5</span></div>
-                        {% if sentiment_label == "Very Bullish" or sentiment_label == "Bullish" %}
-                        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400">{{ sentiment_label }}</span>
-                        {% elif sentiment_label == "Very Bearish" or sentiment_label == "Bearish" %}
-                        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-red-500/10 text-red-400">{{ sentiment_label }}</span>
-                        {% else %}
-                        <span class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.06] text-t2">{{ sentiment_label }}</span>
-                        {% endif %}
-                    </div>
-                    <p class="text-[0.65rem] leading-relaxed text-t2 mb-3">{{ sentiment_brief }}</p>
-                    {% if sentiment_themes %}
-                    <div class="border-t border-surface/[0.06] pt-3 mt-auto">
-                        <div class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 mb-1.5">Key Factors</div>
-                        <div class="space-y-1">
-                            {% for theme in sentiment_themes|slice:":5" %}
-                            <div class="flex items-start gap-2">
-                                <span class="shrink-0 w-0.5 h-3 rounded-full bg-copper/50 mt-px"></span>
-                                <span class="text-[0.55rem] leading-snug text-t2">{{ theme }}</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% else %}
-                    <div class="font-serif text-2xl text-t4 mb-2">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 5</span></div>
-                    <p class="text-[0.65rem] leading-relaxed text-t4">Community and market sentiment from Reddit, news, and social.</p>
-                    {% endif %}
+                <!-- 2. Sentiment (HTMX partial) -->
+                <div hx-get="{% url 'core:report_card_sentiment' asset.ticker %}"
+                     hx-trigger="load"
+                     hx-swap="outerHTML">
+                    {% include "core/partials/report_card_sentiment.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
                 <!-- 3. External Risk Profile -->
@@ -698,9 +663,25 @@
                 <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-copper/[0.02] border-b border-copper/[0.06]">
                     <i data-lucide="flame" class="size-3.5 text-copper/70"></i>
                     <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-copper/80">Motivators</span>
-                    <span class="text-[0.5rem] text-t4/60 italic">sufficient conditions for alpha generation</span>
+                    <span class="text-[0.5rem] text-t4/60 italic">governed by internal factors (where your thesis lives) — your notes contribute to a more refined analysis</span>
+                    {% if user_has_notes %}
+                    <div class="ml-auto flex items-center gap-0.5 bg-surface/[0.04] rounded-sm p-0.5" id="rc-view-toggle">
+                        <button type="button"
+                                class="rc-view-btn text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1 rounded-sm transition-all active"
+                                data-view=""
+                                onclick="switchReportView(this, '')">
+                            Personal
+                        </button>
+                        <button type="button"
+                                class="rc-view-btn text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1 rounded-sm transition-all"
+                                data-view="base"
+                                onclick="switchReportView(this, 'base')">
+                            Base
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-copper/[0.01] [&>*]:flex [&>*]:flex-col">
+                <div id="rc-motivators" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-copper/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 
                 <!-- 4. Valuation / Fair Value -->
                 <div hx-get="{% url 'core:report_card_valuation' asset.ticker %}"
@@ -716,17 +697,18 @@
                     {% include "core/partials/report_card_product_flywheel.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
-                <!-- 6. Leadership & Hiring -->
-                <div hx-get="{% url 'core:report_card_leadership' asset.ticker %}"
+                <!-- 6. People -->
+                <div hx-get="{% url 'core:report_card_people' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
-                    {% include "core/partials/report_card_leadership.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                    {% include "core/partials/report_card_people.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
                 </div>
             </div>
 
             <!-- Overall Assessment (HTMX partial) -->
-            <div hx-get="{% url 'core:report_card_overall' asset.ticker %}"
+            <div id="rc-overall-wrap"
+                 hx-get="{% url 'core:report_card_overall' asset.ticker %}"
                  hx-trigger="load, section-scored from:body delay:2s"
                  hx-swap="outerHTML">
                 {% include "core/partials/report_card_overall.html" with waiting=True ticker=asset.ticker scored_count=0 %}
@@ -789,8 +771,8 @@
 
         {% if request.user.is_authenticated %}
         <!-- Sticky notes sidebar -->
-        <div class="hidden xl:block w-[240px] shrink-0 sticky top-6 self-start">
-            <div class="border border-surface/[0.04] rounded-sm p-4">
+        <div class="hidden xl:block w-[240px] shrink-0 sticky top-[84px] sm:top-[88px] self-start">
+            <div class="border border-surface/[0.04] rounded-t-none rounded-b-sm p-4">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
                         <i data-lucide="pen-line" class="size-3 text-t4"></i>
@@ -802,7 +784,7 @@
                           placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
                           class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
                 <div class="flex items-center justify-between mt-2">
-                    <span class="text-[0.45rem] text-t4 leading-tight">Influences Valuation, Flywheel &amp; Leadership scores</span>
+                    <span class="text-[0.45rem] text-t4 leading-tight">Influences Valuation, Flywheel &amp; People scores</span>
                     <button id="noteSaveBtn" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>
                 </div>
             </div>
@@ -869,6 +851,69 @@
         </div><!-- /flex -->
     </div><!-- /max-w container -->
 
-    {% include "core/components/footer.html" %}
 </div>
+
+<script>
+(function() {
+    var scored = 0;
+    document.body.addEventListener('section-scored', function() {
+        scored++;
+        if (scored >= 6) {
+            var b = document.getElementById('rc-processing-banner');
+            if (b) b.style.display = 'none';
+        }
+    });
+    // Also hide if all sections already scored on page load (cached)
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            if (document.querySelectorAll('[data-section]').length >= 6) {
+                var b = document.getElementById('rc-processing-banner');
+                if (b) b.style.display = 'none';
+            }
+        }, 2000);
+    });
+})();
+</script>
+
+{% if user_has_notes %}
+<script>
+function switchReportView(btn, view) {
+    // Update toggle button states
+    document.querySelectorAll('.rc-view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const qs = view ? '?view=' + view : '';
+    const ticker = '{{ asset.ticker }}';
+
+    // Re-fetch motivator sections with view param
+    const sections = [
+        {url: '{% url "core:report_card_valuation" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(1)'},
+        {url: '{% url "core:report_card_product_flywheel" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(2)'},
+        {url: '{% url "core:report_card_people" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(3)'},
+    ];
+
+    sections.forEach(function(s) {
+        const el = document.querySelector(s.sel);
+        if (el) {
+            el.setAttribute('hx-get', s.url);
+            el.setAttribute('hx-trigger', 'load');
+            el.setAttribute('hx-swap', 'outerHTML');
+            htmx.process(el);
+            htmx.trigger(el, 'load');
+        }
+    });
+
+    // Re-fetch overall
+    const overallEl = document.querySelector('#rc-overall-wrap') ||
+                      document.querySelector('[hx-get*="report-card/overall"]');
+    if (overallEl) {
+        const overallUrl = '{% url "core:report_card_overall" asset.ticker %}' + qs;
+        overallEl.setAttribute('hx-get', overallUrl);
+        overallEl.setAttribute('hx-swap', 'outerHTML');
+        htmx.process(overallEl);
+        htmx.trigger(overallEl, 'load');
+    }
+}
+</script>
+{% endif %}
 {% endblock %}
