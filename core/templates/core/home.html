@@ -281,5 +281,7 @@
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.15 });
     els.forEach(el => observer.observe(el));
+    var si = document.getElementById('tickerInput');
+    if (si) si.focus();
 </script>
 {% endblock %}
