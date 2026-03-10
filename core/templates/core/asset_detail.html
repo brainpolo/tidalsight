@@ -41,9 +41,9 @@
     {% include "core/components/header.html" with show_search=True %}
 
     <!-- Fixed asset context banner -->
-    <div id="assetBanner" class="asset-banner fixed top-[calc(1.75rem+53px)] sm:top-[calc(2rem+57px)] left-0 right-0 z-30">
+    <div id="assetBanner" class="asset-banner fixed top-[calc(1.75rem+55px)] sm:top-[calc(2rem+59px)] left-0 right-0 z-30">
         <div class="max-w-[1120px] mx-auto px-4 sm:px-10 {% if request.user.is_authenticated %}xl:pr-[calc(240px+2rem+2.5rem)]{% endif %}">
-            <div class="banner-bar py-2 sm:py-2.5 flex items-center justify-center gap-2 sm:gap-3 bg-page/90 backdrop-blur-md border-b border-surface/[0.06] opacity-0 -translate-y-2 transition-all duration-200 ease-out">
+            <div class="banner-bar py-1 sm:py-1.5 flex items-center justify-center gap-2 sm:gap-3 bg-page/90 backdrop-blur-md border-b border-surface/[0.06] opacity-0 -translate-y-2 transition-all duration-200 ease-out">
                 {% if asset.website %}
                 <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz=32"
                      alt="" class="size-4 sm:size-5 rounded-sm shrink-0" loading="lazy">
@@ -771,7 +771,7 @@
 
         {% if request.user.is_authenticated %}
         <!-- Sticky notes sidebar -->
-        <div class="hidden xl:block w-[240px] shrink-0 sticky top-[84px] sm:top-[88px] self-start">
+        <div class="hidden xl:block w-[240px] shrink-0 sticky top-[78px] sm:top-[82px] self-start">
             <div class="border border-surface/[0.04] rounded-t-none rounded-b-sm p-4">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
@@ -1008,7 +1008,9 @@ function switchReportView(btn, view) {
 
     // Show banner only after user scrolls past the main divider (below chart/peers)
     const obs = new IntersectionObserver(function(entries) {
-        banner.classList.toggle('visible', !entries[0].isIntersecting);
+        var e = entries[0];
+        var scrolledPast = !e.isIntersecting && e.boundingClientRect.top < 0;
+        banner.classList.toggle('visible', scrolledPast);
     }, { threshold: 0, rootMargin: '0px 0px 0px 0px' });
     obs.observe(divider);
 
