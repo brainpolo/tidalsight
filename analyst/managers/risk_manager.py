@@ -19,6 +19,7 @@ from analyst.app_behaviour import (
     cache_key,
 )
 from analyst.grounding import agent_grounding, compute_label
+from analyst.utils import asset_label
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -32,12 +33,12 @@ def _cache_keys(ticker: str) -> tuple[str, str, str]:
     )
 
 
-def _run_agent(ticker: str, company_name: str) -> RiskAssessment:
+def _run_agent(label: str) -> RiskAssessment:
     config = RunConfig(
         model_provider=get_model_provider(),
         tracing_disabled=True,
     )
-    prompt = f"Assess the external risk profile for {ticker} ({company_name})."
+    prompt = f"Assess the external risk profile for {label}."
     result = asyncio.run(
         Runner.run(
             risk_agent,
@@ -68,7 +69,7 @@ def get_risk(asset: Asset) -> dict | None:
     try:
         logger.info("Generating external risk for %s...", asset.ticker)
 
-        assessment = _run_agent(asset.ticker, asset.name)
+        assessment = _run_agent(asset_label(asset))
         data = assessment.model_dump()
         data["label"] = compute_label("risk", data["score"])
         data["generated_at"] = timezone.now().isoformat()

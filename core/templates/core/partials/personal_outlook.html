@@ -1,0 +1,89 @@
+{% if outlook %}
+<!-- Headline -->
+<div class="font-serif text-lg text-heading leading-snug tracking-tight mb-6">{{ outlook.headline }}</div>
+
+<!-- Insights -->
+<div class="space-y-3.5 mb-6">
+    {% for insight in outlook.insights %}
+    <div class="flex items-start gap-3 text-[0.85rem] leading-relaxed text-t2">
+        <span class="text-copper/60 text-[0.65rem] mt-1 shrink-0 font-medium">{{ forloop.counter|stringformat:"02d" }}</span>
+        <span>{{ insight.point }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Risk Summary -->
+<div class="pt-5 border-t border-surface/[0.04]">
+    <div class="flex items-start gap-3">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-sm text-[0.6rem] font-semibold tracking-[0.1em] uppercase shrink-0 mt-px bg-copper/10 text-copper border border-copper/15">Risk</span>
+        <span class="text-[0.85rem] text-t3 leading-relaxed">{{ outlook.risk_summary }}</span>
+    </div>
+</div>
+
+<!-- Trajectory -->
+{% if outlook.trajectory %}
+<div class="pt-5 border-t border-surface/[0.04]">
+    <p class="text-[0.85rem] text-t2 leading-relaxed font-serif italic">{{ outlook.trajectory }}</p>
+</div>
+{% endif %}
+
+{% if outlook.generated_at %}
+<div class="mt-5 text-[0.5rem] text-t4/40 tracking-wide">
+    Updated {{ outlook.generated_at|timesince }} ago
+</div>
+{% endif %}
+
+<script>
+(function() {
+    var container = document.currentScript.parentElement;
+    var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    var tickerRe = /\$([A-Z][A-Z0-9.=\-]{0,9})/g;
+    var nodes = [];
+    while (walker.nextNode()) {
+        if (tickerRe.test(walker.currentNode.textContent)) nodes.push(walker.currentNode);
+        tickerRe.lastIndex = 0;
+    }
+    nodes.forEach(function(node) {
+        var frag = document.createDocumentFragment();
+        var last = 0;
+        node.textContent.replace(tickerRe, function(match, ticker, offset) {
+            if (offset > last) frag.appendChild(document.createTextNode(node.textContent.slice(last, offset)));
+            var a = document.createElement('a');
+            a.href = '/assets/' + encodeURIComponent(ticker) + '/';
+            a.textContent = match;
+            a.className = 'text-copper hover:text-copper-light transition-colors';
+            frag.appendChild(a);
+            last = offset + match.length;
+        });
+        if (last < node.textContent.length) frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+        node.parentNode.replaceChild(frag, node);
+    });
+})();
+</script>
+
+{% elif no_watchlist %}
+<p class="text-[0.85rem] font-light text-t4 leading-relaxed">
+    Add assets to your watchlist to receive personalised insights.
+</p>
+
+{% elif loading %}
+<div hx-get="{% url 'core:personal_outlook' %}"
+     hx-trigger="load delay:5s"
+     hx-swap="innerHTML">
+    <div class="space-y-2.5">
+        <div class="h-4 w-5/6 bg-surface/[0.03] rounded-sm animate-pulse"></div>
+        <div class="h-4 w-2/3 bg-surface/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
+        <div class="mt-5 space-y-3">
+            <div class="h-3 w-full bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
+            <div class="h-3 w-11/12 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
+            <div class="h-3 w-4/5 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
+        </div>
+        <div class="mt-5 text-[0.6rem] text-t4 tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Generating your brief...</div>
+    </div>
+</div>
+
+{% else %}
+<p class="text-[0.85rem] font-light text-t4 leading-relaxed">
+    No outlook available yet. Check back once your watchlist assets have been analysed.
+</p>
+{% endif %}

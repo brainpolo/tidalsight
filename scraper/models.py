@@ -225,14 +225,14 @@ class News(models.Model):
     category = models.CharField(
         max_length=NEWS_CATEGORY_MAX_LENGTH, choices=Category.choices, blank=True
     )
-    published_at = models.DateTimeField()
+    posted_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     assets = models.ManyToManyField(
         Asset, through="NewsAssetImpact", related_name="news"
     )
 
     class Meta:
-        ordering = ["-published_at"]
+        ordering = ["-posted_at"]
         verbose_name_plural = "news"
 
     def __str__(self):
@@ -266,7 +266,7 @@ class NewsAssetImpact(models.Model):
 
     class Meta:
         unique_together = [("news", "asset")]
-        ordering = ["-news__published_at"]
+        ordering = ["-news__posted_at"]
 
     def __str__(self):
         return f"{self.asset.ticker}: {self.direction} ({self.magnitude})"
@@ -382,7 +382,7 @@ class NewsArticle(models.Model):
     description = models.TextField(blank=True)
     source = models.CharField(max_length=NEWS_SOURCE_MAX_LENGTH, blank=True)
     thumbnail = models.URLField(max_length=NEWS_URL_MAX_LENGTH, blank=True)
-    published_at = models.DateTimeField(null=True, blank=True)
+    posted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     assets = models.ManyToManyField(Asset, blank=True, related_name="news_articles")
     embedding = VectorField(
@@ -390,7 +390,7 @@ class NewsArticle(models.Model):
     )
 
     class Meta:
-        ordering = ["-published_at"]
+        ordering = ["-posted_at"]
 
     def __str__(self):
         return self.title[:80]

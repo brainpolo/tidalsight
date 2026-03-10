@@ -12,7 +12,7 @@ NEWS_ARTICLE_DESCRIPTION_TRUNCATION = 200
 DIGEST_FRESHNESS_TTL = 60 * 60  # 1 hour — how often to regenerate
 DIGEST_DATA_TTL = 60 * 60 * 24  # 24 hours — max age before digest is discarded
 DIGEST_LOCK_TTL = 60 * 5  # 5 minutes — prevent concurrent generation
-DIGEST_REFRESH_INTERVAL = 60  # seconds — HTMX polling interval
+DIGEST_REFRESH_INTERVAL = 10  # seconds — HTMX polling interval
 
 PEER_SYNC_LOCK_TTL = 60 * 5  # 5 minutes
 PEER_TARGET_COUNT = 6  # ask LLM for this many
@@ -55,10 +55,14 @@ OVERALL_ASSESSMENT_LOCK_TTL = 300  # 5 minutes
 
 REVISION_LOCK_TTL = 60  # 1 minute — revisions are fast (MINI model, no tools)
 
+OUTLOOK_FRESHNESS_TTL = 60 * 60  # 1 hour
+OUTLOOK_DATA_TTL = 60 * 60 * 2  # 2 hours
+OUTLOOK_LOCK_TTL = 60 * 3  # 3 minutes
+
 DESCRIPTION_FRESHNESS_DAYS = 90  # 3 months — how often to regenerate
 DESCRIPTION_LOCK_TTL = 300  # 5 minutes
 
-MAX_AGENT_TURNS = 50
+MAX_AGENT_TURNS = 25
 
 
 # ── Cache keys ──────────────────────────────────────────────────────

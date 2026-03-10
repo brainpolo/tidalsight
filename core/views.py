@@ -2,11 +2,10 @@ import asyncio
 import json
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from asgiref.sync import sync_to_async
 from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import (
@@ -33,7 +32,11 @@ from analyst.app_behaviour import (
     DIGEST_REFRESH_INTERVAL,
     SENTIMENT_MIN_POSTS,
 )
-from analyst.managers.digest_manager import get_market_digest
+from analyst.managers.digest_manager import (
+    DIGEST_DATA_KEY,
+    DIGEST_FRESH_KEY,
+    DIGEST_LOCK_KEY,
+)
 from analyst.managers.finance_manager import (
     _cache_keys as finance_cache_keys,
 )
@@ -55,6 +58,8 @@ from analyst.managers.overall_assessment_manager import (
 from analyst.managers.overall_assessment_manager import (
     compute_verdict,
     compute_weighted_score,
+    expected_section_count,
+    sections_for_asset,
 )
 from analyst.managers.people_manager import (
     _base_cache_keys as people_base_cache_keys,
@@ -68,6 +73,7 @@ from analyst.managers.people_manager import (
 from analyst.managers.people_manager import (
     _revision_cache_keys as people_revision_cache_keys,
 )
+from analyst.managers.personal_outlook_manager import _cache_keys as outlook_cache_keys
 from analyst.managers.product_manager import (
     _base_cache_keys as product_base_cache_keys,
 )
@@ -141,14 +147,14 @@ from core.models import UserAsset
 from core.sparkline import build_sparkline_svg
 from core.utils import pct_change, total_post_count
 from scraper.clients.yfinance_client import search_tickers
-from scraper.managers.asset_manager import (
-    get_or_create_asset,
-    sync_all_prices,
-    sync_fundamentals,
-    sync_quick_prices,
-)
+from scraper.managers.asset_manager import get_or_create_asset
 from scraper.models import Asset, AssetView, PriceHistory
-from scraper.tasks import backfill_full_prices, fetch_asset_news
+from scraper.tasks import (
+    fetch_asset_news,
+    fetch_fundamentals_for_asset,
+    refresh_asset_prices,
+    sync_new_asset_prices,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +260,6 @@ async def rankings(request):
     )
 
 
-@login_required
 async def home_watchlist(request):
     """HTMX partial: watchlist widget for the homepage."""
     watched_asset_ids = [
@@ -322,14 +327,66 @@ async def strategy(request):
 
 
 async def market_digest(request):
-    try:
-        digest = await sync_to_async(get_market_digest)()
-    except Exception:
-        logger.exception("Market digest generation failed in view")
-        digest = None
-    if digest and digest.get("generated_at"):
-        digest["generated_at"] = datetime.fromisoformat(digest["generated_at"])
-    return render(request, "core/partials/market_digest.html", {"digest": digest})
+    digest = await sync_to_async(cache.get)(DIGEST_DATA_KEY)
+
+    if digest:
+        if digest.get("generated_at"):
+            digest["generated_at"] = datetime.fromisoformat(digest["generated_at"])
+        # If not fresh and no task running, kick off background regeneration
+        is_fresh = await sync_to_async(cache.get)(DIGEST_FRESH_KEY)
+        if not is_fresh:
+            is_locked = await sync_to_async(cache.get)(DIGEST_LOCK_KEY)
+            if not is_locked:
+                from analyst.tasks import generate_market_digest
+
+                generate_market_digest.delay()
+        return render(request, "core/partials/market_digest.html", {"digest": digest})
+
+    # No cached data — fire task if not already running, return polling skeleton
+    is_locked = await sync_to_async(cache.get)(DIGEST_LOCK_KEY)
+    if not is_locked:
+        from analyst.tasks import generate_market_digest
+
+        generate_market_digest.delay()
+    return render(request, "core/partials/market_digest.html", {"loading": True})
+
+
+async def personal_outlook(request):
+    """HTMX partial: personalised briefing based on user's watchlist."""
+    user_id = request.user.id
+    has_watchlist = await UserAsset.objects.filter(
+        user_id=user_id, in_watchlist=True
+    ).aexists()
+    if not has_watchlist:
+        return render(
+            request, "core/partials/personal_outlook.html", {"no_watchlist": True}
+        )
+
+    data_key, fresh_key, lock_key = outlook_cache_keys(user_id)
+    outlook = await sync_to_async(cache.get)(data_key)
+
+    if outlook:
+        if outlook.get("generated_at"):
+            outlook["generated_at"] = datetime.fromisoformat(outlook["generated_at"])
+        # If not fresh and no task already running, kick off background regeneration
+        is_fresh = await sync_to_async(cache.get)(fresh_key)
+        if not is_fresh:
+            is_locked = await sync_to_async(cache.get)(lock_key)
+            if not is_locked:
+                from analyst.tasks import generate_personal_outlook
+
+                generate_personal_outlook.delay(user_id)
+        return render(
+            request, "core/partials/personal_outlook.html", {"outlook": outlook}
+        )
+
+    # No cached data — fire task only if not already running, return polling skeleton
+    is_locked = await sync_to_async(cache.get)(lock_key)
+    if not is_locked:
+        from analyst.tasks import generate_personal_outlook
+
+        generate_personal_outlook.delay(user_id)
+    return render(request, "core/partials/personal_outlook.html", {"loading": True})
 
 
 async def trending_banner(request):
@@ -418,10 +475,9 @@ async def asset_detail(request, ticker):
             request, "core/asset_unavailable.html", {"ticker": ticker}, status=503
         )
 
-    # For new assets with no price data, fetch 1W quickly then backfill full history
+    # For new assets with no price data, dispatch background sync
     if not await asset.prices.aexists():
-        await sync_to_async(sync_quick_prices)(asset, ticker)
-        backfill_full_prices.delay(asset.id, ticker)
+        sync_new_asset_prices.delay(asset.id)
 
     # Track views (cooldown-based dedup via Redis)
     ip = request.META.get("HTTP_X_FORWARDED_FOR", request.META.get("REMOTE_ADDR", ""))
@@ -489,6 +545,7 @@ async def asset_detail(request, ticker):
             "user_note": user_note,
             "report_section_poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
             "user_has_notes": bool(user_note or price_target is not None),
+            "expected_section_count": expected_section_count(asset.asset_class),
             "verdict": compute_verdict(asset.report_card_score)
             if asset.report_card_score
             else None,
@@ -496,7 +553,6 @@ async def asset_detail(request, ticker):
     )
 
 
-@login_required
 @require_POST
 async def toggle_watchlist(request, ticker):
     """HTMX partial: toggle asset in user's watchlist, return new star state."""
@@ -534,7 +590,7 @@ async def asset_header(request, ticker):
     if not asset:
         return render(request, "core/partials/asset_header.html", {})
 
-    await sync_to_async(sync_all_prices)(ticker)
+    refresh_asset_prices.delay(asset.id)
 
     last_two = [p async for p in asset.prices.all()[:2]]
     latest_price = last_two[0] if last_two else None
@@ -570,7 +626,7 @@ async def asset_fundamentals(request, ticker):
     if not asset:
         return render(request, "core/partials/asset_fundamentals.html", {})
 
-    await sync_to_async(sync_fundamentals)(ticker)
+    fetch_fundamentals_for_asset.delay(asset.id)
 
     fundamental = await asset.fundamentals.afirst()
     latest_price = await asset.prices.afirst()
@@ -714,15 +770,12 @@ async def asset_sentiment(request, ticker):
         + await asset.hn_posts.acount()
         + await asset.news_articles.acount()
     )
-    if total < SENTIMENT_MIN_POSTS:
-        return render(
-            request, "core/partials/asset_sentiment.html", {"insufficient": True}
-        )
 
-    # Fire-and-forget in a background thread on the web server itself,
-    # keeping Celery workers free for heavy scraping/sync tasks.
-    # The cache lock inside get_sentiment prevents concurrent runs.
-    analyse_sentiment.delay(asset.id)
+    if total < SENTIMENT_MIN_POSTS:
+        fetch_asset_news.delay(asset.id)
+    else:
+        analyse_sentiment.delay(asset.id)
+
     response = render(request, "core/partials/asset_sentiment.html", {"loading": True})
     response["HX-Trigger-After-Settle"] = '{"retrySentiment": true}'
     return response
@@ -753,11 +806,14 @@ async def report_card_sentiment(request, ticker):
         + await asset.hn_posts.acount()
         + await asset.news_articles.acount()
     )
-    if total < SENTIMENT_MIN_POSTS:
-        return render(request, "core/partials/report_card_sentiment.html", {})
 
-    if not await cache.aget(lock_key):
+    if total < SENTIMENT_MIN_POSTS:
+        # Kick off targeted news fetch so sources accumulate for this asset
+        fetch_asset_news.delay(asset.id)
+    elif not await cache.aget(lock_key):
         analyse_sentiment.delay(asset.id)
+
+    # Always poll — either waiting for sources to arrive or for agent to finish
     response = render(
         request,
         "core/partials/report_card_sentiment.html",
@@ -813,14 +869,12 @@ async def report_card_finance(request, ticker):
         return response
 
     if not fundamental:
-        return render(
-            request,
-            "core/partials/report_card_finance.html",
-            {"unavailable": True},
-        )
-
-    if not await cache.aget(lock_key):
+        # Kick off fundamentals fetch so finance can proceed once data arrives
+        fetch_fundamentals_for_asset.delay(asset.id)
+    elif not await cache.aget(lock_key):
         analyse_finance.delay(asset.id)
+
+    # Always poll — either waiting for fundamentals or for agent to finish
     return render(
         request,
         "core/partials/report_card_finance.html",
@@ -896,10 +950,12 @@ async def report_card_valuation(request, ticker):
     view_mode = request.GET.get("view", "")
     force_base = view_mode == "base"
 
-    # Check revision cache first if user has notes (and not forcing base), then fall back to base
+    wants_revision = not force_base and (user_note or price_target is not None)
+
+    # Check revision cache first if user has notes
     cached = None
-    if not force_base and (user_note or price_target is not None):
-        rev_key, _ = valuation_revision_cache_keys(user_id, ticker)
+    if wants_revision:
+        rev_key, rev_lock_key = valuation_revision_cache_keys(user_id, ticker)
         cached = await cache.aget(rev_key)
 
     base_key, base_lock_key = valuation_base_cache_keys(ticker)
@@ -930,6 +986,22 @@ async def report_card_valuation(request, ticker):
             rsi = await sync_to_async(compute_rsi)(asset)
             fp = valuation_base_fingerprint(fundamental, float(latest_price.close), rsi)
             if valuation_is_cache_valid(cached, fp):
+                # Base is valid — but if user wants a revision, dispatch it
+                if wants_revision:
+                    if not await cache.aget(rev_lock_key):
+                        analyse_valuation.delay(
+                            asset.id, user_id, user_note, price_target
+                        )
+                    return render(
+                        request,
+                        "core/partials/report_card_valuation.html",
+                        {
+                            "loading": True,
+                            "ticker": ticker,
+                            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+                            "view_mode": view_mode,
+                        },
+                    )
                 filled_dots = round(cached["score"])
                 response = render(
                     request,
@@ -946,14 +1018,12 @@ async def report_card_valuation(request, ticker):
 
     has_fundamentals = await asset.fundamentals.aexists()
     if not has_fundamentals:
-        return render(
-            request,
-            "core/partials/report_card_valuation.html",
-            {"unavailable": True},
-        )
-
-    if not await cache.aget(base_lock_key):
+        # Kick off fundamentals fetch so valuation can proceed once data arrives
+        fetch_fundamentals_for_asset.delay(asset.id)
+    elif not await cache.aget(base_lock_key):
         analyse_valuation.delay(asset.id, user_id, user_note, price_target)
+
+    # Always poll — either waiting for fundamentals or for agent to finish
     return render(
         request,
         "core/partials/report_card_valuation.html",
@@ -993,10 +1063,12 @@ async def report_card_product(request, ticker):
     view_mode = request.GET.get("view", "")
     force_base = view_mode == "base"
 
-    # Check revision cache first if user has notes (and not forcing base), then fall back to base
+    wants_revision = not force_base and (user_note or price_target is not None)
+
+    # Check revision cache first if user has notes
     cached = None
-    if not force_base and (user_note or price_target is not None):
-        rev_key, _ = product_revision_cache_keys(user_id, ticker)
+    if wants_revision:
+        rev_key, rev_lock_key = product_revision_cache_keys(user_id, ticker)
         cached = await cache.aget(rev_key)
 
     base_key, base_lock_key = product_base_cache_keys(ticker)
@@ -1021,6 +1093,21 @@ async def report_card_product(request, ticker):
         else:
             fp = product_base_fingerprint()
             if product_is_cache_valid(cached, fp):
+                if wants_revision:
+                    if not await cache.aget(rev_lock_key):
+                        analyse_product.delay(
+                            asset.id, user_id, user_note, price_target
+                        )
+                    return render(
+                        request,
+                        "core/partials/report_card_product.html",
+                        {
+                            "loading": True,
+                            "ticker": ticker,
+                            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+                            "view_mode": view_mode,
+                        },
+                    )
                 filled_dots = round(cached["score"])
                 response = render(
                     request,
@@ -1076,10 +1163,12 @@ async def report_card_people(request, ticker):
     view_mode = request.GET.get("view", "")
     force_base = view_mode == "base"
 
-    # Check revision cache first if user has notes (and not forcing base), then fall back to base
+    wants_revision = not force_base and (user_note or price_target is not None)
+
+    # Check revision cache first if user has notes
     cached = None
-    if not force_base and (user_note or price_target is not None):
-        rev_key, _ = people_revision_cache_keys(user_id, ticker)
+    if wants_revision:
+        rev_key, rev_lock_key = people_revision_cache_keys(user_id, ticker)
         cached = await cache.aget(rev_key)
 
     base_key, base_lock_key = people_base_cache_keys(ticker)
@@ -1104,6 +1193,19 @@ async def report_card_people(request, ticker):
         else:
             fp = people_base_fingerprint()
             if people_is_cache_valid(cached, fp):
+                if wants_revision:
+                    if not await cache.aget(rev_lock_key):
+                        analyse_people.delay(asset.id, user_id, user_note, price_target)
+                    return render(
+                        request,
+                        "core/partials/report_card_people.html",
+                        {
+                            "loading": True,
+                            "ticker": ticker,
+                            "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
+                            "view_mode": view_mode,
+                        },
+                    )
                 filled_dots = round(cached["score"])
                 response = render(
                     request,
@@ -1133,7 +1235,7 @@ async def report_card_people(request, ticker):
 
 
 async def report_card_overall(request, ticker):
-    """Partial: overall assessment synthesizing all 6 report card sections."""
+    """Partial: overall assessment synthesizing all report card sections."""
     ticker = ticker.upper()
     asset = await Asset.objects.filter(ticker=ticker).afirst()
     if not asset:
@@ -1148,39 +1250,47 @@ async def report_card_overall(request, ticker):
     view_mode = request.GET.get("view", "")
     force_base = view_mode == "base"
 
-    # Determine if user has notes (affects which cache keys to check)
+    # Determine if user has notes (for toggle visibility + revision lookups)
     user_has_notes = False
-    if not force_base and request.user.is_authenticated:
+    if request.user.is_authenticated:
         user_asset = await UserAsset.objects.filter(
             user=request.user, asset=asset
         ).afirst()
         if user_asset and (user_asset.note or user_asset.price_target is not None):
             user_has_notes = True
 
-    # Gather all 6 section caches
+    use_revisions = user_has_notes and not force_base
+
+    # Determine which sections apply to this asset class
+    hygiene_keys, motivator_keys = sections_for_asset(asset.asset_class)
+    all_keys = set(hygiene_keys + motivator_keys)
+    expected = expected_section_count(asset.asset_class)
+
+    # Gather section caches
     sections = {}
 
-    # 1. Financial Health
-    fh_key, _, _ = finance_cache_keys(ticker)
-    cached_fh = await cache.aget(fh_key)
-    if cached_fh and "score" in cached_fh:
-        sections["finance"] = cached_fh
+    # Financial Health (equity only)
+    if "finance" in all_keys:
+        fh_key, _, _ = finance_cache_keys(ticker)
+        cached_fh = await cache.aget(fh_key)
+        if cached_fh and "score" in cached_fh:
+            sections["finance"] = cached_fh
 
-    # 2. Sentiment
+    # Sentiment
     sent_key, _, _ = sentiment_cache_keys(ticker)
     cached_sent = await cache.aget(sent_key)
     if cached_sent and "score" in cached_sent:
         sections["sentiment"] = cached_sent
 
-    # 3. External Risk
+    # Risk
     er_key, _, _ = risk_cache_keys(ticker)
     cached_er = await cache.aget(er_key)
     if cached_er and "score" in cached_er:
         sections["risk"] = cached_er
 
-    # 4. Valuation — check revision cache if user has notes, fall back to base
+    # Valuation — check revision cache if user has notes, fall back to base
     cached_val = None
-    if user_has_notes:
+    if use_revisions:
         rev_key, _ = valuation_revision_cache_keys(user_id, ticker)
         cached_val = await cache.aget(rev_key)
     if not cached_val:
@@ -1189,9 +1299,9 @@ async def report_card_overall(request, ticker):
     if cached_val and "score" in cached_val:
         sections["valuation"] = cached_val
 
-    # 5. Product Flywheel — check revision cache if user has notes, fall back to base
+    # Product — check revision cache if user has notes, fall back to base
     cached_fw = None
-    if user_has_notes:
+    if use_revisions:
         rev_key, _ = product_revision_cache_keys(user_id, ticker)
         cached_fw = await cache.aget(rev_key)
     if not cached_fw:
@@ -1200,20 +1310,23 @@ async def report_card_overall(request, ticker):
     if cached_fw and "score" in cached_fw:
         sections["product"] = cached_fw
 
-    # 6. People — check revision cache if user has notes, fall back to base
-    cached_ppl = None
-    if user_has_notes:
-        rev_key, _ = people_revision_cache_keys(user_id, ticker)
-        cached_ppl = await cache.aget(rev_key)
-    if not cached_ppl:
-        base_key, _ = people_base_cache_keys(ticker)
-        cached_ppl = await cache.aget(base_key)
-    if cached_ppl and "score" in cached_ppl:
-        sections["people"] = cached_ppl
+    # People (equity only) — check revision cache if user has notes, fall back to base
+    if "people" in all_keys:
+        cached_ppl = None
+        if use_revisions:
+            rev_key, _ = people_revision_cache_keys(user_id, ticker)
+            cached_ppl = await cache.aget(rev_key)
+        if not cached_ppl:
+            base_key, _ = people_base_cache_keys(ticker)
+            cached_ppl = await cache.aget(base_key)
+        if cached_ppl and "score" in cached_ppl:
+            sections["people"] = cached_ppl
 
-    # Need all 6 sections
-    if len(sections) < 6:
-        partial_total = compute_weighted_score(sections) if sections else None
+    # Need all expected sections
+    if len(sections) < expected:
+        partial_total = (
+            compute_weighted_score(sections, asset.asset_class) if sections else None
+        )
         return render(
             request,
             "core/partials/report_card_overall.html",
@@ -1221,18 +1334,18 @@ async def report_card_overall(request, ticker):
                 "waiting": True,
                 "ticker": ticker,
                 "scored_count": len(sections),
+                "expected_count": expected,
                 "report_card_total": partial_total,
                 "view_mode": view_mode,
             },
         )
 
-    total_score = compute_weighted_score(sections)
+    total_score = compute_weighted_score(sections, asset.asset_class)
     verdict = compute_verdict(total_score)
 
     # Check overall cache — use user key if revisions exist, base otherwise
     has_revisions = any(
-        sections.get(key, {}).get("is_revised", False)
-        for key in ("valuation", "product", "people")
+        sections.get(key, {}).get("is_revised", False) for key in motivator_keys
     )
 
     if has_revisions:
@@ -1284,7 +1397,6 @@ SECTION_TEMPLATES = {
 }
 
 
-@login_required
 @require_POST
 async def regenerate_report_card(request, ticker, section):
     """Staff-only: clear cache and re-dispatch analysis for a report card section."""
@@ -1332,7 +1444,15 @@ async def regenerate_report_card(request, ticker, section):
     template = SECTION_TEMPLATES[section]
 
     if section == "overall":
-        return render(request, template, {"waiting": True, "ticker": ticker})
+        return render(
+            request,
+            template,
+            {
+                "waiting": True,
+                "ticker": ticker,
+                "expected_count": expected_section_count(asset.asset_class),
+            },
+        )
 
     return render(
         request,
@@ -1362,14 +1482,27 @@ async def asset_community(request, ticker):
         a async for a in asset.news_articles.all()[:ASSET_DETAIL_NEWS_ARTICLES]
     ]
 
+    # Merge into a single chronological feed
+    mentions = []
+    for p in reddit_posts:
+        mentions.append({"type": "reddit", "title": p.title, "url": p.url,
+                         "date": p.posted_at, "score": p.score,
+                         "num_comments": p.num_comments,
+                         "subreddit": p.subreddit, "author": p.author})
+    for p in hn_posts:
+        mentions.append({"type": "hn", "title": p.title, "url": p.url,
+                         "date": p.posted_at, "score": p.score,
+                         "num_comments": p.num_comments, "author": p.author})
+    for a in news_articles:
+        mentions.append({"type": "news", "title": a.title, "url": a.url,
+                         "date": a.posted_at, "source": a.source})
+    _min_dt = datetime.min.replace(tzinfo=UTC)
+    mentions.sort(key=lambda m: m["date"] or _min_dt, reverse=True)
+
     return render(
         request,
         "core/partials/asset_community.html",
-        {
-            "reddit_posts": reddit_posts,
-            "hn_posts": hn_posts,
-            "news_articles": news_articles,
-        },
+        {"mentions": mentions},
     )
 
 
@@ -1610,7 +1743,22 @@ async def asset_chart_data(request, ticker):
     return JsonResponse(data, safe=False)
 
 
-@login_required
+async def _clear_revision_caches(user_id: int, ticker: str) -> None:
+    """Clear all motivator revision caches and user overall cache for a user+ticker."""
+    keys = []
+    for cache_fn in (
+        valuation_revision_cache_keys,
+        product_revision_cache_keys,
+        people_revision_cache_keys,
+    ):
+        data_key, lock_key = cache_fn(user_id, ticker)
+        keys.extend([data_key, lock_key])
+    # Also clear the user-specific overall cache so it regenerates with new revisions
+    overall_data, overall_lock = overall_user_cache_keys(user_id, ticker)
+    keys.extend([overall_data, overall_lock])
+    await cache.adelete_many(keys)
+
+
 @require_POST
 async def set_price_target(request, ticker):
     """HTMX endpoint: set or clear the user's price target for an asset."""
@@ -1637,10 +1785,11 @@ async def set_price_target(request, ticker):
     user_asset.price_target = price_target
     await user_asset.asave(update_fields=["price_target"])
 
+    await _clear_revision_caches(request.user.id, ticker)
+
     return JsonResponse({"price_target": price_target})
 
 
-@login_required
 @require_POST
 async def save_note(request, ticker):
     """HTMX endpoint: save the user's note for an asset."""
@@ -1657,6 +1806,8 @@ async def save_note(request, ticker):
     )
     user_asset.note = note
     await user_asset.asave(update_fields=["note"])
+
+    await _clear_revision_caches(request.user.id, ticker)
 
     return JsonResponse({"ok": True})
 
@@ -1802,7 +1953,6 @@ async def sign_out(request):
     return redirect("core:home")
 
 
-@login_required
 async def profile(request):
     profile_saved = False
     password_changed = False

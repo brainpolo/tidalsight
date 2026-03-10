@@ -23,6 +23,7 @@ from analyst.app_behaviour import (
 )
 from analyst.grounding import agent_grounding, compute_label
 from analyst.managers.revision_manager import revise_assessment
+from analyst.utils import asset_label
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -72,10 +73,7 @@ def _is_cache_valid(existing: dict, fingerprint: str) -> bool:
 
 def _build_prompt(asset: Asset) -> str:
     """Build prompt with company info (no user context). Agent does its own research."""
-    return (
-        f"Assess the product flywheel and competitive moat for "
-        f"{asset.ticker} ({asset.name})."
-    )
+    return f"Assess the product flywheel and competitive moat for {asset_label(asset)}."
 
 
 def _run_agent(prompt: str) -> ProductAssessment:

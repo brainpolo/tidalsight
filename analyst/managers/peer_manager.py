@@ -9,6 +9,7 @@ from analyst.agents.peer_discovery import PeerDiscovery, peer_discovery_agent
 from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import MAX_AGENT_TURNS, PEER_SYNC_LOCK_TTL, PEER_TARGET_COUNT
 from analyst.grounding import agent_grounding
+from analyst.utils import asset_label
 from scraper.managers.asset_manager import get_or_create_asset
 from scraper.models import Asset
 
@@ -27,7 +28,7 @@ def sync_peers(asset: Asset) -> list[Asset]:
     try:
         prompt = (
             f"Return {PEER_TARGET_COUNT} direct competitor/peer stock tickers for "
-            f"{asset.ticker} ({asset.name}, {asset.get_asset_class_display()})."
+            f"{asset_label(asset)}."
         )
 
         config = RunConfig(

@@ -8,6 +8,7 @@ from analyst.agents.provider import get_model_provider
 from analyst.agents.revision_agent import REVISION_AGENTS
 from analyst.app_behaviour import MAX_AGENT_TURNS
 from analyst.grounding import agent_grounding, compute_label
+from analyst.utils import asset_label
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ def _build_revision_prompt(
 
     lines = [
         f"# Revision Request: {section_name.replace('_', ' ').title()}",
-        f"**Asset**: {asset.ticker} ({asset.name})\n",
+        f"**Asset**: {asset_label(asset)}\n",
         f"## Base Assessment\n```json\n{json.dumps(base_clean, indent=2)}\n```\n",
     ]
     if user_note:

@@ -31,7 +31,7 @@ def _store_article(article_data: dict, matched_assets: list[Asset]) -> bool:
             "description": article_data.get("description", ""),
             "source": article_data.get("source", ""),
             "thumbnail": article_data.get("thumbnail", ""),
-            "published_at": article_data.get("published_at"),
+            "posted_at": article_data.get("posted_at"),
         },
     )
 

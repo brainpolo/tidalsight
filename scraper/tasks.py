@@ -12,6 +12,7 @@ from scraper.managers.asset_manager import (
     sync_all_prices,
     sync_full_prices,
     sync_fundamentals,
+    sync_quick_prices,
 )
 from scraper.managers.brave_news_manager import sync_asset_news, sync_news
 from scraper.managers.hn_manager import sync_hn_posts
@@ -47,6 +48,23 @@ def fetch_news():
     count = sync_news()
     logger.info("fetch_news: %d new articles", count)
     return count
+
+
+@shared_task(ignore_result=True)
+def sync_new_asset_prices(asset_id: int):
+    """Bootstrap prices for a brand-new asset (quick 1W then full backfill)."""
+    asset = Asset.objects.get(id=asset_id)
+    sync_quick_prices(asset, asset.ticker)
+    sync_full_prices(asset, asset.ticker)
+    logger.info("sync_new_asset_prices: done for %s", asset.ticker)
+
+
+@shared_task(ignore_result=True)
+def refresh_asset_prices(asset_id: int):
+    """Refresh hourly + daily prices for an existing asset (staleness-guarded)."""
+    asset = Asset.objects.get(id=asset_id)
+    sync_all_prices(asset.ticker)
+    logger.info("refresh_asset_prices: done for %s", asset.ticker)
 
 
 @shared_task
@@ -151,6 +169,13 @@ def sync_traditional_prices():
         "sync_traditional_prices: %d new rows across %d assets", total, len(tickers)
     )
     return total
+
+
+@shared_task(ignore_result=True)
+def fetch_fundamentals_for_asset(asset_id: int):
+    """Sync fundamentals for a single asset (on-demand from views)."""
+    asset = Asset.objects.get(id=asset_id)
+    sync_fundamentals(asset.ticker)
 
 
 @shared_task

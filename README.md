@@ -9,11 +9,13 @@ A real-time market intelligence platform that combines financial data, community
 - **AI market digest** — A global market brief synthesised from the latest community posts across all sources, regenerated hourly with the same source-fingerprint optimisation.
 - **Infinite-scroll daily prices** — Cursor-based pagination streams the full price history as the user scrolls, with positive-day statistics computed across 30d/90d/1y/5y/all-time windows.
 - **Interactive price chart** — Canvas-rendered chart with range switching (1D–ALL), RSI gauge, price target overlay, click-to-measure, and PNG export.
-- **[AI report card](REPORT_CARD.md)** — Holistic buy/sell/hold assessment across 6 dimensions (Financial Health, Sentiment, External Risk, Valuation, Product Flywheel, Leadership) scored out of 5, synthesised into an overall verdict with a 12-month price target. Built on Herzberg's Two-Factor Theory separating hygiene factors from motivators.
+- **[AI report card](REPORT_CARD.md)** — Holistic buy/sell/hold assessment across up to 6 dimensions (Financial Health, Sentiment, External Risk, Valuation, Product Flywheel, Leadership) scored out of 5, synthesised into an overall verdict with a 12-month price target. Built on Herzberg's Two-Factor Theory separating hygiene factors from motivators. Equities use all 6; crypto, commodities, and currencies use 4 (scores scaled to the same 0–30 range).
 - **Personalisation** — Watchlists, price targets, and private notes per asset that feed into AI-generated analysis.
 - **Zero-config data pipeline** — Celery Beat continuously ingests prices, fundamentals, Reddit, Hacker News, and news. New assets get quick-synced on first visit, then backfilled in the background.
 
 ## Architecture
+
+Tidalsight follows a **hypermedia-driven thin-client** architecture. The frontend is a pure rendering surface — no client-side state, no SPA framework, no JSON serialization layer. Django renders HTML partials, HTMX swaps them into the page, and Celery workers handle all heavy processing in the background. The browser is a dumb terminal; the server owns every decision.
 
 Three Django apps, each with a single responsibility:
 

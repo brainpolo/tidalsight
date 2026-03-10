@@ -90,16 +90,16 @@ def news_search(
 
     results = []
     for item in data.get("results", []):
-        published_at = None
+        posted_at = None
         meta_url = item.get("meta_url", {})
         # Brave provides page_age as ISO 8601 datetime, age is human-readable ("2 hours ago")
         for date_field in ("page_age", "age"):
             raw = item.get(date_field)
             if raw:
                 try:
-                    published_at = datetime.fromisoformat(raw)
-                    if published_at.tzinfo is None:
-                        published_at = published_at.replace(tzinfo=UTC)
+                    posted_at = datetime.fromisoformat(raw)
+                    if posted_at.tzinfo is None:
+                        posted_at = posted_at.replace(tzinfo=UTC)
                     break
                 except ValueError, TypeError:
                     continue
@@ -112,7 +112,7 @@ def news_search(
                 "source": meta_url.get("hostname", "")
                 if isinstance(meta_url, dict)
                 else "",
-                "published_at": published_at,
+                "posted_at": posted_at,
                 "thumbnail": item.get("thumbnail", {}).get("src", "")
                 if isinstance(item.get("thumbnail"), dict)
                 else "",

@@ -26,6 +26,11 @@
     .rc-view-btn { color: var(--ts-t4); cursor: pointer; border: none; }
     .rc-view-btn:hover { color: var(--ts-t2); }
     .rc-view-btn.active { color: var(--ts-t1); background: color-mix(in srgb, var(--ts-surface) 8%, transparent); }
+
+    /* Fixed asset banner */
+    .asset-banner { pointer-events: none; }
+    .asset-banner.visible { pointer-events: auto; }
+    .asset-banner.visible .banner-bar { opacity: 1; transform: translateY(0); }
 </style>
 {% endblock %}
 
@@ -35,6 +40,25 @@
 <div class="min-h-screen">
     {% include "core/components/header.html" with show_search=True %}
 
+    <!-- Fixed asset context banner -->
+    <div id="assetBanner" class="asset-banner fixed top-[calc(1.75rem+53px)] sm:top-[calc(2rem+57px)] left-0 right-0 z-30">
+        <div class="max-w-[1120px] mx-auto px-4 sm:px-10 xl:pr-[calc(240px+2rem+2.5rem)]">
+            <div class="banner-bar py-2 sm:py-2.5 flex items-center justify-center gap-2 sm:gap-3 bg-page/90 backdrop-blur-md border-b border-surface/[0.06] opacity-0 -translate-y-2 transition-all duration-200 ease-out">
+                {% if asset.website %}
+                <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz=32"
+                     alt="" class="size-4 sm:size-5 rounded-sm shrink-0" loading="lazy">
+                {% endif %}
+                <span class="font-serif text-[0.8rem] sm:text-[0.9rem] text-t1 truncate">{{ asset.name }}</span>
+                <span class="text-[0.5rem] font-semibold tracking-[0.1em] uppercase text-t4 shrink-0 hidden sm:inline">{{ asset.ticker }}</span>
+                {% include "core/components/verdict_badge.html" with verdict=verdict size="sm" %}
+                <span class="text-surface/[0.12] hidden sm:inline">&middot;</span>
+                <canvas id="bannerSparkline" width="48" height="18" class="opacity-50 hidden sm:block shrink-0"></canvas>
+                <span id="bannerPrice" class="text-[0.7rem] sm:text-[0.8rem] font-medium tabular-nums text-heading shrink-0"></span>
+                <span id="bannerChange" class="text-[0.5rem] sm:text-[0.55rem] font-semibold tabular-nums px-1 sm:px-1.5 py-0.5 rounded-sm shrink-0"></span>
+            </div>
+        </div>
+    </div>
+
     <!-- Asset Header + Chart -->
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="pt-4 sm:pt-6 pb-4 sm:pb-6">
@@ -42,7 +66,7 @@
                 <!-- Left: Asset info -->
                 <div class="shrink-0 w-full lg:min-w-[300px] lg:max-w-[420px] lg:w-auto">
                     <!-- Identity row -->
-                    <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
+                    <div id="assetIdentity" class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
                         {% if asset.website %}
                         <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz={{ favicon_size }}"
                              alt="" class="size-7 sm:size-8 rounded-md self-start mt-0.5" loading="lazy">
@@ -106,67 +130,10 @@
                             </svg>
                         </button>
                     </div>
-                    <div class="h-[200px] relative">
+                    <div class="h-[220px] sm:h-[250px] relative">
                         <canvas id="priceChart" class="hidden"></canvas>
                         {% include "core/components/chart_skeleton.html" %}
                     </div>
-                    <!-- Price Target -->
-                    {% if request.user.is_authenticated %}
-                    <div class="mt-3 flex items-center gap-2">
-                        <label for="priceTargetInput" class="text-[0.6rem] font-semibold tracking-[0.1em] uppercase text-t3 shrink-0">Target</label>
-                        <div class="relative flex items-center">
-                            <span class="absolute left-2 text-[0.7rem] text-t3 pointer-events-none">$</span>
-                            <input id="priceTargetInput" type="number" step="0.01" min="0"
-                                   value="{% if price_target %}{{ price_target }}{% endif %}"
-                                   placeholder="—"
-                                   class="w-[100px] pl-5 pr-2 py-1 text-[0.7rem] tabular-nums bg-surface/[0.03] border border-surface/[0.06] rounded-sm text-heading placeholder-t4 focus:outline-none focus:border-copper/30 transition-colors">
-                        </div>
-                        <button id="priceTargetSave" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors">Set</button>
-                        {% if price_target %}<button id="priceTargetClear" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2 py-1 rounded-sm bg-surface/[0.03] text-t3 hover:text-t2 transition-colors">Clear</button>{% endif %}
-                    </div>
-                    <script>
-                    (function() {
-                        const url = '{% url "core:set_price_target" asset.ticker %}';
-                        const csrf = '{{ csrf_token }}';
-                        const input = document.getElementById('priceTargetInput');
-                        const saveBtn = document.getElementById('priceTargetSave');
-                        const clearBtn = document.getElementById('priceTargetClear');
-
-                        function send(val) {
-                            const body = new URLSearchParams();
-                            body.set('price_target', val);
-                            body.set('csrfmiddlewaretoken', csrf);
-                            return fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                                .then(r => r.json());
-                        }
-
-                        saveBtn.addEventListener('click', () => {
-                            const v = input.value.trim();
-                            if (!v || parseFloat(v) <= 0) return;
-                            send(v).then(d => {
-                                window.chartPriceTarget = d.price_target;
-                                document.body.dispatchEvent(new CustomEvent('price-target-changed'));
-                                if (!clearBtn) location.reload();
-                            });
-                        });
-
-                        input.addEventListener('keydown', (e) => {
-                            if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); }
-                        });
-
-                        if (clearBtn) {
-                            clearBtn.addEventListener('click', () => {
-                                send('').then(() => {
-                                    input.value = '';
-                                    window.chartPriceTarget = null;
-                                    document.body.dispatchEvent(new CustomEvent('price-target-changed'));
-                                    clearBtn.remove();
-                                });
-                            });
-                        }
-                    })();
-                    </script>
-                    {% endif %}
                     <!-- RSI Gauge -->
                     <div id="rsiGauge" class="hidden mt-4">
                         <div class="flex items-center gap-1.5 mb-2.5">
@@ -197,6 +164,7 @@
                         const surfaceColor = tv('--ts-surface');
 
                         function surfMix(pct) { return 'color-mix(in srgb, ' + surfaceColor + ' ' + pct + '%, transparent)'; }
+                        function fmtPrice(v) { return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
                         function parseData(raw) {
                             return raw.map(d => {
@@ -345,7 +313,7 @@
                                 const yy = yPos(val);
                                 ctx.beginPath(); ctx.moveTo(pad.left, yy); ctx.lineTo(w - pad.right, yy); ctx.stroke();
                                 ctx.fillStyle = axisColor; ctx.font = '9px Inter, sans-serif'; ctx.textAlign = 'right';
-                                ctx.fillText('$' + val.toFixed(2), pad.left - 6, yy + 3);
+                                ctx.fillText(fmtPrice(val), pad.left - 6, yy + 3);
                             }
                             const labelCount = Math.min(6, prices.length);
                             ctx.fillStyle = axisColor; ctx.font = '9px Inter, sans-serif';
@@ -375,7 +343,7 @@
                                 ctx.beginPath(); ctx.moveTo(pad.left, ty); ctx.lineTo(w - pad.right, ty);
                                 ctx.strokeStyle = '#c87941'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
                                 ctx.fillStyle = pageBg; ctx.font = '600 9px Inter, sans-serif'; ctx.textAlign = 'right';
-                                const label = 'Target $' + window.chartPriceTarget.toFixed(2);
+                                const label = 'Target ' + fmtPrice(window.chartPriceTarget);
                                 const lw = ctx.measureText(label).width + 8;
                                 ctx.fillRect(w - pad.right - lw - 2, ty - 8, lw + 4, 16);
                                 ctx.fillStyle = '#c87941';
@@ -436,7 +404,7 @@
                             const sign = delta >= 0 ? '+' : '';
                             const dateLabel = smartDateLabel(startIdx, endIdx);
                             const midX = (xPos(startIdx) + xPos(endIdx)) / 2;
-                            const deltaText = sign + '$' + delta.toFixed(2) + '  (' + sign + deltaPct + '%)';
+                            const deltaText = sign + fmtPrice(Math.abs(delta)) + '  (' + sign + deltaPct + '%)';
                             ctx.font = '600 9px Inter, sans-serif';
                             const deltaW = ctx.measureText(deltaText).width;
                             ctx.font = '500 8px Inter, sans-serif';
@@ -496,7 +464,7 @@
                             drawVerticalLine(px, surfMix(12), [3, 3]);
                             const dotColor = periodUp ? '#22c55e' : '#ef4444';
                             drawDot(px, py, dotColor, periodUp ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)');
-                            drawTooltip('$' + prices[idx].toFixed(2) + '  \u00b7  ' + labels[idx], px, pad.top);
+                            drawTooltip(fmtPrice(prices[idx]) + '  \u00b7  ' + labels[idx], px, pad.top);
                             canvas.style.cursor = 'crosshair';
                         }
 
@@ -552,6 +520,22 @@
                             canvas.style.cursor = 'default';
                         });
 
+                        // Touch support for mobile chart interaction
+                        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+                        canvas.addEventListener('touchmove', (e) => {
+                            e.preventDefault();
+                            if (rafPending) return; rafPending = true;
+                            const touch = e.touches[0];
+                            requestAnimationFrame(() => {
+                                const r = canvas.getBoundingClientRect();
+                                drawChart(); drawCrosshair(touch.clientX - r.left, touch.clientY - r.top); rafPending = false;
+                            });
+                        }, { passive: false });
+                        canvas.addEventListener('touchend', (e) => {
+                            drawChart(); drawAllMeasurements();
+                            canvas.style.cursor = 'default';
+                        });
+
                         document.getElementById('downloadChart').addEventListener('click', () => {
                             drawChart(); drawAllMeasurements();
                             const link = document.createElement('a');
@@ -583,7 +567,7 @@
     </div>
     {% endif %}
 
-    <div class="divider"></div>
+    <div id="mainDivider" class="divider"></div>
 
     <!-- Main content + sticky notes sidebar -->
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
@@ -604,14 +588,46 @@
                       placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
                       class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
             <div class="flex items-center justify-between mt-2">
-                <span class="text-[0.45rem] text-t4">Influences Valuation, Flywheel &amp; People scores</span>
+                <span class="text-[0.45rem] text-t4">Influences Valuation{% if asset.asset_class == "equity" %}, Product &amp; People{% else %} &amp; Product{% endif %} scores</span>
                 <button id="noteSaveBtnMobile" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>
             </div>
+            <div class="mt-3 pt-3 border-t border-surface/[0.04] flex items-center gap-2">
+                <label class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3 shrink-0">Target</label>
+                <div class="relative flex items-center flex-1">
+                    <span class="absolute left-2 text-[0.65rem] text-t3 pointer-events-none">$</span>
+                    <input id="priceTargetInputMobile" type="number" step="0.01" min="0"
+                           value="{% if price_target %}{{ price_target }}{% endif %}"
+                           placeholder="—"
+                           class="w-full pl-5 pr-2 py-1.5 text-[0.65rem] tabular-nums bg-surface/[0.03] border border-surface/[0.06] rounded-sm text-heading placeholder-t4 focus:outline-none focus:border-copper/30 transition-colors">
+                </div>
+                <button id="priceTargetSaveMobile" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2 py-1.5 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0">Set</button>
+                {% if price_target %}<button id="priceTargetClearMobile" class="text-[0.55rem] text-t4 hover:text-t2 transition-colors shrink-0">&times;</button>{% endif %}
+            </div>
+            {% if user_has_notes %}
+            <div class="mt-3 pt-3 border-t border-surface/[0.04]">
+                <label class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3 mb-2 block">Analysis View</label>
+                <div class="flex items-center gap-0.5 bg-surface/[0.04] rounded-sm p-0.5">
+                    <button type="button"
+                            class="rc-view-btn flex-1 text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1.5 rounded-sm transition-all active"
+                            data-view=""
+                            onclick="switchReportView(this, '')">
+                        Personal
+                    </button>
+                    <button type="button"
+                            class="rc-view-btn flex-1 text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1.5 rounded-sm transition-all"
+                            data-view="base"
+                            onclick="switchReportView(this, 'base')">
+                        Base
+                    </button>
+                </div>
+                <span class="text-[0.45rem] text-t4 mt-1.5 block">Toggle between your personalised analysis and the base market view</span>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 
         <!-- Main content column -->
-        <div class="min-w-0 flex-1 w-full overflow-hidden">
+        <div class="min-w-0 flex-1 w-full overflow-x-clip">
 
     <!-- Report Card -->
         <section class="py-6 sm:py-10">
@@ -621,7 +637,7 @@
             </div>
 
             <div id="rc-processing-banner"
-                 class="flex items-center gap-2 px-4 py-2.5 mb-5 rounded-sm border border-surface/[0.06] bg-surface/[0.02]">
+                 class="flex items-center gap-2 px-4 py-2.5 mb-5 rounded-sm border border-surface/[0.06] bg-surface/[0.02] transition-all duration-500 ease-out">
                 <div class="size-1.5 rounded-full bg-copper/60 animate-pulse"></div>
                 <span class="text-[0.6rem] text-t3">Analysis in progress — scores will appear as they complete</span>
             </div>
@@ -633,14 +649,16 @@
                     <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3">Hygiene Factors</span>
                     <span class="text-[0.5rem] text-t4/60 italic">governed by external factors and public information (what the data shows)</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-surface/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
+                <div class="grid grid-cols-1 sm:grid-cols-2 {% if asset.asset_class == 'equity' %}lg:grid-cols-3{% endif %} gap-px bg-surface/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 
-                <!-- 1. Finance (HTMX partial) -->
+                {% if asset.asset_class == "equity" %}
+                <!-- 1. Finance (HTMX partial, equity only) -->
                 <div hx-get="{% url 'core:report_card_finance' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
                     {% include "core/partials/report_card_finance.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
+                {% endif %}
 
                 <!-- 2. Sentiment (HTMX partial) -->
                 <div hx-get="{% url 'core:report_card_sentiment' asset.ticker %}"
@@ -665,24 +683,8 @@
                     <i data-lucide="flame" class="size-3.5 text-copper/70"></i>
                     <span class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-copper/80">Motivators</span>
                     <span class="text-[0.5rem] text-t4/60 italic">governed by internal factors (where your thesis lives) — your notes contribute to a more refined analysis</span>
-                    {% if user_has_notes %}
-                    <div class="ml-auto flex items-center gap-0.5 bg-surface/[0.04] rounded-sm p-0.5" id="rc-view-toggle">
-                        <button type="button"
-                                class="rc-view-btn text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1 rounded-sm transition-all active"
-                                data-view=""
-                                onclick="switchReportView(this, '')">
-                            Personal
-                        </button>
-                        <button type="button"
-                                class="rc-view-btn text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1 rounded-sm transition-all"
-                                data-view="base"
-                                onclick="switchReportView(this, 'base')">
-                            Base
-                        </button>
-                    </div>
-                    {% endif %}
                 </div>
-                <div id="rc-motivators" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-copper/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
+                <div id="rc-motivators" class="grid grid-cols-1 sm:grid-cols-2 {% if asset.asset_class == 'equity' %}lg:grid-cols-3{% endif %} gap-px bg-copper/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 
                 <!-- 4. Valuation / Fair Value -->
                 <div hx-get="{% url 'core:report_card_valuation' asset.ticker %}"
@@ -698,22 +700,19 @@
                     {% include "core/partials/report_card_product.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
-                <!-- 6. People -->
+                {% if asset.asset_class == "equity" %}
+                <!-- 6. People (equity only) -->
                 <div hx-get="{% url 'core:report_card_people' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
                     {% include "core/partials/report_card_people.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
+                {% endif %}
                 </div>
             </div>
 
             <!-- Overall Assessment (HTMX partial) -->
-            <div id="rc-overall-wrap"
-                 hx-get="{% url 'core:report_card_overall' asset.ticker %}"
-                 hx-trigger="load, section-scored from:body delay:2s"
-                 hx-swap="outerHTML">
-                {% include "core/partials/report_card_overall.html" with waiting=True ticker=asset.ticker scored_count=0 %}
-            </div>
+            {% include "core/partials/report_card_overall.html" with waiting=True ticker=asset.ticker scored_count=0 expected_count=expected_section_count %}
 
             <p class="text-[0.55rem] text-t4 mt-3">Scores are generated from financial data, AI analysis, and community signals.{% if request.user.is_authenticated %} Your notes help personalise this assessment.{% endif %}</p>
         </section>
@@ -781,13 +780,48 @@
                     </div>
                     <div id="noteSaveStatus" class="text-[0.5rem] text-t4 transition-opacity"></div>
                 </div>
-                <textarea id="userNote" rows="9"
+                <textarea id="userNote" rows="4"
                           placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
                           class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
                 <div class="flex items-center justify-between mt-2">
-                    <span class="text-[0.45rem] text-t4 leading-tight">Influences Valuation, Flywheel &amp; People scores</span>
+                    <span class="text-[0.45rem] text-t4 leading-tight">Influences Valuation{% if asset.asset_class == "equity" %}, Product &amp; People{% else %} &amp; Product{% endif %} scores<br><kbd class="opacity-50">⌘ Enter</kbd> to save</span>
                     <button id="noteSaveBtn" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>
                 </div>
+                <div class="mt-3">
+                    <label class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3 mb-2 block">Price Target</label>
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex items-center flex-1">
+                            <span class="absolute left-2 text-[0.65rem] text-t3 pointer-events-none">$</span>
+                            <input id="priceTargetInput" type="number" step="0.01" min="0"
+                                   value="{% if price_target %}{{ price_target }}{% endif %}"
+                                   placeholder="—"
+                                   class="w-full pl-5 pr-2 py-1.5 text-[0.65rem] tabular-nums bg-surface/[0.03] border border-surface/[0.06] rounded-sm text-heading placeholder-t4 focus:outline-none focus:border-copper/30 transition-colors">
+                        </div>
+                        <button id="priceTargetSave" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2 py-1.5 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0">Set</button>
+                        {% if price_target %}<button id="priceTargetClear" class="text-[0.55rem] tracking-[0.08em] uppercase px-1.5 py-1.5 rounded-sm text-t4 hover:text-t2 transition-colors shrink-0">&times;</button>{% endif %}
+                    </div>
+                    <span class="text-[0.45rem] text-t4 mt-1.5 block">Shown as dashed line on chart</span>
+                </div>
+                {% if user_has_notes %}
+                <div class="mt-3 pt-3 border-t border-surface/[0.04]">
+                    <label class="text-[0.55rem] font-semibold tracking-[0.12em] uppercase text-t3 mb-2 block">Analysis View</label>
+                    <div class="flex items-center gap-0.5 bg-surface/[0.04] rounded-sm p-0.5" id="rc-view-toggle">
+                        <button type="button"
+                                class="rc-view-btn flex-1 text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1.5 rounded-sm transition-all active"
+                                data-view=""
+                                onclick="switchReportView(this, '')">
+                            Personal
+                        </button>
+                        <button type="button"
+                                class="rc-view-btn flex-1 text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-2.5 py-1.5 rounded-sm transition-all"
+                                data-view="base"
+                                onclick="switchReportView(this, 'base')">
+                            Base
+                        </button>
+                    </div>
+                    <span class="text-[0.45rem] text-t4 mt-1.5 block">Toggle between your personalised analysis and the base market view</span>
+                </div>
+                {% endif %}
             </div>
         </div>
         <script>
@@ -847,6 +881,50 @@
             bindNote(mobile);
         })();
         </script>
+        <script>
+        (function() {
+            const url = '{% url "core:set_price_target" asset.ticker %}';
+            const csrf = '{{ csrf_token }}';
+            const inputs = [document.getElementById('priceTargetInput'), document.getElementById('priceTargetInputMobile')].filter(Boolean);
+            const saveBtns = [document.getElementById('priceTargetSave'), document.getElementById('priceTargetSaveMobile')].filter(Boolean);
+            const clearBtns = [document.getElementById('priceTargetClear'), document.getElementById('priceTargetClearMobile')].filter(Boolean);
+
+            // Keep inputs in sync
+            inputs.forEach(inp => inp.addEventListener('input', () => {
+                inputs.forEach(other => { if (other !== inp) other.value = inp.value; });
+            }));
+
+            function send(val) {
+                const body = new URLSearchParams();
+                body.set('price_target', val);
+                body.set('csrfmiddlewaretoken', csrf);
+                return fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(r => r.json());
+            }
+
+            saveBtns.forEach(btn => btn.addEventListener('click', () => {
+                const v = (inputs[0] || inputs[1]).value.trim();
+                if (!v || parseFloat(v) <= 0) return;
+                send(v).then(d => {
+                    window.chartPriceTarget = d.price_target;
+                    document.body.dispatchEvent(new CustomEvent('price-target-changed'));
+                    if (!clearBtns.length) location.reload();
+                });
+            }));
+
+            inputs.forEach(inp => inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); saveBtns[0].click(); }
+            }));
+
+            clearBtns.forEach(btn => btn.addEventListener('click', () => {
+                send('').then(() => {
+                    inputs.forEach(inp => inp.value = '');
+                    window.chartPriceTarget = null;
+                    document.body.dispatchEvent(new CustomEvent('price-target-changed'));
+                    clearBtns.forEach(b => b.remove());
+                });
+            }));
+        })();
+        </script>
         {% endif %}
 
         </div><!-- /flex -->
@@ -857,20 +935,20 @@
 <script>
 (function() {
     var scored = 0;
+    var expected = {{ expected_section_count }};
     document.body.addEventListener('section-scored', function() {
         scored++;
-        if (scored >= 6) {
+        if (scored >= expected) {
             var b = document.getElementById('rc-processing-banner');
-            if (b) b.style.display = 'none';
+            if (b) { b.style.opacity = '0'; b.style.marginBottom = '0'; b.style.padding = '0'; b.style.maxHeight = '0'; b.style.borderColor = 'transparent'; }
         }
     });
     // Also hide if all sections already scored on page load (cached)
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
-            if (document.querySelectorAll('[data-section]').length >= 6) {
+            if (document.querySelectorAll('[data-section]').length >= expected) {
                 var b = document.getElementById('rc-processing-banner');
-                if (b) b.style.display = 'none';
-            }
+                if (b) { b.style.opacity = '0'; b.style.marginBottom = '0'; b.style.padding = '0'; b.style.maxHeight = '0'; b.style.borderColor = 'transparent'; }
         }, 2000);
     });
 })();
@@ -879,9 +957,10 @@
 {% if user_has_notes %}
 <script>
 function switchReportView(btn, view) {
-    // Update toggle button states
-    document.querySelectorAll('.rc-view-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    // Sync all toggle buttons (mobile + desktop)
+    document.querySelectorAll('.rc-view-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === (view || ''));
+    });
 
     const qs = view ? '?view=' + view : '';
     const ticker = '{{ asset.ticker }}';
@@ -890,7 +969,9 @@ function switchReportView(btn, view) {
     const sections = [
         {url: '{% url "core:report_card_valuation" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(1)'},
         {url: '{% url "core:report_card_product" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(2)'},
+        {% if asset.asset_class == "equity" %}
         {url: '{% url "core:report_card_people" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(3)'},
+        {% endif %}
     ];
 
     sections.forEach(function(s) {
@@ -917,4 +998,64 @@ function switchReportView(btn, view) {
 }
 </script>
 {% endif %}
+
+<script>
+(function() {
+    const banner = document.getElementById('assetBanner');
+    const divider = document.getElementById('mainDivider');
+    if (!banner || !divider) return;
+
+    // Show banner only after user scrolls past the main divider (below chart/peers)
+    const obs = new IntersectionObserver(function(entries) {
+        banner.classList.toggle('visible', !entries[0].isIntersecting);
+    }, { threshold: 0, rootMargin: '0px 0px 0px 0px' });
+    obs.observe(divider);
+
+    // Draw sparkline from chart data
+    const sparkCanvas = document.getElementById('bannerSparkline');
+    const priceEl = document.getElementById('bannerPrice');
+    const changeEl = document.getElementById('bannerChange');
+    const data = {{ chart_data_json|safe }};
+    if (!data.length || !sparkCanvas) return;
+
+    const prices = data.map(function(d) { return d.close; });
+    const latest = prices[prices.length - 1];
+    const first = prices[0];
+    const change = ((latest - first) / first * 100).toFixed(2);
+    const isUp = latest >= first;
+
+    // Price display
+    if (priceEl) priceEl.textContent = '$' + latest.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (changeEl) {
+        changeEl.textContent = (isUp ? '▲ ' : '▼ ') + Math.abs(change) + '%';
+        changeEl.className = 'text-[0.55rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm ' +
+            (isUp ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500');
+    }
+
+    // Sparkline
+    const ctx = sparkCanvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = 48, h = 18;
+    sparkCanvas.width = w * dpr;
+    sparkCanvas.height = h * dpr;
+    sparkCanvas.style.width = w + 'px';
+    sparkCanvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const min = Math.min.apply(null, prices);
+    const max = Math.max.apply(null, prices);
+    const range = max - min || 1;
+    const step = w / (prices.length - 1);
+
+    ctx.beginPath();
+    prices.forEach(function(p, i) {
+        var x = i * step;
+        var y = h - 2 - ((p - min) / range) * (h - 4);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = isUp ? '#22c55e' : '#ef4444';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+})();
+</script>
 {% endblock %}

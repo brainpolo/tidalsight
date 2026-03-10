@@ -8,10 +8,12 @@ from analyst.managers.finance_manager import get_finance
 from analyst.managers.overall_assessment_manager import get_overall_assessment
 from analyst.managers.peer_manager import sync_peers
 from analyst.managers.people_manager import get_people
+from analyst.managers.personal_outlook_manager import get_personal_outlook
 from analyst.managers.product_manager import get_product
 from analyst.managers.risk_manager import get_risk
 from analyst.managers.sentiment_manager import get_sentiment
 from analyst.managers.valuation_manager import get_valuation
+from core.models import UserAsset
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -38,9 +40,23 @@ def generate_market_digest():
     digest = get_market_digest()
     if digest:
         logger.info("Task generate_market_digest: digest refreshed")
+        # Trigger personal outlook refresh for all users with watchlists
+        user_ids = (
+            UserAsset.objects.filter(in_watchlist=True)
+            .values_list("user_id", flat=True)
+            .distinct()
+        )
+        for uid in user_ids:
+            generate_personal_outlook.delay(uid)
     else:
         logger.warning("Task generate_market_digest: no digest generated")
     return bool(digest)
+
+
+@shared_task(ignore_result=True)
+def generate_personal_outlook(user_id: int) -> None:
+    logger.info("Task generate_personal_outlook started for user %s", user_id)
+    get_personal_outlook(user_id)
 
 
 # ── Report card section tasks ────────────────────────────────────────

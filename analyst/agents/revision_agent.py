@@ -6,8 +6,10 @@ from analyst.agents.valuation_agent import ValuationAssessment
 from analyst.llms import BYTEDANCE_SEED_2_0_MINI
 
 REVISION_INSTRUCTIONS = (
-    "You are a senior equity analyst revising a base assessment based on "
-    "an investor's private notes and/or price target.\n\n"
+    "You are a senior analyst revising a base assessment based on "
+    "an investor's private notes and/or price target. The asset could be "
+    "an equity, cryptocurrency, commodity, or currency — the asset class "
+    "is stated in the prompt.\n\n"
     "You will receive:\n"
     "1. The section type (valuation, product, or people)\n"
     "2. The base assessment JSON (score, label, brief, and section-specific lists)\n"

@@ -7,10 +7,10 @@
     {% if price_change != None %}
     <div class="flex items-baseline gap-2">
         <span class="text-[0.75rem] font-semibold tabular-nums {% if price_change >= 0 %}text-green-500{% else %}text-red-500{% endif %}">
-            {% if price_change >= 0 %}+{% endif %}{{ price_change|floatformat:2 }}
+            {% if price_change >= 0 %}▲{% else %}▼{% endif %} {{ price_change|floatformat:2 }}
         </span>
         <span class="text-[0.7rem] tabular-nums {% if price_change >= 0 %}text-green-500/60{% else %}text-red-500/60{% endif %}">
-            ({% if price_change_pct >= 0 %}+{% endif %}{{ price_change_pct|floatformat:2 }}%)
+            ({{ price_change_pct|floatformat:2 }}%)
         </span>
     </div>
     {% endif %}

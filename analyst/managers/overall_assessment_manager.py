@@ -20,6 +20,7 @@ from analyst.app_behaviour import (
     cache_key,
 )
 from analyst.grounding import agent_grounding
+from analyst.utils import asset_label
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -27,11 +28,28 @@ logger = logging.getLogger(__name__)
 # Fields excluded from fingerprint to avoid self-referential invalidation
 _META_FIELDS = {"source_hash", "generated_at", "is_revised"}
 
-# Hygiene factors are weighted 1.5x, motivators 1.0x -> max 30
-HYGIENE_SECTIONS = ("finance", "sentiment", "risk")
-MOTIVATOR_SECTIONS = ("valuation", "product", "people")
+# Hygiene factors are weighted 1.5x, motivators 1.0x -> scaled to 30
 HYGIENE_WEIGHT = 1.5
 MOTIVATOR_WEIGHT = 1.0
+SCORE_SCALE = 30.0
+
+_EQUITY_HYGIENE = ("finance", "sentiment", "risk")
+_EQUITY_MOTIVATORS = ("valuation", "product", "people")
+_NON_EQUITY_HYGIENE = ("sentiment", "risk")
+_NON_EQUITY_MOTIVATORS = ("valuation", "product")
+
+
+def sections_for_asset(asset_class: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Return (hygiene, motivators) section keys for the given asset class."""
+    if asset_class == "equity":
+        return _EQUITY_HYGIENE, _EQUITY_MOTIVATORS
+    return _NON_EQUITY_HYGIENE, _NON_EQUITY_MOTIVATORS
+
+
+def expected_section_count(asset_class: str) -> int:
+    hygiene, motivators = sections_for_asset(asset_class)
+    return len(hygiene) + len(motivators)
+
 
 # Deterministic verdict ranges (weighted total out of 30)
 _VERDICT_RANGES = [
@@ -43,17 +61,23 @@ _VERDICT_RANGES = [
 ]
 
 
-def compute_weighted_score(sections: dict[str, dict]) -> float:
-    """Compute weighted total: hygiene x 1.5, motivators x 1.0."""
-    total = 0.0
-    for key in HYGIENE_SECTIONS:
-        total += sections.get(key, {}).get("score", 0) * HYGIENE_WEIGHT
-    for key in MOTIVATOR_SECTIONS:
-        total += sections.get(key, {}).get("score", 0) * MOTIVATOR_WEIGHT
-    return round(total, 1)
+def compute_weighted_score(
+    sections: dict[str, dict], asset_class: str = "equity"
+) -> int:
+    """Compute weighted total: hygiene x 1.5, motivators x 1.0, scaled to 30."""
+    hygiene, motivators = sections_for_asset(asset_class)
+    raw: float = 0.0
+    for key in hygiene:
+        raw += sections.get(key, {}).get("score", 0) * HYGIENE_WEIGHT
+    for key in motivators:
+        raw += sections.get(key, {}).get("score", 0) * MOTIVATOR_WEIGHT
+    max_raw: float = (
+        len(hygiene) * 4 * HYGIENE_WEIGHT + len(motivators) * 4 * MOTIVATOR_WEIGHT
+    )
+    return round(raw * (SCORE_SCALE / max_raw))
 
 
-def compute_verdict(total_score: float) -> str:
+def compute_verdict(total_score: int) -> str:
     """Map a weighted total score (0-30) to a deterministic recommendation."""
     for threshold, label in _VERDICT_RANGES:
         if total_score <= threshold:
@@ -76,7 +100,7 @@ def _user_cache_keys(user_id: int, ticker: str) -> tuple[str, str]:
 
 
 def _source_fingerprint(sections: dict[str, dict]) -> str:
-    """Hash all 6 section results to detect any change."""
+    """Hash all section results to detect any change."""
     parts = []
     for name in sorted(sections):
         filtered = {k: v for k, v in sections[name].items() if k not in _META_FIELDS}
@@ -96,9 +120,20 @@ def _build_prompt(
     verdict: str,
     sections: dict[str, dict],
 ) -> str:
-    """Build structured markdown prompt from all 6 sections."""
+    """Build structured markdown prompt from all sections."""
+    hygiene_keys, motivator_keys = sections_for_asset(asset.asset_class)
+
+    section_labels = {
+        "finance": "Financial Health",
+        "sentiment": "Sentiment",
+        "risk": "External Risk",
+        "valuation": "Valuation",
+        "product": "Product Flywheel",
+        "people": "People",
+    }
+
     lines = [
-        f"# Overall Assessment for {asset.ticker} ({asset.name})\n",
+        f"# Overall Assessment for {asset_label(asset)}\n",
         f"**Current Price**: ${current_price:,.2f}",
         f"**Weighted Total Score**: {total_score} / 30",
         f"**Recommendation**: {verdict}\n",
@@ -107,13 +142,9 @@ def _build_prompt(
 
     # Hygiene Factors
     lines.append("## Hygiene Factors (necessary conditions, weighted 1.5×)\n")
-    for key, label in [
-        ("finance", "Financial Health"),
-        ("sentiment", "Sentiment"),
-        ("risk", "External Risk"),
-    ]:
+    for key in hygiene_keys:
         section = sections.get(key, {})
-        lines.append(f"### {label}")
+        lines.append(f"### {section_labels[key]}")
         lines.append(f"- **Score**: {section.get('score', 'N/A')} / 4")
         lines.append(f"- **Label**: {section.get('label', 'N/A')}")
         lines.append(f"- **Brief**: {section.get('brief', 'N/A')}")
@@ -125,13 +156,9 @@ def _build_prompt(
 
     # Motivators
     lines.append("## Motivators (sufficient conditions for alpha)\n")
-    for key, label in [
-        ("valuation", "Valuation"),
-        ("product", "Product Flywheel"),
-        ("people", "People"),
-    ]:
+    for key in motivator_keys:
         section = sections.get(key, {})
-        lines.append(f"### {label}")
+        lines.append(f"### {section_labels[key]}")
         lines.append(f"- **Score**: {section.get('score', 'N/A')} / 4")
         lines.append(f"- **Label**: {section.get('label', 'N/A')}")
         lines.append(f"- **Brief**: {section.get('brief', 'N/A')}")
@@ -188,7 +215,7 @@ def _generate_assessment(
         latest_price = asset.prices.first()
         current_price = float(latest_price.close) if latest_price else 0.0
 
-        total_score = compute_weighted_score(sections)
+        total_score = compute_weighted_score(sections, asset.asset_class)
         verdict = compute_verdict(total_score)
 
         prompt = _build_prompt(asset, current_price, total_score, verdict, sections)
@@ -197,7 +224,7 @@ def _generate_assessment(
         assessment = _run_agent(prompt)
         fingerprint = _source_fingerprint(sections)
         data = assessment.model_dump()
-        data["score"] = round(total_score)
+        data["score"] = total_score
         data["verdict"] = verdict
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
@@ -207,7 +234,7 @@ def _generate_assessment(
 
         if persist_to_db:
             Asset.objects.filter(pk=asset.pk).update(
-                report_card_score=round(total_score),
+                report_card_score=total_score,
                 target_price=assessment.target_price,
                 report_card_updated_at=timezone.now(),
             )
@@ -224,10 +251,12 @@ def get_base_overall_assessment(
     sections: dict[str, dict],
 ) -> dict | None:
     """Return base overall assessment (no user influence). Persists score to DB."""
-    if len(sections) < 6:
+    expected = expected_section_count(asset.asset_class)
+    if len(sections) < expected:
         logger.info(
-            "Only %d/6 sections for %s, skipping base overall",
+            "Only %d/%d sections for %s, skipping base overall",
             len(sections),
+            expected,
             asset.ticker,
         )
         return None
@@ -252,16 +281,20 @@ def get_overall_assessment(
     sections: dict[str, dict],
 ) -> dict | None:
     """Return overall assessment. Delegates to base if no sections are revised."""
-    if len(sections) < 6:
+    expected = expected_section_count(asset.asset_class)
+    if len(sections) < expected:
         logger.info(
-            "Only %d/6 sections for %s, skipping overall", len(sections), asset.ticker
+            "Only %d/%d sections for %s, skipping overall",
+            len(sections),
+            expected,
+            asset.ticker,
         )
         return None
 
     # Check if any motivator section has been revised by user notes
+    _, motivator_keys = sections_for_asset(asset.asset_class)
     has_revisions = any(
-        sections.get(key, {}).get("is_revised", False)
-        for key in ("valuation", "product", "people")
+        sections.get(key, {}).get("is_revised", False) for key in motivator_keys
     )
 
     if not has_revisions:

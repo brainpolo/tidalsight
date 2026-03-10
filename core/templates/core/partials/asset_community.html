@@ -1,53 +1,35 @@
-{% if reddit_posts or hn_posts or news_articles %}
+{% if mentions %}
     <section class="py-6 sm:py-10">
-        <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Mentioned In</div>
+        <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Recent Mentions</div>
         <div class="max-h-[420px] overflow-y-auto space-y-px sm:pr-2" style="scrollbar-width: thin; scrollbar-color: var(--ts-divider) transparent;">
-            {% for post in reddit_posts %}
-            <a href="{{ post.url }}" target="_blank" rel="noopener" class="block bg-surface/[0.02] hover:bg-surface/[0.04] transition-colors p-3.5 sm:p-5 rounded-sm group">
-                <div class="text-[0.8rem] sm:text-sm text-heading group-hover:text-copper-light transition-colors leading-snug line-clamp-2 sm:truncate">{{ post.title }}</div>
+            {% for m in mentions %}
+            <a href="{{ m.url }}" target="_blank" rel="noopener" class="block bg-surface/[0.02] hover:bg-surface/[0.04] transition-colors p-3.5 sm:p-5 rounded-sm group">
+                <div class="text-[0.8rem] sm:text-sm text-heading group-hover:text-copper-light transition-colors leading-snug line-clamp-2 sm:truncate">{{ m.title }}</div>
                 <div class="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[0.6rem] sm:text-[0.65rem] text-t3">
+                    {% if m.type == "reddit" %}
                     <span class="text-copper/60">Reddit</span>
                     <span class="hidden sm:inline">&middot;</span>
-                    <span class="hidden sm:inline">r/{{ post.subreddit }}</span>
-                    <span>&middot;</span>
-                    <span>{{ post.posted_at|timesince }} ago</span>
-                    <span class="hidden sm:inline">&middot;</span>
-                    <span class="hidden sm:inline">u/{{ post.author }}</span>
-                    <span class="ml-auto flex items-center gap-3 text-t4">
-                        <span title="Score">&#9650; {{ post.score }}</span>
-                        <span class="hidden sm:inline" title="Comments">{{ post.num_comments }} comments</span>
-                    </span>
-                </div>
-            </a>
-            {% endfor %}
-            {% for post in hn_posts %}
-            <a href="{{ post.url }}" target="_blank" rel="noopener" class="block bg-surface/[0.02] hover:bg-surface/[0.04] transition-colors p-3.5 sm:p-5 rounded-sm group">
-                <div class="text-[0.8rem] sm:text-sm text-heading group-hover:text-copper-light transition-colors leading-snug line-clamp-2 sm:truncate">{{ post.title }}</div>
-                <div class="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[0.6rem] sm:text-[0.65rem] text-t3">
+                    <span class="hidden sm:inline">r/{{ m.subreddit }}</span>
+                    {% elif m.type == "hn" %}
                     <span class="text-[#ff6600]/60">HN</span>
-                    <span>&middot;</span>
-                    <span>{{ post.posted_at|timesince }} ago</span>
-                    <span class="hidden sm:inline">&middot;</span>
-                    <span class="hidden sm:inline">{{ post.author }}</span>
-                    <span class="ml-auto flex items-center gap-3 text-t4">
-                        <span title="Score">&#9650; {{ post.score }}</span>
-                        <span class="hidden sm:inline" title="Comments">{{ post.num_comments }} comments</span>
-                    </span>
-                </div>
-            </a>
-            {% endfor %}
-            {% for article in news_articles %}
-            <a href="{{ article.url }}" target="_blank" rel="noopener" class="block bg-surface/[0.02] hover:bg-surface/[0.04] transition-colors p-3.5 sm:p-5 rounded-sm group">
-                <div class="text-[0.8rem] sm:text-sm text-heading group-hover:text-copper-light transition-colors leading-snug line-clamp-2 sm:truncate">{{ article.title }}</div>
-                <div class="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[0.6rem] sm:text-[0.65rem] text-t3">
+                    {% elif m.type == "news" %}
                     <span class="text-blue-400/60">News</span>
-                    {% if article.source %}
+                    {% if m.source %}
                     <span>&middot;</span>
-                    <span>{{ article.source }}</span>
+                    <span>{{ m.source }}</span>
                     {% endif %}
-                    {% if article.published_at %}
+                    {% endif %}
+                    {% if m.date %}
                     <span>&middot;</span>
-                    <span>{{ article.published_at|timesince }} ago</span>
+                    <span>{{ m.date|timesince }} ago</span>
+                    {% endif %}
+                    {% if m.type == "reddit" or m.type == "hn" %}
+                    <span class="hidden sm:inline">&middot;</span>
+                    <span class="hidden sm:inline">{{ m.author }}</span>
+                    <span class="ml-auto flex items-center gap-3 text-t4">
+                        <span title="Score">&#9650; {{ m.score }}</span>
+                        <span class="hidden sm:inline" title="Comments">{{ m.num_comments }} comments</span>
+                    </span>
                     {% endif %}
                 </div>
             </a>

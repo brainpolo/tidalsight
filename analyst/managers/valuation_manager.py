@@ -20,6 +20,7 @@ from analyst.app_behaviour import (
 )
 from analyst.grounding import agent_grounding, compute_label
 from analyst.managers.revision_manager import revise_assessment
+from analyst.utils import asset_label
 from core.managers.valuation_manager import compute_rsi, compute_valuations
 from core.templatetags.formatting import abbreviate
 from scraper.models import Asset, Fundamental
@@ -102,7 +103,7 @@ def _build_prompt(
 ) -> str:
     """Build markdown prompt with valuation data and fundamentals (no user context)."""
     current = float(latest_price.close)
-    lines = [f"# Valuation Data for {asset.ticker} ({asset.name})\n"]
+    lines = [f"# Valuation Data for {asset_label(asset)}\n"]
     lines.append(f"**Current Price**: ${current:,.2f}")
     if rsi is not None:
         lines.append(f"**RSI (14-day)**: {rsi}")
@@ -197,15 +198,6 @@ def get_base_valuation(asset: Asset) -> dict | None:
 
     try:
         valuations = compute_valuations(asset, fundamental, latest_price)
-        if len(valuations) < 2:
-            logger.debug(
-                "Only %d valuation models for %s, skipping",
-                len(valuations),
-                asset.ticker,
-            )
-            cache.delete(lock_key)
-            return None
-
         prompt = _build_prompt(asset, fundamental, latest_price, valuations, rsi)
         logger.info("Generating base valuation for %s...", asset.ticker)
 

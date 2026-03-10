@@ -136,6 +136,11 @@
 .reveal-stagger.visible > *:nth-child(5) { transition-delay: 0.24s; }
 .reveal-stagger.visible > *:nth-child(6) { transition-delay: 0.3s; }
 
+.price-thead th {
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
 .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

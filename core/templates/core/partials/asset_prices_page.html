@@ -1,20 +1,21 @@
+{% load humanize %}
 {% for p in recent_prices %}
 <tr class="border-t border-surface/[0.04] hover:bg-surface/[0.02] transition-colors">
-    <td class="py-3 pr-6 text-t2">{{ p.timestamp|date:"M d, Y" }}</td>
-    <td class="text-right py-3 px-4 text-heading">{{ p.open|floatformat:2 }}</td>
-    <td class="text-right py-3 px-4 text-sea-light">{{ p.high|floatformat:2 }}</td>
-    <td class="text-right py-3 px-4 text-copper">{{ p.low|floatformat:2 }}</td>
-    <td class="text-right py-3 px-4 text-heading font-medium">{{ p.close|floatformat:2 }}</td>
+    <td class="py-3 pr-4 sm:pr-6 text-t2 whitespace-nowrap">{{ p.timestamp|date:"D, M d, y" }}</td>
+    <td class="text-right py-3 px-4 text-heading hidden sm:table-cell tabular-nums">{{ p.open|floatformat:2|intcomma }}</td>
+    <td class="text-right py-3 px-4 text-sea-light hidden sm:table-cell tabular-nums">{{ p.high|floatformat:2|intcomma }}</td>
+    <td class="text-right py-3 px-4 text-copper hidden sm:table-cell tabular-nums">{{ p.low|floatformat:2|intcomma }}</td>
+    <td class="text-right py-3 px-4 text-heading font-medium tabular-nums">{{ p.close|floatformat:2|intcomma }}</td>
     <td class="text-right py-3 px-4">
         {% if p.daily_change_pct != None %}
         <span class="inline-flex items-center gap-1 text-[0.65rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm {% if p.daily_change >= 0 %}bg-green-500/10 text-green-500{% else %}bg-red-500/10 text-red-500{% endif %}">
-            {% if p.daily_change >= 0 %}+{% endif %}{{ p.daily_change_pct }}%
+            {% if p.daily_change >= 0 %}▲{% else %}▼{% endif %} {{ p.daily_change_pct }}%
         </span>
         {% else %}
         <span class="text-t4">—</span>
         {% endif %}
     </td>
-    <td class="text-right py-3 pl-4 text-t3">{{ p.volume|floatformat:0 }}</td>
+    <td class="text-right py-3 pl-4 text-t3 hidden sm:table-cell tabular-nums">{% if p.volume %}{{ p.volume|floatformat:0|intcomma }}{% else %}<span class="text-t4">&mdash;</span>{% endif %}</td>
 </tr>
 {% endfor %}
 {% if next_before %}

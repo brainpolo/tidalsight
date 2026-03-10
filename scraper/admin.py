@@ -43,10 +43,10 @@ class NewsAssetImpactInline(admin.TabularInline):
 
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
-    list_display = ("headline", "category", "source", "published_at")
+    list_display = ("headline", "category", "source", "posted_at")
     list_filter = ("category", "source")
     search_fields = ("headline", "summary")
-    date_hierarchy = "published_at"
+    date_hierarchy = "posted_at"
     inlines = [NewsAssetImpactInline]
 
 
@@ -59,10 +59,10 @@ class NewsAssetImpactAdmin(admin.ModelAdmin):
 
 @admin.register(NewsArticle)
 class NewsArticleAdmin(admin.ModelAdmin):
-    list_display = ("title", "source", "published_at")
+    list_display = ("title", "source", "posted_at")
     list_filter = ("source",)
     search_fields = ("title", "description")
-    date_hierarchy = "published_at"
+    date_hierarchy = "posted_at"
     filter_horizontal = ("assets",)
 
 

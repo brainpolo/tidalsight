@@ -55,7 +55,7 @@ def _fetch_sources() -> tuple[list[RedditPost], list[HNPost], list[NewsArticle]]
     )
     hn_posts = list(HNPost.objects.order_by("-posted_at")[:HN_POSTS_FOR_DIGEST])
     news_articles = list(
-        NewsArticle.objects.order_by("-published_at")[:NEWS_ARTICLES_FOR_DIGEST]
+        NewsArticle.objects.order_by("-posted_at")[:NEWS_ARTICLES_FOR_DIGEST]
     )
     return reddit_posts, hn_posts, news_articles
 
@@ -91,7 +91,7 @@ def _build_prompt(
     if news_articles:
         lines = ["## News Articles"]
         for a in news_articles:
-            date = a.published_at.strftime("%Y-%m-%d") if a.published_at else "unknown"
+            date = a.posted_at.strftime("%Y-%m-%d") if a.posted_at else "unknown"
             lines.append(f"[{a.source}, {date}] {a.title}")
             if a.description:
                 lines.append(f"  {a.description[:NEWS_ARTICLE_DESCRIPTION_TRUNCATION]}")

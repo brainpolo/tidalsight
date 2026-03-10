@@ -100,6 +100,7 @@ urlpatterns = [
         name="save_note",
     ),
     path("market-digest/", views.market_digest, name="market_digest"),
+    path("personal-outlook/", views.personal_outlook, name="personal_outlook"),
     path("trending/", views.trending_banner, name="trending_banner"),
     # Auth
     path("sign-up/", views.sign_up, name="sign_up"),

@@ -1,6 +1,6 @@
 # Report Card
 
-Asset-level scoring system that produces a holistic buy/sell/hold assessment across 6 dimensions, each scored out of 5, culminating in an overall verdict with a 12-month price target.
+Asset-level scoring system that produces a holistic buy/sell/hold assessment across up to 6 dimensions, each scored out of 5, culminating in an overall verdict with a 12-month price target. Equities are assessed on all 6 dimensions; crypto, commodities, and currencies use 4 (Financial Health and Leadership are equity-only). Scores are scaled to a consistent 0–30 range regardless of section count.
 
 ## Philosophy — Herzberg's Two-Factor Theory
 
@@ -8,21 +8,21 @@ The report card is structured around [Herzberg's Two-Factor Theory](https://en.w
 
 **Hygiene Factors** — things that must be sound or the investment fails regardless of upside:
 
-| # | Section | What it answers |
-|---|---------|-----------------|
-| 1 | **Financial Health** | Is the balance sheet solid? Revenue growing? Margins healthy? |
-| 2 | **Sentiment** | What does the market think? Is crowd sentiment aligned or divergent? |
-| 3 | **External Risk** | What macro, regulatory, or geopolitical threats exist? |
+| # | Section | What it answers | Asset classes |
+|---|---------|-----------------|---------------|
+| 1 | **Financial Health** | Is the balance sheet solid? Revenue growing? Margins healthy? | Equities only |
+| 2 | **Sentiment** | What does the market think? Is crowd sentiment aligned or divergent? | All |
+| 3 | **External Risk** | What macro, regulatory, or geopolitical threats exist? | All |
 
 **Motivators** — things that create differentiated upside:
 
-| # | Section | What it answers |
-|---|---------|-----------------|
-| 4 | **Valuation** | Is the stock cheap or expensive relative to intrinsic value? |
-| 5 | **Product Flywheel** | Does the business have compounding moats and network effects? |
-| 6 | **Leadership** | Is management capable, aligned, and executing well? |
+| # | Section | What it answers | Asset classes |
+|---|---------|-----------------|---------------|
+| 4 | **Valuation** | Is the asset cheap or expensive relative to intrinsic value? | All |
+| 5 | **Product Flywheel** | Does the asset have compounding moats and network effects? | All |
+| 6 | **Leadership** | Is management capable, aligned, and executing well? | Equities only |
 
-The **Overall Assessment** synthesises all 6 into a verdict (Strong Buy / Buy / Hold / Sell / Strong Sell), a 12-month price target, key drivers, and key risks.
+The **Overall Assessment** synthesises all scored sections into a verdict (Strong Buy / Buy / Hold / Sell / Strong Sell), a 12-month price target, key drivers, and key risks. For non-equity assets with 4 sections, raw scores are scaled up to the 0–30 range so verdict thresholds remain consistent.
 
 ## How scores are generated
 
@@ -78,8 +78,8 @@ Grounding is **appended** (not prepended) to maximise KV-cache reuse when the sa
 
 #### Overall Assessment
 - **Agent:** `analyst/agents/overall_assessment_agent.py` — structured output (score, label, verdict, justification, target_price, key_drivers, key_risks)
-- **Data:** All 6 section scores + their briefs, fed as context
-- **Trigger:** Only runs after all 6 sections have scores
+- **Data:** All scored section results + their briefs, fed as context
+- **Trigger:** Only runs after all applicable sections have scores (6 for equities, 4 for others)
 - **Invalidation:** Composite fingerprint of all section scores
 
 ## Company Description
@@ -104,7 +104,7 @@ User visits asset page
   │         └─ HTMX polls every 6s until score lands
   │
   ├─ Overall Assessment
-  │    ├─ Waits for all 6 sections
+  │    ├─ Waits for all applicable sections (6 equity, 4 others)
   │    └─ Synthesises into verdict + price target
   │
   └─ Company Description

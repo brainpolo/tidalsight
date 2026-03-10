@@ -1,7 +1,7 @@
 from agents import Agent, ModelSettings
 from pydantic import BaseModel, Field
 
-from analyst.agents.tools import search_web
+from analyst.agents.tools import search_posts, search_web
 from analyst.grounding import SCORING_RUBRIC
 from analyst.llms import BYTEDANCE_SEED_2_0_MINI
 
@@ -17,9 +17,9 @@ people_agent = Agent(
     name="People Analyst",
     instructions=(
         "You are a senior analyst assessing the people quality — leadership, "
-        "talent, hiring practices, and organisational culture — of an asset. "
-        "This could be a stock, cryptocurrency, commodity, or currency. You "
-        "will receive a ticker and name. Use search_web to research.\n\n"
+        "talent, hiring practices, and organisational culture — of an equity "
+        "asset. You will receive the ticker and company name. Use search_web "
+        "to research.\n\n"
         "A business is nothing without its people. Assess not just the C-suite "
         "but the depth and calibre of the entire organisation.\n\n"
         "Perform 4-6 web searches covering:\n"
@@ -50,10 +50,12 @@ people_agent = Agent(
         "- people_strengths: Up to 3 short phrases for the strongest people "
         "signals (e.g., 'Founder-CEO with 20yr track record', "
         "'Top-tier ML talent from DeepMind/FAIR joining', "
-        "'4.5 Glassdoor with rising trend')."
+        "'4.5 Glassdoor with rising trend').\n\n"
+        "Also use search_posts to find relevant community discussions (Reddit, HN, news) "
+        "about the asset's leadership and talent. Pass the ticker to scope results."
     ),
     model=BYTEDANCE_SEED_2_0_MINI,
     model_settings=ModelSettings(temperature=0.3),
     output_type=PeopleAssessment,
-    tools=[search_web],
+    tools=[search_web, search_posts],
 )

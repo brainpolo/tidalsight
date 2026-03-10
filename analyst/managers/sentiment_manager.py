@@ -23,6 +23,7 @@ from analyst.app_behaviour import (
     cache_key,
 )
 from analyst.grounding import agent_grounding, compute_label
+from analyst.utils import asset_label
 from scraper.models import (
     Asset,
     HNComment,
@@ -61,7 +62,7 @@ def _get_community_posts(asset: Asset) -> tuple[list, list, list]:
             ),
         )
     )
-    news_articles = list(asset.news_articles.order_by("-published_at"))
+    news_articles = list(asset.news_articles.order_by("-posted_at"))
     return reddit_posts, hn_posts, news_articles
 
 
@@ -111,7 +112,7 @@ def _build_prompt(
         entries.append((ts, "\n".join(lines)))
 
     for a in news_articles:
-        ts = a.published_at or a.created_at
+        ts = a.posted_at or a.created_at
         lines = [f"[News, {a.source}] {a.title}"]
         if a.description:
             lines.append(f"  {a.description[:200]}")
@@ -120,7 +121,7 @@ def _build_prompt(
     entries.sort(key=lambda x: x[0], reverse=True)
     entries = entries[:SENTIMENT_MAX_POSTS]
 
-    header = f"# Community Posts for {asset.ticker} ({asset.name})\n\n"
+    header = f"# Community Posts for {asset_label(asset)}\n\n"
     return header + "\n\n".join(text for _, text in entries)
 
 

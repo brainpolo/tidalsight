@@ -1,9 +1,10 @@
 {% if waiting %}
-<!-- Waiting for all 6 sections -->
+<!-- Waiting for all sections -->
 <div class="mt-6 border border-copper/[0.12] rounded-sm p-5 sm:p-6"
      hx-get="{% url 'core:report_card_overall' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="section-scored from:body delay:2s"
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
+     id="rc-overall-wrap">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-3">
             <i data-lucide="clipboard-check" class="size-4 text-t4"></i>
@@ -12,7 +13,7 @@
         <div class="flex items-center gap-3">
             {% if report_card_total != None %}
             <div class="font-serif text-2xl text-heading">{{ report_card_total }}<span class="text-[0.7rem] font-sans text-t3 ml-0.5">/ 30</span></div>
-            <span class="text-[0.55rem] text-t4">{{ scored_count }} of 6 scores available</span>
+            <span class="text-[0.55rem] text-t4">{{ scored_count }} of {{ expected_count }} scores available</span>
             {% else %}
             <div class="font-serif text-2xl text-t4">&mdash;<span class="text-[0.7rem] font-sans text-t4 ml-0.5">/ 30</span></div>
             {% endif %}
@@ -26,7 +27,8 @@
 <div class="mt-6 border border-copper/[0.12] rounded-sm p-5 sm:p-6" data-section="overall"
      hx-get="{% url 'core:report_card_overall' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="load delay:{{ poll_interval }}s, section-scored from:body delay:2s"
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
+     id="rc-overall-wrap">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-3">
             <i data-lucide="clipboard-check" class="size-4 text-t4"></i>
@@ -60,7 +62,8 @@
 <div class="mt-6 border border-copper/[0.12] rounded-sm p-5 sm:p-6" data-section="overall"
      hx-get="{% url 'core:report_card_overall' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="section-scored from:body delay:2s"
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
+     id="rc-overall-wrap">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-3">
             <i data-lucide="clipboard-check" class="size-4 text-t4"></i>

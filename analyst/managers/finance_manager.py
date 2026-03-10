@@ -19,6 +19,7 @@ from analyst.app_behaviour import (
     cache_key,
 )
 from analyst.grounding import agent_grounding, compute_label
+from analyst.utils import asset_label
 from core.templatetags.formatting import abbreviate
 from scraper.models import Asset, Fundamental
 
@@ -76,7 +77,7 @@ def _source_fingerprint(fundamental: Fundamental) -> str:
 
 def _build_prompt(asset: Asset, fundamental: Fundamental) -> str:
     """Build a markdown prompt from fundamental data."""
-    lines = [f"# Financial Data for {asset.ticker} ({asset.name})\n"]
+    lines = [f"# Financial Data for {asset_label(asset)}\n"]
 
     field_labels = {
         "revenue": ("Revenue", "$", True),

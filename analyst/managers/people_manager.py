@@ -20,6 +20,7 @@ from analyst.app_behaviour import (
 )
 from analyst.grounding import agent_grounding, compute_label
 from analyst.managers.revision_manager import revise_assessment
+from analyst.utils import asset_label
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -71,7 +72,7 @@ def _build_prompt(asset: Asset) -> str:
     """Build prompt with company info (no user context). Agent does its own research."""
     return (
         f"Assess the people quality — leadership, talent, hiring practices, "
-        f"and organisational culture — for {asset.ticker} ({asset.name})."
+        f"and organisational culture — for {asset_label(asset)}."
     )
 
 
