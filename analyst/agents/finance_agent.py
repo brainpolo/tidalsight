@@ -5,14 +5,14 @@ from analyst.grounding import SCORING_RUBRIC
 from analyst.llms import BYTEDANCE_SEED_2_0_MINI
 
 
-class FinancialHealthAssessment(BaseModel):
+class FinanceAssessment(BaseModel):
     score: float = Field(ge=1.0, le=4.0)
     brief: str
     strengths: list[str] = Field(max_length=3)
     concerns: list[str] = Field(max_length=3)
 
 
-financial_health_agent = Agent(
+finance_agent = Agent(
     name="Financial Health Analyst",
     instructions=(
         "You are a senior research analyst assessing the financial health of an asset "
@@ -38,5 +38,5 @@ financial_health_agent = Agent(
     ),
     model=BYTEDANCE_SEED_2_0_MINI,
     model_settings=ModelSettings(temperature=0.3),
-    output_type=FinancialHealthAssessment,
+    output_type=FinanceAssessment,
 )

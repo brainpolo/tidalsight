@@ -49,14 +49,14 @@ urlpatterns = [
         name="report_card_sentiment",
     ),
     path(
-        "assets/<str:ticker>/report-card/financial-health/",
-        views.report_card_financial_health,
-        name="report_card_financial_health",
+        "assets/<str:ticker>/report-card/finance/",
+        views.report_card_finance,
+        name="report_card_finance",
     ),
     path(
-        "assets/<str:ticker>/report-card/external-risk/",
-        views.report_card_external_risk,
-        name="report_card_external_risk",
+        "assets/<str:ticker>/report-card/risk/",
+        views.report_card_risk,
+        name="report_card_risk",
     ),
     path(
         "assets/<str:ticker>/report-card/valuation/",
@@ -64,9 +64,9 @@ urlpatterns = [
         name="report_card_valuation",
     ),
     path(
-        "assets/<str:ticker>/report-card/product-flywheel/",
-        views.report_card_product_flywheel,
-        name="report_card_product_flywheel",
+        "assets/<str:ticker>/report-card/product/",
+        views.report_card_product,
+        name="report_card_product",
     ),
     path(
         "assets/<str:ticker>/report-card/people/",

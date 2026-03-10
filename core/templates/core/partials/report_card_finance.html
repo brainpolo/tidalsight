@@ -1,7 +1,7 @@
 {% if loading %}
 <!-- Loading skeleton — self-polls until agent finishes -->
 <div class="p-5 sm:p-6"
-     hx-get="{% url 'core:report_card_financial_health' ticker %}"
+     hx-get="{% url 'core:report_card_finance' ticker %}"
      hx-trigger="load delay:{{ poll_interval }}s"
      hx-swap="outerHTML">
     <div class="flex items-center justify-between mb-3">

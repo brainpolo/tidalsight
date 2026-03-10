@@ -4,14 +4,14 @@ from celery import shared_task
 
 from analyst.managers.description_manager import generate_description
 from analyst.managers.digest_manager import get_market_digest
-from analyst.managers.external_risk_manager import get_external_risk
-from analyst.managers.financial_health_manager import get_financial_health
-from analyst.managers.leadership_manager import get_people
+from analyst.managers.finance_manager import get_finance
 from analyst.managers.overall_assessment_manager import get_overall_assessment
 from analyst.managers.peer_manager import sync_peers
-from analyst.managers.product_flywheel_manager import get_product_flywheel
-from analyst.managers.sentiment_manager import get_asset_sentiment
-from analyst.managers.valuation_score_manager import get_valuation
+from analyst.managers.people_manager import get_people
+from analyst.managers.product_manager import get_product
+from analyst.managers.risk_manager import get_risk
+from analyst.managers.sentiment_manager import get_sentiment
+from analyst.managers.valuation_manager import get_valuation
 from scraper.models import Asset
 
 logger = logging.getLogger(__name__)
@@ -50,21 +50,21 @@ def generate_market_digest():
 def analyse_sentiment(asset_id: int) -> None:
     asset = Asset.objects.get(id=asset_id)
     logger.info("Task analyse_sentiment started for %s", asset.ticker)
-    get_asset_sentiment(asset)
+    get_sentiment(asset)
 
 
 @shared_task(ignore_result=True)
-def analyse_financial_health(asset_id: int) -> None:
+def analyse_finance(asset_id: int) -> None:
     asset = Asset.objects.get(id=asset_id)
-    logger.info("Task analyse_financial_health started for %s", asset.ticker)
-    get_financial_health(asset)
+    logger.info("Task analyse_finance started for %s", asset.ticker)
+    get_finance(asset)
 
 
 @shared_task(ignore_result=True)
-def analyse_external_risk(asset_id: int) -> None:
+def analyse_risk(asset_id: int) -> None:
     asset = Asset.objects.get(id=asset_id)
-    logger.info("Task analyse_external_risk started for %s", asset.ticker)
-    get_external_risk(asset)
+    logger.info("Task analyse_risk started for %s", asset.ticker)
+    get_risk(asset)
 
 
 @shared_task(ignore_result=True)
@@ -82,17 +82,15 @@ def analyse_valuation(
 
 
 @shared_task(ignore_result=True)
-def analyse_product_flywheel(
+def analyse_product(
     asset_id: int,
     user_id: int,
     user_note: str,
     price_target: float | None,
 ) -> None:
     asset = Asset.objects.get(id=asset_id)
-    logger.info(
-        "Task analyse_product_flywheel started for %s (user %s)", asset.ticker, user_id
-    )
-    get_product_flywheel(asset, user_id, user_note, price_target)
+    logger.info("Task analyse_product started for %s (user %s)", asset.ticker, user_id)
+    get_product(asset, user_id, user_note, price_target)
 
 
 @shared_task(ignore_result=True)

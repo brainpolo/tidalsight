@@ -6,16 +6,16 @@ from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.external_risk_agent import (
-    ExternalRiskAssessment,
-    external_risk_agent,
-)
 from analyst.agents.provider import get_model_provider
+from analyst.agents.risk_agent import (
+    RiskAssessment,
+    risk_agent,
+)
 from analyst.app_behaviour import (
-    EXTERNAL_RISK_DATA_TTL,
-    EXTERNAL_RISK_FRESHNESS_TTL,
-    EXTERNAL_RISK_LOCK_TTL,
     MAX_AGENT_TURNS,
+    RISK_DATA_TTL,
+    RISK_FRESHNESS_TTL,
+    RISK_LOCK_TTL,
     cache_key,
 )
 from analyst.grounding import agent_grounding, compute_label
@@ -32,7 +32,7 @@ def _cache_keys(ticker: str) -> tuple[str, str, str]:
     )
 
 
-def _run_agent(ticker: str, company_name: str) -> ExternalRiskAssessment:
+def _run_agent(ticker: str, company_name: str) -> RiskAssessment:
     config = RunConfig(
         model_provider=get_model_provider(),
         tracing_disabled=True,
@@ -40,7 +40,7 @@ def _run_agent(ticker: str, company_name: str) -> ExternalRiskAssessment:
     prompt = f"Assess the external risk profile for {ticker} ({company_name})."
     result = asyncio.run(
         Runner.run(
-            external_risk_agent,
+            risk_agent,
             input=prompt + agent_grounding(),
             run_config=config,
             max_turns=MAX_AGENT_TURNS,
@@ -49,7 +49,7 @@ def _run_agent(ticker: str, company_name: str) -> ExternalRiskAssessment:
     return result.final_output
 
 
-def get_external_risk(asset: Asset) -> dict | None:
+def get_risk(asset: Asset) -> dict | None:
     """Return cached external risk assessment, regenerating when stale."""
     data_key, fresh_key, lock_key = _cache_keys(asset.ticker)
 
@@ -59,7 +59,7 @@ def get_external_risk(asset: Asset) -> dict | None:
         logger.debug("External risk for %s served from cache (fresh)", asset.ticker)
         return existing
 
-    if not cache.add(lock_key, True, EXTERNAL_RISK_LOCK_TTL):
+    if not cache.add(lock_key, True, RISK_LOCK_TTL):
         logger.debug(
             "External risk generation for %s already in progress", asset.ticker
         )
@@ -73,8 +73,8 @@ def get_external_risk(asset: Asset) -> dict | None:
         data["label"] = compute_label("risk", data["score"])
         data["generated_at"] = timezone.now().isoformat()
 
-        cache.set(data_key, data, EXTERNAL_RISK_DATA_TTL)
-        cache.set(fresh_key, True, EXTERNAL_RISK_FRESHNESS_TTL)
+        cache.set(data_key, data, RISK_DATA_TTL)
+        cache.set(fresh_key, True, RISK_FRESHNESS_TTL)
         cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:

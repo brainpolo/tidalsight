@@ -140,7 +140,7 @@ def _run_agent(prompt: str) -> SentimentAnalysis:
     return result.final_output
 
 
-def get_asset_sentiment(asset: Asset) -> dict | None:
+def get_sentiment(asset: Asset) -> dict | None:
     """Return cached sentiment analysis, regenerating if stale."""
     data_key, fresh_key, lock_key = _cache_keys(asset.ticker)
 

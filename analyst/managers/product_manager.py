@@ -8,16 +8,16 @@ from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.product_flywheel_agent import (
-    ProductFlywheelAssessment,
-    product_flywheel_agent,
+from analyst.agents.product_agent import (
+    ProductAssessment,
+    product_agent,
 )
 from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
     MAX_AGENT_TURNS,
-    PRODUCT_FLYWHEEL_DATA_TTL,
-    PRODUCT_FLYWHEEL_FRESHNESS_TTL,
-    PRODUCT_FLYWHEEL_LOCK_TTL,
+    PRODUCT_DATA_TTL,
+    PRODUCT_FRESHNESS_TTL,
+    PRODUCT_LOCK_TTL,
     REVISION_LOCK_TTL,
     cache_key,
 )
@@ -65,7 +65,7 @@ def _is_cache_valid(existing: dict, fingerprint: str) -> bool:
         if timezone.is_naive(gen_time):
             gen_time = timezone.make_aware(gen_time)
         age_seconds = (timezone.now() - gen_time).total_seconds()
-        if age_seconds < PRODUCT_FLYWHEEL_FRESHNESS_TTL:
+        if age_seconds < PRODUCT_FRESHNESS_TTL:
             return True
     return False
 
@@ -78,14 +78,14 @@ def _build_prompt(asset: Asset) -> str:
     )
 
 
-def _run_agent(prompt: str) -> ProductFlywheelAssessment:
+def _run_agent(prompt: str) -> ProductAssessment:
     config = RunConfig(
         model_provider=get_model_provider(),
         tracing_disabled=True,
     )
     result = asyncio.run(
         Runner.run(
-            product_flywheel_agent,
+            product_agent,
             input=prompt + agent_grounding(),
             run_config=config,
             max_turns=MAX_AGENT_TURNS,
@@ -94,8 +94,8 @@ def _run_agent(prompt: str) -> ProductFlywheelAssessment:
     return result.final_output
 
 
-def get_base_product_flywheel(asset: Asset) -> dict | None:
-    """Return cached base product flywheel (no user context), regenerating when stale."""
+def get_base_product(asset: Asset) -> dict | None:
+    """Return cached base product assessment (no user context), regenerating when stale."""
     data_key, lock_key = _base_cache_keys(asset.ticker)
 
     existing = cache.get(data_key)
@@ -106,7 +106,7 @@ def get_base_product_flywheel(asset: Asset) -> dict | None:
         logger.debug("Base product flywheel for %s served from cache", asset.ticker)
         return existing
 
-    if not cache.add(lock_key, True, PRODUCT_FLYWHEEL_LOCK_TTL):
+    if not cache.add(lock_key, True, PRODUCT_LOCK_TTL):
         logger.debug(
             "Base product flywheel generation for %s already in progress", asset.ticker
         )
@@ -122,7 +122,7 @@ def get_base_product_flywheel(asset: Asset) -> dict | None:
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 
-        cache.set(data_key, data, PRODUCT_FLYWHEEL_DATA_TTL)
+        cache.set(data_key, data, PRODUCT_DATA_TTL)
         cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
@@ -133,14 +133,14 @@ def get_base_product_flywheel(asset: Asset) -> dict | None:
         return existing
 
 
-def get_product_flywheel(
+def get_product(
     asset: Asset,
     user_id: int,
     user_note: str,
     price_target: float | None,
 ) -> dict | None:
-    """Return effective product flywheel: revised if user has notes, otherwise base."""
-    base = get_base_product_flywheel(asset)
+    """Return effective product assessment: revised if user has notes, otherwise base."""
+    base = get_base_product(asset)
     if base is None:
         return None
 
@@ -183,7 +183,7 @@ def get_product_flywheel(
         revised["generated_at"] = timezone.now().isoformat()
         revised["is_revised"] = True
 
-        cache.set(rev_data_key, revised, PRODUCT_FLYWHEEL_DATA_TTL)
+        cache.set(rev_data_key, revised, PRODUCT_DATA_TTL)
         cache.delete(rev_lock_key)
         return revised
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:

@@ -6,14 +6,14 @@ from analyst.grounding import SCORING_RUBRIC
 from analyst.llms import BYTEDANCE_SEED_2_0_MINI
 
 
-class ExternalRiskAssessment(BaseModel):
+class RiskAssessment(BaseModel):
     score: float = Field(ge=1.0, le=4.0)
     brief: str
     risk_factors: list[str] = Field(max_length=5)
     sources: list[str] = Field(max_length=5)
 
 
-external_risk_agent = Agent(
+risk_agent = Agent(
     name="External Risk Analyst",
     instructions=(
         "You are a senior risk analyst assessing the external risk profile of a "
@@ -41,6 +41,6 @@ external_risk_agent = Agent(
     ),
     model=BYTEDANCE_SEED_2_0_MINI,
     model_settings=ModelSettings(temperature=0.3),
-    output_type=ExternalRiskAssessment,
+    output_type=RiskAssessment,
     tools=[search_web],
 )

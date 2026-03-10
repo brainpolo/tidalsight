@@ -6,14 +6,14 @@ from analyst.grounding import SCORING_RUBRIC
 from analyst.llms import BYTEDANCE_SEED_2_0_MINI
 
 
-class ProductFlywheelAssessment(BaseModel):
+class ProductAssessment(BaseModel):
     score: float = Field(ge=1.0, le=4.0)
     brief: str
     flywheel_strengths: list[str] = Field(max_length=3)
     moat_risks: list[str] = Field(max_length=3)
 
 
-product_flywheel_agent = Agent(
+product_agent = Agent(
     name="Product Flywheel Analyst",
     instructions=(
         "You are a senior product strategist assessing the product flywheel and "
@@ -44,6 +44,6 @@ product_flywheel_agent = Agent(
     ),
     model=BYTEDANCE_SEED_2_0_MINI,
     model_settings=ModelSettings(temperature=0.3),
-    output_type=ProductFlywheelAssessment,
+    output_type=ProductAssessment,
     tools=[search_web],
 )

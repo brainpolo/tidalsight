@@ -1,7 +1,7 @@
 {% if loading %}
 <!-- Loading skeleton — self-polls until agent finishes -->
 <div class="p-5 sm:p-6 sm:border-l border-copper/[0.06]"
-     hx-get="{% url 'core:report_card_product_flywheel' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
+     hx-get="{% url 'core:report_card_product' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="load delay:{{ poll_interval }}s"
      hx-swap="outerHTML">
     <div class="flex items-center justify-between mb-3">

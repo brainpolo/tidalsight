@@ -635,11 +635,11 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-surface/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 
-                <!-- 1. Financial Health (HTMX partial) -->
-                <div hx-get="{% url 'core:report_card_financial_health' asset.ticker %}"
+                <!-- 1. Finance (HTMX partial) -->
+                <div hx-get="{% url 'core:report_card_finance' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
-                    {% include "core/partials/report_card_financial_health.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                    {% include "core/partials/report_card_finance.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
                 <!-- 2. Sentiment (HTMX partial) -->
@@ -649,11 +649,11 @@
                     {% include "core/partials/report_card_sentiment.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
-                <!-- 3. External Risk Profile -->
-                <div hx-get="{% url 'core:report_card_external_risk' asset.ticker %}"
+                <!-- 3. Risk -->
+                <div hx-get="{% url 'core:report_card_risk' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
-                    {% include "core/partials/report_card_external_risk.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                    {% include "core/partials/report_card_risk.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
                 </div>
@@ -691,11 +691,11 @@
                     {% include "core/partials/report_card_valuation.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
-                <!-- 5. Product Flywheel -->
-                <div hx-get="{% url 'core:report_card_product_flywheel' asset.ticker %}"
+                <!-- 5. Product -->
+                <div hx-get="{% url 'core:report_card_product' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
-                    {% include "core/partials/report_card_product_flywheel.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                    {% include "core/partials/report_card_product.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
                 <!-- 6. People -->
@@ -889,7 +889,7 @@ function switchReportView(btn, view) {
     // Re-fetch motivator sections with view param
     const sections = [
         {url: '{% url "core:report_card_valuation" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(1)'},
-        {url: '{% url "core:report_card_product_flywheel" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(2)'},
+        {url: '{% url "core:report_card_product" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(2)'},
         {url: '{% url "core:report_card_people" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(3)'},
     ];
 

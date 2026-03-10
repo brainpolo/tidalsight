@@ -1,7 +1,7 @@
 from agents import Agent, ModelSettings
 
-from analyst.agents.leadership_agent import PeopleAssessment
-from analyst.agents.product_flywheel_agent import ProductFlywheelAssessment
+from analyst.agents.people_agent import PeopleAssessment
+from analyst.agents.product_agent import ProductAssessment
 from analyst.agents.valuation_agent import ValuationAssessment
 from analyst.llms import BYTEDANCE_SEED_2_0_MINI
 
@@ -42,12 +42,12 @@ valuation_revision_agent = Agent(
     output_type=ValuationAssessment,
 )
 
-product_flywheel_revision_agent = Agent(
-    name="Product Flywheel Revision Analyst",
+product_revision_agent = Agent(
+    name="Product Revision Analyst",
     instructions=REVISION_INSTRUCTIONS,
     model=BYTEDANCE_SEED_2_0_MINI,
     model_settings=_REVISION_SETTINGS,
-    output_type=ProductFlywheelAssessment,
+    output_type=ProductAssessment,
 )
 
 people_revision_agent = Agent(
@@ -60,6 +60,6 @@ people_revision_agent = Agent(
 
 REVISION_AGENTS = {
     "valuation": valuation_revision_agent,
-    "product": product_flywheel_revision_agent,
+    "product": product_revision_agent,
     "people": people_revision_agent,
 }

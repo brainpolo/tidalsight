@@ -25,14 +25,14 @@ SENTIMENT_FRESHNESS_TTL = 43200  # 12 hours
 SENTIMENT_DATA_TTL = 86400  # 24 hours
 SENTIMENT_LOCK_TTL = 300  # 5 minutes
 
-FINANCIAL_HEALTH_DATA_TTL = (
+FINANCE_DATA_TTL = (
     60 * 60 * 24 * 30
 )  # 30 days — eviction fallback only, fingerprint drives invalidation
-FINANCIAL_HEALTH_LOCK_TTL = 300  # 5 minutes
+FINANCE_LOCK_TTL = 300  # 5 minutes
 
-EXTERNAL_RISK_FRESHNESS_TTL = 60 * 60 * 24 * 14  # 2 weeks
-EXTERNAL_RISK_DATA_TTL = 60 * 60 * 24 * 60  # 2 months
-EXTERNAL_RISK_LOCK_TTL = 300  # 5 minutes
+RISK_FRESHNESS_TTL = 60 * 60 * 24 * 14  # 2 weeks
+RISK_DATA_TTL = 60 * 60 * 24 * 60  # 2 months
+RISK_LOCK_TTL = 300  # 5 minutes
 
 VALUATION_FRESHNESS_TTL = (
     60 * 60 * 24 * 7
@@ -40,13 +40,13 @@ VALUATION_FRESHNESS_TTL = (
 VALUATION_DATA_TTL = 60 * 60 * 24 * 90  # 3 months — eviction fallback
 VALUATION_LOCK_TTL = 300  # 5 minutes
 
-PRODUCT_FLYWHEEL_FRESHNESS_TTL = 60 * 60 * 24 * 7  # 1 week
-PRODUCT_FLYWHEEL_DATA_TTL = 60 * 60 * 24 * 30  # 1 month
-PRODUCT_FLYWHEEL_LOCK_TTL = 300  # 5 minutes
+PRODUCT_FRESHNESS_TTL = 60 * 60 * 24 * 7  # 1 week
+PRODUCT_DATA_TTL = 60 * 60 * 24 * 30  # 1 month
+PRODUCT_LOCK_TTL = 300  # 5 minutes
 
-LEADERSHIP_FRESHNESS_TTL = 60 * 60 * 24 * 7  # 1 week
-LEADERSHIP_DATA_TTL = 60 * 60 * 24 * 60  # 2 months
-LEADERSHIP_LOCK_TTL = 300  # 5 minutes
+PEOPLE_FRESHNESS_TTL = 60 * 60 * 24 * 7  # 1 week
+PEOPLE_DATA_TTL = 60 * 60 * 24 * 60  # 2 months
+PEOPLE_LOCK_TTL = 300  # 5 minutes
 
 OVERALL_ASSESSMENT_DATA_TTL = (
     60 * 60 * 24 * 30

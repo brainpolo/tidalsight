@@ -8,13 +8,13 @@ from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.leadership_agent import PeopleAssessment, people_agent
+from analyst.agents.people_agent import PeopleAssessment, people_agent
 from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
-    LEADERSHIP_DATA_TTL,
-    LEADERSHIP_FRESHNESS_TTL,
-    LEADERSHIP_LOCK_TTL,
     MAX_AGENT_TURNS,
+    PEOPLE_DATA_TTL,
+    PEOPLE_FRESHNESS_TTL,
+    PEOPLE_LOCK_TTL,
     REVISION_LOCK_TTL,
     cache_key,
 )
@@ -62,7 +62,7 @@ def _is_cache_valid(existing: dict, fingerprint: str) -> bool:
         if timezone.is_naive(gen_time):
             gen_time = timezone.make_aware(gen_time)
         age_seconds = (timezone.now() - gen_time).total_seconds()
-        if age_seconds < LEADERSHIP_FRESHNESS_TTL:
+        if age_seconds < PEOPLE_FRESHNESS_TTL:
             return True
     return False
 
@@ -103,7 +103,7 @@ def get_base_people(asset: Asset) -> dict | None:
         logger.debug("Base people for %s served from cache", asset.ticker)
         return existing
 
-    if not cache.add(lock_key, True, LEADERSHIP_LOCK_TTL):
+    if not cache.add(lock_key, True, PEOPLE_LOCK_TTL):
         logger.debug("Base people generation for %s already in progress", asset.ticker)
         return existing
 
@@ -117,7 +117,7 @@ def get_base_people(asset: Asset) -> dict | None:
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 
-        cache.set(data_key, data, LEADERSHIP_DATA_TTL)
+        cache.set(data_key, data, PEOPLE_DATA_TTL)
         cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
@@ -178,7 +178,7 @@ def get_people(
         revised["generated_at"] = timezone.now().isoformat()
         revised["is_revised"] = True
 
-        cache.set(rev_data_key, revised, LEADERSHIP_DATA_TTL)
+        cache.set(rev_data_key, revised, PEOPLE_DATA_TTL)
         cache.delete(rev_lock_key)
         return revised
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:

@@ -34,26 +34,11 @@ from analyst.app_behaviour import (
     SENTIMENT_MIN_POSTS,
 )
 from analyst.managers.digest_manager import get_market_digest
-from analyst.managers.external_risk_manager import (
-    _cache_keys as external_risk_cache_keys,
+from analyst.managers.finance_manager import (
+    _cache_keys as finance_cache_keys,
 )
-from analyst.managers.financial_health_manager import (
-    _cache_keys as financial_health_cache_keys,
-)
-from analyst.managers.financial_health_manager import (
-    _source_fingerprint as financial_health_fingerprint,
-)
-from analyst.managers.leadership_manager import (
-    _base_cache_keys as people_base_cache_keys,
-)
-from analyst.managers.leadership_manager import (
-    _base_source_fingerprint as people_base_fingerprint,
-)
-from analyst.managers.leadership_manager import (
-    _is_cache_valid as people_is_cache_valid,
-)
-from analyst.managers.leadership_manager import (
-    _revision_cache_keys as people_revision_cache_keys,
+from analyst.managers.finance_manager import (
+    _source_fingerprint as finance_fingerprint,
 )
 from analyst.managers.overall_assessment_manager import (
     _base_cache_keys as overall_base_cache_keys,
@@ -71,37 +56,52 @@ from analyst.managers.overall_assessment_manager import (
     compute_verdict,
     compute_weighted_score,
 )
-from analyst.managers.product_flywheel_manager import (
-    _base_cache_keys as product_flywheel_base_cache_keys,
+from analyst.managers.people_manager import (
+    _base_cache_keys as people_base_cache_keys,
 )
-from analyst.managers.product_flywheel_manager import (
-    _base_source_fingerprint as product_flywheel_base_fingerprint,
+from analyst.managers.people_manager import (
+    _base_source_fingerprint as people_base_fingerprint,
 )
-from analyst.managers.product_flywheel_manager import (
-    _is_cache_valid as product_flywheel_is_cache_valid,
+from analyst.managers.people_manager import (
+    _is_cache_valid as people_is_cache_valid,
 )
-from analyst.managers.product_flywheel_manager import (
-    _revision_cache_keys as product_flywheel_revision_cache_keys,
+from analyst.managers.people_manager import (
+    _revision_cache_keys as people_revision_cache_keys,
+)
+from analyst.managers.product_manager import (
+    _base_cache_keys as product_base_cache_keys,
+)
+from analyst.managers.product_manager import (
+    _base_source_fingerprint as product_base_fingerprint,
+)
+from analyst.managers.product_manager import (
+    _is_cache_valid as product_is_cache_valid,
+)
+from analyst.managers.product_manager import (
+    _revision_cache_keys as product_revision_cache_keys,
+)
+from analyst.managers.risk_manager import (
+    _cache_keys as risk_cache_keys,
 )
 from analyst.managers.sentiment_manager import _cache_keys as sentiment_cache_keys
-from analyst.managers.valuation_score_manager import (
+from analyst.managers.valuation_manager import (
     _base_cache_keys as valuation_base_cache_keys,
 )
-from analyst.managers.valuation_score_manager import (
+from analyst.managers.valuation_manager import (
     _base_source_fingerprint as valuation_base_fingerprint,
 )
-from analyst.managers.valuation_score_manager import (
+from analyst.managers.valuation_manager import (
     _is_cache_valid as valuation_is_cache_valid,
 )
-from analyst.managers.valuation_score_manager import (
+from analyst.managers.valuation_manager import (
     _revision_cache_keys as valuation_revision_cache_keys,
 )
 from analyst.tasks import (
-    analyse_external_risk,
-    analyse_financial_health,
+    analyse_finance,
     analyse_overall,
     analyse_people,
-    analyse_product_flywheel,
+    analyse_product,
+    analyse_risk,
     analyse_sentiment,
     analyse_valuation,
     discover_peers,
@@ -721,7 +721,7 @@ async def asset_sentiment(request, ticker):
 
     # Fire-and-forget in a background thread on the web server itself,
     # keeping Celery workers free for heavy scraping/sync tasks.
-    # The cache lock inside get_asset_sentiment prevents concurrent runs.
+    # The cache lock inside get_sentiment prevents concurrent runs.
     analyse_sentiment.delay(asset.id)
     response = render(request, "core/partials/asset_sentiment.html", {"loading": True})
     response["HX-Trigger-After-Settle"] = '{"retrySentiment": true}'
@@ -735,7 +735,7 @@ async def report_card_sentiment(request, ticker):
     if not asset:
         return render(request, "core/partials/report_card_sentiment.html", {})
 
-    data_key, fresh_key, _ = sentiment_cache_keys(ticker)
+    data_key, fresh_key, lock_key = sentiment_cache_keys(ticker)
     cached = await cache.aget(data_key)
 
     if cached and await cache.aget(fresh_key):
@@ -756,7 +756,8 @@ async def report_card_sentiment(request, ticker):
     if total < SENTIMENT_MIN_POSTS:
         return render(request, "core/partials/report_card_sentiment.html", {})
 
-    analyse_sentiment.delay(asset.id)
+    if not await cache.aget(lock_key):
+        analyse_sentiment.delay(asset.id)
     response = render(
         request,
         "core/partials/report_card_sentiment.html",
@@ -770,18 +771,18 @@ async def report_card_sentiment(request, ticker):
     return response
 
 
-async def report_card_financial_health(request, ticker):
+async def report_card_finance(request, ticker):
     """Partial: report card financial health score. Runs agent in background if not cached."""
     ticker = ticker.upper()
     asset = await Asset.objects.filter(ticker=ticker).afirst()
     if not asset:
         return render(
             request,
-            "core/partials/report_card_financial_health.html",
+            "core/partials/report_card_finance.html",
             {"unavailable": True},
         )
 
-    data_key, _, _ = financial_health_cache_keys(ticker)
+    data_key, _, lock_key = finance_cache_keys(ticker)
     cached = await cache.aget(data_key)
     fundamental = await asset.fundamentals.afirst()
 
@@ -789,12 +790,12 @@ async def report_card_financial_health(request, ticker):
     if cached and "score" in cached:
         fingerprint_ok = fundamental and cached.get(
             "source_hash"
-        ) == financial_health_fingerprint(fundamental)
+        ) == finance_fingerprint(fundamental)
         if fingerprint_ok:
             filled_dots = round(cached["score"])
             response = render(
                 request,
-                "core/partials/report_card_financial_health.html",
+                "core/partials/report_card_finance.html",
                 {"health": cached, "filled_dots": filled_dots, "ticker": ticker},
             )
             response["HX-Trigger"] = "section-scored"
@@ -803,25 +804,26 @@ async def report_card_financial_health(request, ticker):
         filled_dots = round(cached["score"])
         response = render(
             request,
-            "core/partials/report_card_financial_health.html",
+            "core/partials/report_card_finance.html",
             {"health": cached, "filled_dots": filled_dots, "ticker": ticker},
         )
         response["HX-Trigger"] = "section-scored"
-        if fundamental:
-            analyse_financial_health.delay(asset.id)  # refresh in background
+        if fundamental and not await cache.aget(lock_key):
+            analyse_finance.delay(asset.id)  # refresh in background
         return response
 
     if not fundamental:
         return render(
             request,
-            "core/partials/report_card_financial_health.html",
+            "core/partials/report_card_finance.html",
             {"unavailable": True},
         )
 
-    analyse_financial_health.delay(asset.id)
+    if not await cache.aget(lock_key):
+        analyse_finance.delay(asset.id)
     return render(
         request,
-        "core/partials/report_card_financial_health.html",
+        "core/partials/report_card_finance.html",
         {
             "loading": True,
             "ticker": ticker,
@@ -830,34 +832,35 @@ async def report_card_financial_health(request, ticker):
     )
 
 
-async def report_card_external_risk(request, ticker):
+async def report_card_risk(request, ticker):
     """Partial: report card external risk score. Runs agent in background if not cached."""
     ticker = ticker.upper()
     asset = await Asset.objects.filter(ticker=ticker).afirst()
     if not asset:
         return render(
             request,
-            "core/partials/report_card_external_risk.html",
+            "core/partials/report_card_risk.html",
             {"unavailable": True},
         )
 
-    data_key, fresh_key, _ = external_risk_cache_keys(ticker)
+    data_key, fresh_key, lock_key = risk_cache_keys(ticker)
     cached = await cache.aget(data_key)
 
     if cached and await cache.aget(fresh_key):
         filled_dots = round(cached["score"])
         response = render(
             request,
-            "core/partials/report_card_external_risk.html",
+            "core/partials/report_card_risk.html",
             {"risk": cached, "filled_dots": filled_dots, "ticker": ticker},
         )
         response["HX-Trigger"] = "section-scored"
         return response
 
-    analyse_external_risk.delay(asset.id)
+    if not await cache.aget(lock_key):
+        analyse_risk.delay(asset.id)
     return render(
         request,
-        "core/partials/report_card_external_risk.html",
+        "core/partials/report_card_risk.html",
         {
             "loading": True,
             "ticker": ticker,
@@ -899,8 +902,8 @@ async def report_card_valuation(request, ticker):
         rev_key, _ = valuation_revision_cache_keys(user_id, ticker)
         cached = await cache.aget(rev_key)
 
+    base_key, base_lock_key = valuation_base_cache_keys(ticker)
     if not cached:
-        base_key, _ = valuation_base_cache_keys(ticker)
         cached = await cache.aget(base_key)
 
     if cached:
@@ -949,7 +952,8 @@ async def report_card_valuation(request, ticker):
             {"unavailable": True},
         )
 
-    analyse_valuation.delay(asset.id, user_id, user_note, price_target)
+    if not await cache.aget(base_lock_key):
+        analyse_valuation.delay(asset.id, user_id, user_note, price_target)
     return render(
         request,
         "core/partials/report_card_valuation.html",
@@ -962,14 +966,14 @@ async def report_card_valuation(request, ticker):
     )
 
 
-async def report_card_product_flywheel(request, ticker):
+async def report_card_product(request, ticker):
     """Partial: report card product flywheel score. Runs agent in background if not cached."""
     ticker = ticker.upper()
     asset = await Asset.objects.filter(ticker=ticker).afirst()
     if not asset:
         return render(
             request,
-            "core/partials/report_card_product_flywheel.html",
+            "core/partials/report_card_product.html",
             {"unavailable": True},
         )
 
@@ -992,11 +996,11 @@ async def report_card_product_flywheel(request, ticker):
     # Check revision cache first if user has notes (and not forcing base), then fall back to base
     cached = None
     if not force_base and (user_note or price_target is not None):
-        rev_key, _ = product_flywheel_revision_cache_keys(user_id, ticker)
+        rev_key, _ = product_revision_cache_keys(user_id, ticker)
         cached = await cache.aget(rev_key)
 
+    base_key, base_lock_key = product_base_cache_keys(ticker)
     if not cached:
-        base_key, _ = product_flywheel_base_cache_keys(ticker)
         cached = await cache.aget(base_key)
 
     if cached:
@@ -1004,7 +1008,7 @@ async def report_card_product_flywheel(request, ticker):
             filled_dots = round(cached["score"])
             response = render(
                 request,
-                "core/partials/report_card_product_flywheel.html",
+                "core/partials/report_card_product.html",
                 {
                     "flywheel": cached,
                     "filled_dots": filled_dots,
@@ -1015,12 +1019,12 @@ async def report_card_product_flywheel(request, ticker):
             response["HX-Trigger"] = "section-scored"
             return response
         else:
-            fp = product_flywheel_base_fingerprint()
-            if product_flywheel_is_cache_valid(cached, fp):
+            fp = product_base_fingerprint()
+            if product_is_cache_valid(cached, fp):
                 filled_dots = round(cached["score"])
                 response = render(
                     request,
-                    "core/partials/report_card_product_flywheel.html",
+                    "core/partials/report_card_product.html",
                     {
                         "flywheel": cached,
                         "filled_dots": filled_dots,
@@ -1031,10 +1035,11 @@ async def report_card_product_flywheel(request, ticker):
                 response["HX-Trigger"] = "section-scored"
                 return response
 
-    analyse_product_flywheel.delay(asset.id, user_id, user_note, price_target)
+    if not await cache.aget(base_lock_key):
+        analyse_product.delay(asset.id, user_id, user_note, price_target)
     return render(
         request,
-        "core/partials/report_card_product_flywheel.html",
+        "core/partials/report_card_product.html",
         {
             "loading": True,
             "ticker": ticker,
@@ -1077,8 +1082,8 @@ async def report_card_people(request, ticker):
         rev_key, _ = people_revision_cache_keys(user_id, ticker)
         cached = await cache.aget(rev_key)
 
+    base_key, base_lock_key = people_base_cache_keys(ticker)
     if not cached:
-        base_key, _ = people_base_cache_keys(ticker)
         cached = await cache.aget(base_key)
 
     if cached:
@@ -1113,7 +1118,8 @@ async def report_card_people(request, ticker):
                 response["HX-Trigger"] = "section-scored"
                 return response
 
-    analyse_people.delay(asset.id, user_id, user_note, price_target)
+    if not await cache.aget(base_lock_key):
+        analyse_people.delay(asset.id, user_id, user_note, price_target)
     return render(
         request,
         "core/partials/report_card_people.html",
@@ -1155,7 +1161,7 @@ async def report_card_overall(request, ticker):
     sections = {}
 
     # 1. Financial Health
-    fh_key, _, _ = financial_health_cache_keys(ticker)
+    fh_key, _, _ = finance_cache_keys(ticker)
     cached_fh = await cache.aget(fh_key)
     if cached_fh and "score" in cached_fh:
         sections["finance"] = cached_fh
@@ -1167,7 +1173,7 @@ async def report_card_overall(request, ticker):
         sections["sentiment"] = cached_sent
 
     # 3. External Risk
-    er_key, _, _ = external_risk_cache_keys(ticker)
+    er_key, _, _ = risk_cache_keys(ticker)
     cached_er = await cache.aget(er_key)
     if cached_er and "score" in cached_er:
         sections["risk"] = cached_er
@@ -1186,10 +1192,10 @@ async def report_card_overall(request, ticker):
     # 5. Product Flywheel — check revision cache if user has notes, fall back to base
     cached_fw = None
     if user_has_notes:
-        rev_key, _ = product_flywheel_revision_cache_keys(user_id, ticker)
+        rev_key, _ = product_revision_cache_keys(user_id, ticker)
         cached_fw = await cache.aget(rev_key)
     if not cached_fw:
-        base_key, _ = product_flywheel_base_cache_keys(ticker)
+        base_key, _ = product_base_cache_keys(ticker)
         cached_fw = await cache.aget(base_key)
     if cached_fw and "score" in cached_fw:
         sections["product"] = cached_fw
@@ -1230,9 +1236,9 @@ async def report_card_overall(request, ticker):
     )
 
     if has_revisions:
-        data_key, _ = overall_user_cache_keys(user_id, ticker)
+        data_key, lock_key = overall_user_cache_keys(user_id, ticker)
     else:
-        data_key, _ = overall_base_cache_keys(ticker)
+        data_key, lock_key = overall_base_cache_keys(ticker)
     cached = await cache.aget(data_key)
 
     fp = overall_fingerprint(sections)
@@ -1251,7 +1257,8 @@ async def report_card_overall(request, ticker):
         )
 
     # Fire background agent
-    analyse_overall.delay(asset.id, user_id, sections)
+    if not await cache.aget(lock_key):
+        analyse_overall.delay(asset.id, user_id, sections)
     return render(
         request,
         "core/partials/report_card_overall.html",
@@ -1268,10 +1275,10 @@ async def report_card_overall(request, ticker):
 
 SECTION_TEMPLATES = {
     "sentiment": "core/partials/report_card_sentiment.html",
-    "finance": "core/partials/report_card_financial_health.html",
-    "risk": "core/partials/report_card_external_risk.html",
+    "finance": "core/partials/report_card_finance.html",
+    "risk": "core/partials/report_card_risk.html",
     "valuation": "core/partials/report_card_valuation.html",
-    "product": "core/partials/report_card_product_flywheel.html",
+    "product": "core/partials/report_card_product.html",
     "people": "core/partials/report_card_people.html",
     "overall": "core/partials/report_card_overall.html",
 }
@@ -1298,21 +1305,21 @@ async def regenerate_report_card(request, ticker, section):
         await cache.adelete_many(keys)
         analyse_sentiment.delay(asset.id)
     elif section == "finance":
-        keys = list(financial_health_cache_keys(ticker))
+        keys = list(finance_cache_keys(ticker))
         await cache.adelete_many(keys)
-        analyse_financial_health.delay(asset.id)
+        analyse_finance.delay(asset.id)
     elif section == "risk":
-        keys = list(external_risk_cache_keys(ticker))
+        keys = list(risk_cache_keys(ticker))
         await cache.adelete_many(keys)
-        analyse_external_risk.delay(asset.id)
+        analyse_risk.delay(asset.id)
     elif section == "valuation":
         keys = list(valuation_base_cache_keys(ticker))
         await cache.adelete_many(keys)
         analyse_valuation.delay(asset.id, 0, "", None)
     elif section == "product":
-        keys = list(product_flywheel_base_cache_keys(ticker))
+        keys = list(product_base_cache_keys(ticker))
         await cache.adelete_many(keys)
-        analyse_product_flywheel.delay(asset.id, 0, "", None)
+        analyse_product.delay(asset.id, 0, "", None)
     elif section == "people":
         keys = list(people_base_cache_keys(ticker))
         await cache.adelete_many(keys)

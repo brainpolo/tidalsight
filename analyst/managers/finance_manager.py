@@ -7,14 +7,14 @@ from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.financial_health_agent import (
-    FinancialHealthAssessment,
-    financial_health_agent,
+from analyst.agents.finance_agent import (
+    FinanceAssessment,
+    finance_agent,
 )
 from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
-    FINANCIAL_HEALTH_DATA_TTL,
-    FINANCIAL_HEALTH_LOCK_TTL,
+    FINANCE_DATA_TTL,
+    FINANCE_LOCK_TTL,
     MAX_AGENT_TURNS,
     cache_key,
 )
@@ -126,14 +126,14 @@ def _build_prompt(asset: Asset, fundamental: Fundamental) -> str:
     return "\n".join(lines)
 
 
-def _run_agent(prompt: str) -> FinancialHealthAssessment:
+def _run_agent(prompt: str) -> FinanceAssessment:
     config = RunConfig(
         model_provider=get_model_provider(),
         tracing_disabled=True,
     )
     result = asyncio.run(
         Runner.run(
-            financial_health_agent,
+            finance_agent,
             input=prompt + agent_grounding(),
             run_config=config,
             max_turns=MAX_AGENT_TURNS,
@@ -142,7 +142,7 @@ def _run_agent(prompt: str) -> FinancialHealthAssessment:
     return result.final_output
 
 
-def get_financial_health(asset: Asset) -> dict | None:
+def get_finance(asset: Asset) -> dict | None:
     """Return cached financial health assessment, regenerating only when fundamentals change."""
     data_key, _, lock_key = _cache_keys(asset.ticker)
 
@@ -162,7 +162,7 @@ def get_financial_health(asset: Asset) -> dict | None:
         )
         return existing
 
-    if not cache.add(lock_key, True, FINANCIAL_HEALTH_LOCK_TTL):
+    if not cache.add(lock_key, True, FINANCE_LOCK_TTL):
         logger.debug(
             "Financial health generation for %s already in progress", asset.ticker
         )
@@ -197,7 +197,7 @@ def get_financial_health(asset: Asset) -> dict | None:
         data["source_hash"] = fingerprint
         data["generated_at"] = timezone.now().isoformat()
 
-        cache.set(data_key, data, FINANCIAL_HEALTH_DATA_TTL)
+        cache.set(data_key, data, FINANCE_DATA_TTL)
         cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
