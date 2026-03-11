@@ -595,7 +595,7 @@
             </div>
             <textarea id="userNoteMobile" rows="2"
                       placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
-                      class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
+                      class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-y-auto max-h-[40vh] focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
             <div class="flex items-center justify-between mt-2">
                 <span class="text-[0.45rem] text-t4">Influences Valuation{% if asset.asset_class == "equity" %}, Product &amp; People{% else %} &amp; Product{% endif %} scores</span>
                 <button id="noteSaveBtnMobile" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>
@@ -781,7 +781,7 @@
                 </div>
                 <textarea id="userNote" rows="4"
                           placeholder="Your thesis, conviction, or concerns for {{ asset.ticker }}…"
-                          class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-hidden focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
+                          class="w-full bg-surface/[0.02] border border-surface/[0.05] rounded-sm px-2.5 py-2 text-[0.65rem] leading-relaxed text-heading placeholder-t4 resize-none overflow-y-auto max-h-[40vh] focus:outline-none focus:border-copper/20 transition-colors">{{ user_note }}</textarea>
                 <div class="flex items-center justify-between mt-2">
                     <span class="text-[0.45rem] text-t4 leading-tight">Influences Valuation{% if asset.asset_class == "equity" %}, Product &amp; People{% else %} &amp; Product{% endif %} scores<br><kbd class="opacity-50">⌘ Enter</kbd> to save</span>
                     <button id="noteSaveBtn" class="text-[0.55rem] font-semibold tracking-[0.08em] uppercase px-2.5 py-1 rounded-sm bg-copper/10 text-copper hover:bg-copper/20 transition-colors shrink-0 ml-2">Save</button>

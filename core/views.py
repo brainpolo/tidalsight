@@ -288,7 +288,9 @@ async def rankings(request):
             asset.is_personalized = False
         if asset.target_price and asset.latest_close:
             asset.upside = float(
-                (asset.target_price - asset.latest_close) / asset.latest_close * 100
+                (float(asset.target_price) - float(asset.latest_close))
+                / float(asset.latest_close)
+                * 100
             )
         else:
             asset.upside = None
