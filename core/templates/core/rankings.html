@@ -158,42 +158,42 @@
     {% endif %}
 
     {# ── Column headers (mobile) ── #}
-    <div class="rank-thead sm:hidden flex items-center gap-3 px-4 pt-2.5 pb-3 border-b border-surface/[0.06] sticky top-[2.75rem] z-10 bg-page">
-        <span class="w-7 shrink-0 text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4">#</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 pl-5">Asset</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right ml-auto">Score</span>
+    <div class="rank-thead lg:hidden flex items-center gap-3 px-4 pt-4 pb-5 sticky top-[calc(1.75rem+46px)] sm:top-[calc(2rem+48px)] z-10 bg-page">
+        <span class="w-7 shrink-0 text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4">#</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 pl-5">Asset</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right ml-auto">Score</span>
     </div>
 
     {# ── Column headers (desktop) ── #}
-    <div class="rank-thead hidden sm:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-4 sm:px-6 pt-3 pb-4 border-b border-surface/[0.06] sticky top-[3rem] z-10 bg-page">
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4">#</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4">Asset</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Score</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Verdict</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Price</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Target</span>
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Upside</span>
+    <div class="rank-thead hidden lg:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-6 pt-5 pb-6 sticky top-[calc(2rem+48px)] z-10 bg-page">
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4">#</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4">Asset</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Score</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Verdict</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Price</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Target</span>
+        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Upside</span>
     </div>
 
     {# ── Ranked list ── #}
     <div id="rankingsList">
     {% for asset in ranked_assets %}
         <a href="{% url 'core:asset_detail' asset.ticker %}"
-           class="rank-row {% if asset.rank <= 3 %}rank-podium rank-{{ asset.rank }}{% endif %} group block relative border-b border-surface/[0.04] transition-colors duration-200 hover:bg-surface/[0.02]"
+           class="rank-row {% if asset.rank <= 3 %}rank-podium rank-{{ asset.rank }} {% endif %}group block relative border-b border-surface/[0.04] transition-colors duration-200 hover:bg-surface/[0.02]"
            data-asset-class="{{ asset.asset_class }}"
            style="animation-delay: {{ asset.rank|add:"-1" }}00ms">
 
             {# ── Desktop row ── #}
-            <div class="hidden sm:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-4 sm:px-6 py-4">
+            <div class="hidden lg:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-6 py-4">
 
                 {# Rank #}
                 <div class="flex items-center">
-                    {% if asset.rank == 1 %}
+                    {% if asset.rank <= 10 %}
                     <span data-rank class="font-serif text-xl text-copper">{{ asset.rank }}</span>
-                    {% elif asset.rank == 2 %}
-                    <span data-rank class="font-serif text-xl text-copper-light/70">{{ asset.rank }}</span>
-                    {% elif asset.rank == 3 %}
-                    <span data-rank class="font-serif text-xl text-copper-light/50">{{ asset.rank }}</span>
+                    {% elif asset.rank <= 20 %}
+                    <span data-rank class="font-serif text-lg text-sea">{{ asset.rank }}</span>
+                    {% elif asset.rank <= 30 %}
+                    <span data-rank class="font-serif text-lg text-t2">{{ asset.rank }}</span>
                     {% else %}
                     <span data-rank class="font-serif text-lg text-t4">{{ asset.rank }}</span>
                     {% endif %}
@@ -257,11 +257,15 @@
             </div>
 
             {# ── Mobile row ── #}
-            <div class="sm:hidden flex items-center gap-3 px-4 py-3.5">
+            <div class="lg:hidden flex items-center gap-3 px-4 py-3.5">
                 {# Rank #}
                 <div class="w-7 shrink-0">
-                    {% if asset.rank <= 3 %}
+                    {% if asset.rank <= 10 %}
                     <span data-rank class="font-serif text-lg text-copper">{{ asset.rank }}</span>
+                    {% elif asset.rank <= 20 %}
+                    <span data-rank class="font-serif text-base text-sea">{{ asset.rank }}</span>
+                    {% elif asset.rank <= 30 %}
+                    <span data-rank class="font-serif text-base text-t2">{{ asset.rank }}</span>
                     {% else %}
                     <span data-rank class="font-serif text-base text-t4">{{ asset.rank }}</span>
                     {% endif %}
