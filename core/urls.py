@@ -36,6 +36,11 @@ urlpatterns = [
     ),
     path("assets/<str:ticker>/peers/", views.asset_peers, name="asset_peers"),
     path(
+        "assets/<str:ticker>/peers/regenerate/",
+        views.regenerate_peers,
+        name="regenerate_peers",
+    ),
+    path(
         "assets/<str:ticker>/sentiment/",
         views.asset_sentiment,
         name="asset_sentiment",

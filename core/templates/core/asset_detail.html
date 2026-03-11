@@ -757,7 +757,7 @@
         </div>
 
     <!-- Fundamentals (HTMX partial) -->
-    <div class="reveal-section" hx-get="{% url 'core:asset_fundamentals' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+    <div class="reveal-section" hx-get="{% url 'core:asset_fundamentals' asset.ticker %}" hx-trigger="load, retryFundamentals from:body delay:6s" hx-swap="innerHTML">
             <section class="py-6 sm:py-10">
                 <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Fundamentals</div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">

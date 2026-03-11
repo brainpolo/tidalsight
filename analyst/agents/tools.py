@@ -9,8 +9,8 @@ from scraper.models import HNPost, NewsArticle, RedditPost
 
 @function_tool
 def validate_ticker(ticker: str) -> str:
-    """Check whether a ticker symbol is real and tradeable. Call this for every ticker you
-    plan to reference in the digest. If the ticker is invalid, do not mention it."""
+    """Validate a ticker against Yahoo Finance. If valid, the asset is created in the
+    database if it doesn't already exist. Call this before referencing any ticker."""
     ticker = ticker.upper().strip().lstrip("$")
     try:
         asset = get_or_create_asset(ticker)

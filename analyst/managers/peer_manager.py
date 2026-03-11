@@ -24,8 +24,8 @@ def sync_peers(asset: Asset) -> list[Asset]:
 
     try:
         prompt = (
-            f"Return {PEER_TARGET_COUNT} direct competitor/peer stock tickers for "
-            f"{asset_label(asset)}."
+            f"Return {PEER_TARGET_COUNT} direct competitor/peer tickers for "
+            f"{asset_label(asset)}. Peers must be the same asset class."
         )
 
         discovery: PeerDiscovery = run_agent(peer_discovery_agent, prompt)

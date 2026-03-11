@@ -685,9 +685,18 @@ async def asset_fundamentals(request, ticker):
     if not asset:
         return render(request, "core/partials/asset_fundamentals.html", {})
 
-    fetch_fundamentals_for_asset.delay(asset.id)
-
     fundamental = await asset.fundamentals.afirst()
+
+    if not fundamental:
+        fetch_fundamentals_for_asset.delay(asset.id)
+        response = render(
+            request,
+            "core/partials/asset_fundamentals.html",
+            {"loading": True},
+        )
+        response["HX-Trigger-After-Settle"] = '{"retryFundamentals": true}'
+        return response
+
     latest_price = await asset.prices.afirst()
     fundamental_cards = build_fundamental_cards(fundamental, latest_price)
 
@@ -742,12 +751,20 @@ async def asset_peers(request, ticker):
     cache_key = f"asset_peers:{ticker}"
     cached = await cache.aget(cache_key)
     if cached is not None:
-        return render(request, "core/partials/asset_peers.html", {"peers": cached})
+        return render(
+            request,
+            "core/partials/asset_peers.html",
+            {"peers": cached, "ticker": ticker},
+        )
 
     if not await asset.peers.aexists():
         # Kick off Celery task and tell HTMX to retry
         discover_peers.delay(asset.id)
-        response = render(request, "core/partials/asset_peers.html", {"loading": True})
+        response = render(
+            request,
+            "core/partials/asset_peers.html",
+            {"loading": True, "ticker": ticker},
+        )
         response["HX-Trigger-After-Settle"] = '{"retryPeers": true}'
         return response
 
@@ -787,7 +804,35 @@ async def asset_peers(request, ticker):
     if peer_data:
         await cache.aset(cache_key, peer_data, PEERS_CACHE_TTL)
 
-    return render(request, "core/partials/asset_peers.html", {"peers": peer_data})
+    return render(
+        request,
+        "core/partials/asset_peers.html",
+        {"peers": peer_data, "ticker": ticker},
+    )
+
+
+async def regenerate_peers(request, ticker):
+    """Staff-only: clear existing peers and re-discover."""
+    if not request.user.is_staff:
+        return HttpResponseForbidden()
+
+    ticker = ticker.upper()
+    asset = await Asset.objects.filter(ticker=ticker, is_active=True).afirst()
+    if not asset:
+        raise Http404
+
+    # Clear existing peers and cache
+    await sync_to_async(asset.peers.clear)()
+    await cache.adelete(f"asset_peers:{ticker}")
+
+    # Kick off discovery
+    discover_peers.delay(asset.id)
+
+    response = render(
+        request, "core/partials/asset_peers.html", {"loading": True, "ticker": ticker}
+    )
+    response["HX-Trigger-After-Settle"] = '{"retryPeers": true}'
+    return response
 
 
 async def asset_sentiment(request, ticker):

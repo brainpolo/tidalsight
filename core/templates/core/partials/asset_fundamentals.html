@@ -1,6 +1,14 @@
 {% load formatting %}
 
-{% if fundamental_cards.cards %}
+{% if loading %}
+    <section class="py-6 sm:py-10">
+        <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Fundamentals</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">
+            {% include "core/components/skeleton_loader.html" with variant="stats" %}
+        </div>
+    </section>
+    <div class="h-px bg-surface/[0.04]"></div>
+{% elif fundamental_cards.cards %}
     <section class="py-6 sm:py-10">
         <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Fundamentals</div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">

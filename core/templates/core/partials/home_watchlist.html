@@ -33,7 +33,8 @@
     }
 </style>
 
-<div class="grid grid-cols-2 xl:grid-cols-3 gap-2 max-h-[460px] overflow-y-auto scrollbar-hide p-1">
+<div class="grid grid-cols-2 xl:grid-cols-3 gap-2 max-h-[460px] overflow-y-auto scrollbar-hide p-1"
+     style="-webkit-mask-image: linear-gradient(to bottom, transparent, black 32px, black calc(100% - 48px), transparent); mask-image: linear-gradient(to bottom, transparent, black 32px, black calc(100% - 48px), transparent);"
     {% for item in items %}
     <a href="{% url 'core:asset_detail' item.asset.ticker %}"
        class="group wl-card {% if item.price_change_pct != None %}{% if item.price_change_pct >= 0 %}wl-card--up{% else %}wl-card--down{% endif %}{% endif %}">
