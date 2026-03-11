@@ -920,12 +920,12 @@ async def _get_user_context(request, asset) -> _UserContext:
     """Return user context for the current user + asset."""
     if not request.user.is_authenticated:
         return _UserContext(0, "", None)
-    user_asset = await UserAsset.objects.filter(
-        user=request.user, asset=asset
-    ).afirst()
+    user_asset = await UserAsset.objects.filter(user=request.user, asset=asset).afirst()
     if not user_asset:
         return _UserContext(0, "", None)
-    price_target = float(user_asset.price_target) if user_asset.price_target is not None else None
+    price_target = (
+        float(user_asset.price_target) if user_asset.price_target is not None else None
+    )
     return _UserContext(request.user.id, user_asset.note, price_target)
 
 

@@ -190,7 +190,9 @@ def get_personal_outlook(user_id: int) -> dict | None:
 
         fingerprint = _source_fingerprint(digest, summaries)
         if existing and existing.get("source_hash") == fingerprint:
-            logger.debug("Outlook sources unchanged for user %s, refreshing TTL", user_id)
+            logger.debug(
+                "Outlook sources unchanged for user %s, refreshing TTL", user_id
+            )
             cache.set(fresh_key, True, OUTLOOK_FRESHNESS_TTL)
             return existing
 

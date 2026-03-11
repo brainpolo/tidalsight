@@ -98,7 +98,11 @@ def _relevant_assets() -> _RelevantTickers:
     3. Is in the top 100 most-viewed assets all-time
     """
     weekly_cutoff = timezone.now() - timedelta(days=_WEEKLY_VIEWS_DAYS)
-    top_ids = Asset.objects.filter(is_active=True).order_by("-views")[:_TOP_VIEWED_LIMIT].values("id")
+    top_ids = (
+        Asset.objects.filter(is_active=True)
+        .order_by("-views")[:_TOP_VIEWED_LIMIT]
+        .values("id")
+    )
 
     assets = (
         Asset.objects.filter(

@@ -38,7 +38,9 @@ def _get_loop() -> asyncio.AbstractEventLoop:
         return _loop
 
 
-def run_agent[T](agent: Agent[T], prompt: str, *, max_turns: int = MAX_AGENT_TURNS) -> T:
+def run_agent[T](
+    agent: Agent[T], prompt: str, *, max_turns: int = MAX_AGENT_TURNS
+) -> T:
     """Run an openai-agents ``Agent`` synchronously and return its typed output.
 
     Uses a long-lived background event loop so that:

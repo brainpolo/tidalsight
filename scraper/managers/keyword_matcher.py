@@ -13,7 +13,9 @@ def build_asset_keyword_map() -> dict[str, list[Asset]]:
     - Asset ticker (3+ chars only to avoid false positives)
     - Website domain name (e.g. "google" from google.com)
     """
-    assets = Asset.objects.filter(is_active=True).only("id", "ticker", "name", "website")
+    assets = Asset.objects.filter(is_active=True).only(
+        "id", "ticker", "name", "website"
+    )
     keyword_map: dict[str, list[Asset]] = {}
 
     for asset in assets:
