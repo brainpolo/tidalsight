@@ -75,6 +75,8 @@
 <div class="grain"></div>
 
 <div class="min-h-screen">
+    {% include "core/components/header.html" %}
+
     <!-- Hero with 3D ocean backdrop -->
     <div class="hero-scene">
         <svg class="tide-svg" viewBox="0 0 1400 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -136,7 +138,6 @@
         <div class="hero-scene-fade"></div>
 
         <div class="hero-content">
-            {% include "core/components/header.html" %}
 
             <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
                 {% if request.user.is_authenticated %}

@@ -10,16 +10,16 @@
         </div>
 
         {# Desktop nav #}
-        <nav class="hidden md:flex items-center gap-6 lg:gap-8">
-            <a href="{% url 'core:strategy' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="compass" class="size-3.5"></i> strategy</a>
-            <a href="{% url 'core:rankings' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="trophy" class="size-3.5"></i> rankings</a>
+        <nav class="hidden md:flex items-center gap-3 lg:gap-8">
+            <a href="{% url 'core:strategy' %}" title="Strategy" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="compass" class="size-3.5"></i><span class="hidden lg:inline"> strategy</span></a>
+            <a href="{% url 'core:rankings' %}" title="Rankings" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="trophy" class="size-3.5"></i><span class="hidden lg:inline"> rankings</span></a>
             {% if user.is_authenticated %}
-                {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="shield" class="size-3.5"></i> admin</a>{% endif %}
-                <a href="{% url 'core:profile' %}" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t2 hover:text-t1 transition-colors"><i data-lucide="user" class="size-3.5"></i> {{ user.first_name|default:user.username }}</a>
-                <form method="post" action="{% url 'core:sign_out' %}" class="inline">{% csrf_token %}<button type="submit" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-copper hover:text-copper-light transition-colors cursor-pointer"><i data-lucide="log-out" class="size-3.5"></i> sign out</button></form>
+                {% if user.is_staff %}<a href="{% url 'admin:index' %}" title="Admin" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t3 hover:text-t2 transition-colors"><i data-lucide="shield" class="size-3.5"></i><span class="hidden lg:inline"> admin</span></a>{% endif %}
+                <a href="{% url 'core:profile' %}" title="Profile" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-t2 hover:text-t1 transition-colors"><i data-lucide="user" class="size-3.5"></i><span class="hidden lg:inline"> {{ user.first_name|default:user.username }}</span></a>
+                <form method="post" action="{% url 'core:sign_out' %}" class="inline">{% csrf_token %}<button type="submit" title="Sign out" class="flex items-center gap-1.5 text-xs font-medium tracking-[0.06em] text-copper hover:text-copper-light transition-colors cursor-pointer"><i data-lucide="log-out" class="size-3.5"></i><span class="hidden lg:inline"> sign out</span></button></form>
             {% else %}
-                <a href="{% url 'core:sign_in' %}" class="text-xs font-medium tracking-[0.06em] text-t2 hover:text-t1 transition-colors">sign in</a>
-                <a href="{% url 'core:sign_up' %}" class="text-xs font-medium tracking-[0.06em] px-5 py-2 border border-copper/20 rounded text-copper hover:text-copper-light hover:border-copper/40 transition-all">sign up</a>
+                <a href="{% url 'core:sign_in' %}" class="text-xs font-medium tracking-[0.06em] text-t2 hover:text-t1 transition-colors"><i data-lucide="log-in" class="size-3.5 lg:hidden"></i><span class="hidden lg:inline">sign in</span></a>
+                <a href="{% url 'core:sign_up' %}" class="text-xs font-medium tracking-[0.06em] lg:px-5 lg:py-2 lg:border lg:border-copper/20 lg:rounded text-copper hover:text-copper-light lg:hover:border-copper/40 transition-all"><i data-lucide="user-plus" class="size-3.5 lg:hidden"></i><span class="hidden lg:inline">sign up</span></a>
             {% endif %}
 
             {# Theme dropdown #}
