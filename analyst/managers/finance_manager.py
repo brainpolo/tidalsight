@@ -14,7 +14,7 @@ from analyst.app_behaviour import (
     FINANCE_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import compute_label
+from analyst.grounding import calibration_anchors, compute_label
 from analyst.runner import run_agent
 from analyst.utils import asset_label
 from core.templatetags.formatting import abbreviate
@@ -121,7 +121,7 @@ def _build_prompt(asset: Asset, fundamental: Fundamental) -> str:
     lines.append("- Current Ratio: >1.0 is healthy, >2.0 is strong")
     lines.append("- Revenue Growth: S&P 500 average ~5-7% YoY")
 
-    return "\n".join(lines)
+    return "\n".join(lines) + calibration_anchors("finance", asset.asset_class)
 
 
 def _run_agent(prompt: str) -> FinanceAssessment:

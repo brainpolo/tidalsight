@@ -131,7 +131,7 @@ wheels = [
 
 [[package]]
 name = "byteplus-python-sdk-v2"
-version = "3.0.33"
+version = "3.0.34"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -139,9 +139,9 @@ dependencies = [
     { name = "six" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/a6/0842f1fe275d6af2fe97b1d0f38466e1df3f02fd2953f56665a995dbb6e9/byteplus_python_sdk_v2-3.0.33.tar.gz", hash = "sha256:67984d12c2f1b485aa2d3364e8fdcecb51251678f3a89f92c606d878f84f4d62", size = 3274271, upload-time = "2026-03-02T12:57:55.848Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/1e/a86461db85e500946855e73d220e303c6332e8a769f22fa322fd53b5170b/byteplus_python_sdk_v2-3.0.34.tar.gz", hash = "sha256:d685b7b63ca6591b09f52454441d9a1c4cf2bb5e413e72afefdfa3cce15f6d45", size = 3278143, upload-time = "2026-03-10T11:36:25.552Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/8b/77991b8065a34f33f112585ce01824013b495cc945863006ca790c88b3d3/byteplus_python_sdk_v2-3.0.33-py2.py3-none-any.whl", hash = "sha256:1e9ef08fc28a534081fe0a8f0a0ddb46354b16a6873833195a924f19213f4548", size = 12814117, upload-time = "2026-03-02T12:57:53.389Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/32/cf91b79112086a502014cdb63da041c755cbf5cc6f53808d9b81ab85f86d/byteplus_python_sdk_v2-3.0.34-py2.py3-none-any.whl", hash = "sha256:52ad911e87db4d5bba1ee2dafbf101afcf8a6cb201035a5c70436c33f017e352", size = 12840595, upload-time = "2026-03-10T11:36:20.18Z" },
 ]
 
 [[package]]

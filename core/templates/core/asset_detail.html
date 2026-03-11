@@ -53,6 +53,7 @@
         opacity: 1;
         transform: none;
     }
+
 </style>
 {% endblock %}
 
@@ -63,7 +64,7 @@
     {% include "core/components/header.html" with show_search=True %}
 
     <!-- Fixed asset context banner -->
-    <div id="assetBanner" class="asset-banner fixed top-[calc(1.75rem+59px)] sm:top-[calc(2rem+63px)] left-0 right-0 z-30">
+    <div id="assetBanner" class="asset-banner fixed top-[calc(1.75rem+58px)] sm:top-[calc(2rem+62px)] left-0 right-0 z-30">
         <div class="max-w-[1120px] mx-auto px-4 sm:px-10 {% if request.user.is_authenticated %}xl:pr-[calc(240px+2rem+2.5rem)]{% endif %}">
             <div class="banner-bar py-1 sm:py-1.5 flex items-center justify-center gap-2 sm:gap-3 bg-page/90 backdrop-blur-md border-b border-surface/[0.06] opacity-0 -translate-y-2 transition-all duration-200 ease-out">
                 {% include "core/components/asset_favicon.html" with website=asset.website ticker=asset.ticker class="size-4 sm:size-5 shrink-0" sz=32 %}

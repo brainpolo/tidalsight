@@ -14,7 +14,7 @@ from analyst.app_behaviour import (
     VALUATION_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import compute_label
+from analyst.grounding import calibration_anchors, compute_label
 from analyst.managers.revision_manager import revise_assessment
 from analyst.runner import run_agent
 from analyst.utils import asset_label
@@ -144,7 +144,7 @@ def _build_prompt(
             display = f"{prefix}{float(raw):,.2f}{suffix}"
         lines.append(f"- **{label}**: {display}")
 
-    return "\n".join(lines)
+    return "\n".join(lines) + calibration_anchors("valuation", asset.asset_class)
 
 
 def _run_agent(prompt: str) -> ValuationAssessment:

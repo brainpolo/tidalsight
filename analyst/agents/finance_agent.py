@@ -34,7 +34,8 @@ finance_agent = Agent(
         "A utility with 100+ D/E may be normal for its sector. "
         "Negative free cash flow for a high-growth asset is less alarming than "
         "for a mature one. Use judgement.\n\n"
-        "If critical data is missing, note it and score conservatively."
+        "If critical data is missing, note what is missing and penalise the score "
+        "accordingly — missing data is a red flag, not an excuse for a middling score."
     ),
     model=BYTEDANCE_SEED_2_0_MINI,
     model_settings=ModelSettings(temperature=0.3),

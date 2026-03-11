@@ -18,7 +18,7 @@ from analyst.app_behaviour import (
     SENTIMENT_REDDIT_COMMENTS_PER_POST,
     cache_key,
 )
-from analyst.grounding import compute_label
+from analyst.grounding import calibration_anchors, compute_label
 from analyst.runner import run_agent
 from analyst.utils import asset_label
 from scraper.models import (
@@ -119,7 +119,8 @@ def _build_prompt(
     entries = entries[:SENTIMENT_MAX_POSTS]
 
     header = f"# Community Posts for {asset_label(asset)}\n\n"
-    return header + "\n\n".join(text for _, text in entries)
+    body = header + "\n\n".join(text for _, text in entries)
+    return body + calibration_anchors("sentiment", asset.asset_class)
 
 
 def _run_agent(prompt: str) -> SentimentAnalysis:

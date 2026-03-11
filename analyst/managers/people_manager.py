@@ -14,7 +14,7 @@ from analyst.app_behaviour import (
     REVISION_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import compute_label
+from analyst.grounding import calibration_anchors, compute_label
 from analyst.managers.revision_manager import revise_assessment
 from analyst.runner import run_agent
 from analyst.utils import asset_label
@@ -70,6 +70,7 @@ def _build_prompt(asset: Asset) -> str:
     return (
         f"Assess the people quality — leadership, talent, hiring practices, "
         f"and organisational culture — for {asset_label(asset)}."
+        + calibration_anchors("people", asset.asset_class)
     )
 
 

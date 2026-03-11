@@ -17,7 +17,7 @@ from analyst.app_behaviour import (
     REVISION_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import compute_label
+from analyst.grounding import calibration_anchors, compute_label
 from analyst.managers.revision_manager import revise_assessment
 from analyst.runner import run_agent
 from analyst.utils import asset_label
@@ -70,7 +70,10 @@ def _is_cache_valid(existing: dict, fingerprint: str) -> bool:
 
 def _build_prompt(asset: Asset) -> str:
     """Build prompt with company info (no user context). Agent does its own research."""
-    return f"Assess the product flywheel and competitive moat for {asset_label(asset)}."
+    return (
+        f"Assess the product flywheel and competitive moat for {asset_label(asset)}."
+        + calibration_anchors("product", asset.asset_class)
+    )
 
 
 def _run_agent(prompt: str) -> ProductAssessment:

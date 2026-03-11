@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import random
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 
@@ -201,7 +202,33 @@ def pwa_manifest(request):
 
 
 async def home(request):
+    hour = timezone.localtime(timezone.now()).hour
+    if hour < 12:
+        greeting = random.choice(
+            [
+                "Good morning",
+                "Top of the morning",
+                "Welcome back",
+            ]
+        )
+    elif hour < 18:
+        greeting = random.choice(
+            [
+                "Good afternoon",
+                "Good day",
+                "Welcome back",
+            ]
+        )
+    else:
+        greeting = random.choice(
+            [
+                "Good evening",
+                "Welcome back",
+            ]
+        )
+
     context = {
+        "greeting": greeting,
         "asset_count": await _cached("home:asset_count", Asset.objects.count),
         "post_count": await _cached("home:post_count", total_post_count),
         "digest_refresh_interval": DIGEST_REFRESH_INTERVAL,
@@ -295,12 +322,38 @@ async def rankings(request):
         else:
             asset.upside = None
 
+    # Build score distribution - scores 8-28 (realistic range)
+    score_buckets = []
+    for s in range(8, 29):
+        bucket_assets = [a for a in ranked if a.report_card_score == s]
+        if s <= 12:
+            verdict = "Strong Sell"
+            css = "ss"
+        elif s <= 16:
+            verdict = "Sell"
+            css = "s"
+        elif s <= 21:
+            verdict = "Hold"
+            css = "h"
+        elif s <= 25:
+            verdict = "Buy"
+            css = "b"
+        else:
+            verdict = "Strong Buy"
+            css = "sb"
+        score_buckets.append(
+            {"score": s, "assets": bucket_assets, "verdict": verdict, "css": css}
+        )
+    max_bucket_count = max((len(b["assets"]) for b in score_buckets), default=1) or 1
+
     return render(
         request,
         "core/rankings.html",
         {
             "ranked_assets": ranked,
             "active_view": view,
+            "score_buckets": score_buckets,
+            "max_bucket_count": max_bucket_count,
         },
     )
 

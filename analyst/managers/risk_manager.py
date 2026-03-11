@@ -14,7 +14,7 @@ from analyst.app_behaviour import (
     RISK_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import compute_label
+from analyst.grounding import calibration_anchors, compute_label
 from analyst.runner import run_agent
 from analyst.utils import asset_label
 from scraper.models import Asset
@@ -30,8 +30,10 @@ def _cache_keys(ticker: str) -> tuple[str, str, str]:
     )
 
 
-def _run_agent(label: str) -> RiskAssessment:
-    prompt = f"Assess the external risk profile for {label}."
+def _run_agent(label: str, asset_class: str) -> RiskAssessment:
+    prompt = f"Assess the external risk profile for {label}." + calibration_anchors(
+        "risk", asset_class
+    )
     return run_agent(risk_agent, prompt)
 
 
@@ -54,7 +56,7 @@ def get_risk(asset: Asset) -> dict | None:
     try:
         logger.info("Generating external risk for %s...", asset.ticker)
 
-        assessment = _run_agent(asset_label(asset))
+        assessment = _run_agent(asset_label(asset), asset.asset_class)
         data = assessment.model_dump()
         data["label"] = compute_label("risk", data["score"])
         data["generated_at"] = timezone.now().isoformat()

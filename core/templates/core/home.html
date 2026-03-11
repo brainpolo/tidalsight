@@ -146,7 +146,7 @@
                     <div class="flex items-start justify-between gap-20 max-lg:flex-col max-lg:gap-14">
                         <div class="max-w-[540px] shrink-0">
                             <h1 class="font-serif font-normal text-[clamp(2.4rem,5vw,3.8rem)] leading-[1.08] tracking-tight text-t1 mb-8">
-                                Welcome back,<br><em class="italic text-copper-light">{{ request.user.first_name|default:request.user.username }}</em>
+                                {{ greeting }},<br><em class="italic text-copper-light">{{ request.user.first_name|default:request.user.username }}</em>
                             </h1>
                             <div class="mb-8 h-px bg-gradient-to-r from-surface/[0.06] to-transparent"></div>
                             {% include "core/components/asset_search_widget.html" %}

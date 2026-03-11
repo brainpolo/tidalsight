@@ -53,7 +53,8 @@
     /* Dimension cards */
     .dim-card {
         position: relative;
-        transition: background-color 0.4s ease;
+        transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .dim-card::before {
         content: '';
@@ -62,10 +63,124 @@
         height: 1px;
         background: linear-gradient(90deg, transparent, var(--ts-divider) 30%, var(--ts-divider) 70%, transparent);
     }
-    .dim-card:first-child::before { display: none; }
-    @media (min-width: 768px) {
-        .dim-card:nth-child(2)::before,
-        .dim-card:nth-child(3)::before { display: none; }
+    .dim-card:first-child::before, .dim-card:nth-child(2)::before, .dim-card:nth-child(3)::before { display: none; }
+    .dim-card.dimmed {
+        opacity: 0.08;
+        transform: scale(0.96) translateY(4px);
+        filter: grayscale(1);
+    }
+
+    /* Viewfinder frame — corner brackets only */
+    #rcFrame {
+        position: absolute;
+        pointer-events: none;
+        z-index: 1;
+        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rc-corner {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rc-corner::before, .rc-corner::after {
+        content: '';
+        position: absolute;
+        background: var(--color-copper, #c87941);
+    }
+    /* Top-left */
+    .rc-corner--tl { top: 0; left: 0; }
+    .rc-corner--tl::before { top: 0; left: 0; width: 28px; height: 1.5px; }
+    .rc-corner--tl::after  { top: 0; left: 0; width: 1.5px; height: 28px; }
+    /* Top-right */
+    .rc-corner--tr { top: 0; right: 0; }
+    .rc-corner--tr::before { top: 0; right: 0; width: 28px; height: 1.5px; }
+    .rc-corner--tr::after  { top: 0; right: 0; width: 1.5px; height: 28px; }
+    /* Bottom-left */
+    .rc-corner--bl { bottom: 0; left: 0; }
+    .rc-corner--bl::before { bottom: 0; left: 0; width: 28px; height: 1.5px; }
+    .rc-corner--bl::after  { bottom: 0; left: 0; width: 1.5px; height: 28px; }
+    /* Bottom-right */
+    .rc-corner--br { bottom: 0; right: 0; }
+    .rc-corner--br::before { bottom: 0; right: 0; width: 28px; height: 1.5px; }
+    .rc-corner--br::after  { bottom: 0; right: 0; width: 1.5px; height: 28px; }
+    /* Glow behind corners */
+    .rc-corner::before { box-shadow: 0 0 8px var(--color-copper, #c87941); opacity: 0.4; }
+    .rc-corner::after  { box-shadow: 0 0 8px var(--color-copper, #c87941); opacity: 0.4; }
+
+    /* Dashed crosshair lines inside frame */
+    .rc-crosshair {
+        position: absolute;
+        background: repeating-linear-gradient(
+            90deg, var(--color-copper, #c87941) 0 3px, transparent 3px 9px
+        );
+        opacity: 0.06;
+        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rc-crosshair--h { height: 1px; left: 28px; right: 28px; top: 50%; }
+    .rc-crosshair--v { width: 1px; top: 28px; bottom: 28px; left: 50%;
+        background: repeating-linear-gradient(
+            180deg, var(--color-copper, #c87941) 0 3px, transparent 3px 9px
+        );
+    }
+
+    /* Asset class pills */
+    .rc-pill-track {
+        position: relative;
+        display: inline-flex;
+        gap: 2px;
+        padding: 3px;
+        border-radius: 4px;
+        background: color-mix(in srgb, var(--ts-surface) 3%, transparent);
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 5%, transparent);
+    }
+    .rc-class-pill {
+        position: relative;
+        z-index: 1;
+        font-size: 0.55rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 6px 16px;
+        border-radius: 2px;
+        border: none;
+        color: var(--ts-t4);
+        cursor: pointer;
+        transition: color 0.25s;
+        background: none;
+    }
+    .rc-class-pill:hover { color: var(--ts-t2); }
+    .rc-class-pill.active { color: var(--ts-t1); }
+    /* Sliding indicator */
+    .rc-pill-slider {
+        position: absolute;
+        top: 3px; bottom: 3px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--ts-surface) 8%, transparent);
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 8%, transparent);
+        transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                    width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 0;
+    }
+
+    /* Staggered card entrance */
+    .dim-card { opacity: 0; transform: translateY(16px); }
+    .reveal.visible .dim-card {
+        opacity: 1; transform: none;
+        transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible .dim-card:nth-child(1) { transition-delay: 0.05s; }
+    .reveal.visible .dim-card:nth-child(2) { transition-delay: 0.10s; }
+    .reveal.visible .dim-card:nth-child(3) { transition-delay: 0.15s; }
+    .reveal.visible .dim-card:nth-child(4) { transition-delay: 0.25s; }
+    .reveal.visible .dim-card:nth-child(5) { transition-delay: 0.30s; }
+    .reveal.visible .dim-card:nth-child(6) { transition-delay: 0.35s; }
+    /* Once revealed, allow dimming transition to take over */
+    .reveal.visible .dim-card.dimmed {
+        opacity: 0.08;
+        transform: scale(0.96) translateY(4px);
+        filter: grayscale(1);
     }
 
     /* Feature accent line */
@@ -117,18 +232,18 @@
     <!-- Page header -->
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="pt-8 pb-20">
-            <div class="sec-num mb-4">Strategy</div>
+            <div class="sec-num mb-4">Methodology</div>
             <h1 class="font-serif font-normal text-[clamp(2.4rem,5vw,4rem)] leading-[1.1] tracking-tight text-t1 max-w-[680px] mb-8">
                 How we build <em class="italic text-copper-light">conviction</em>
             </h1>
             <div class="max-w-[600px]">
                 <p class="text-[0.9rem] font-light leading-[1.7] text-t2 mb-6">
-                    Every assessment we produce is the convergence of independent data layers &mdash;
+                    Every assessment is the convergence of independent data layers &mdash;
                     market prices, social sentiment, financial news, and fundamental analysis &mdash;
                     cross-referenced and synthesised by specialised AI agents.
                 </p>
                 <p class="text-[0.85rem] font-light leading-[1.7] text-t3">
-                    No single source drives a decision. No signal is surfaced without multi-layer agreement.
+                    No single source drives a verdict. Divergence defaults to Hold.
                     This document describes the methodology.
                 </p>
             </div>
@@ -180,42 +295,67 @@
                 </div>
                 <p class="text-[0.85rem] font-light leading-relaxed text-t3 max-w-[380px] lg:pt-10">
                     Equities are assessed across all six dimensions. Crypto, commodities, and currencies
-                    receive four &mdash; Financial Health and Leadership don&rsquo;t apply when there are
-                    no balance sheets or executive teams. Scores are scaled to 30 regardless, so verdicts
+                    receive four &mdash; Finance and People are excluded where balance sheets and executive
+                    teams do not exist. Scores are normalised to 30 regardless, so verdicts
                     remain comparable across asset classes.
                 </p>
             </div>
 
-            <div class="grid grid-cols-3 max-md:grid-cols-1 reveal-stagger">
-                <div class="dim-card py-6 pr-8 max-md:pr-0">
-                    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-copper/60 mb-3">Hygiene &middot; 1.5x weight &middot; <span class="text-t4">Equities only</span></div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-2">Financial Health</h3>
-                    <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Margins, growth, cash flow, and leverage benchmarked against sector peers.</p>
+            <!-- Asset class selector -->
+            <div class="flex flex-wrap items-center gap-4 mb-12" id="rcMethodology">
+                <div class="rc-pill-track">
+                    <div class="rc-pill-slider" id="rcSlider"></div>
+                    <button type="button" class="rc-class-pill active" data-rc-class="equity">Equity</button>
+                    <button type="button" class="rc-class-pill" data-rc-class="crypto">Crypto</button>
+                    <button type="button" class="rc-class-pill" data-rc-class="commodity">Commodity</button>
+                    <button type="button" class="rc-class-pill" data-rc-class="currency">Currency</button>
                 </div>
-                <div class="dim-card py-6 px-8 max-md:px-0">
-                    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-copper/60 mb-3">Hygiene &middot; 1.5x weight</div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-2">Sentiment</h3>
-                    <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Community discussion across Reddit, Hacker News, and financial media &mdash; weighted by engagement. Adapted per asset class: whale movements and protocol upgrades for crypto, supply disruptions for commodities, central bank signals for currencies.</p>
+                <span id="rcDimCount" class="text-[0.6rem] tabular-nums text-copper/60 transition-all duration-300">6 of 6 dimensions</span>
+            </div>
+
+            <!-- Dimension grid with viewfinder frame -->
+            <div class="relative" id="rcGrid">
+                <div id="rcFrame">
+                    <div class="rc-corner rc-corner--tl"></div>
+                    <div class="rc-corner rc-corner--tr"></div>
+                    <div class="rc-corner rc-corner--bl"></div>
+                    <div class="rc-corner rc-corner--br"></div>
+                    <div class="rc-crosshair rc-crosshair--h"></div>
+                    <div class="rc-crosshair rc-crosshair--v"></div>
                 </div>
-                <div class="dim-card py-6 pl-8 max-md:pl-0">
-                    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-copper/60 mb-3">Hygiene &middot; 1.5x weight</div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-2">External Risk</h3>
-                    <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Regulatory exposure, geopolitical concentration, competitive threats, and litigation. For crypto: protocol vulnerabilities and exchange counterparty risk. For commodities: supply concentration and substitution risk. For currencies: sovereign debt and capital controls.</p>
-                </div>
-                <div class="dim-card py-6 pr-8 max-md:pr-0">
-                    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-sea/60 mb-3">Motivator &middot; 1.0x weight</div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-2">Valuation</h3>
-                    <p class="text-[0.8rem] font-light text-t3 leading-relaxed">For equities: Graham, P/E, DDM, and P/S fair-value models. For crypto and commodities: network value, on-chain metrics, or supply-demand models adapted to the asset class.</p>
-                </div>
-                <div class="dim-card py-6 px-8 max-md:px-0">
-                    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-sea/60 mb-3">Motivator &middot; 1.0x weight</div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-2">Product Flywheel</h3>
-                    <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Competitive moat, growth loops, and vulnerability to disruption. For crypto: developer ecosystem, protocol adoption, and composability. For commodities: supply-demand dynamics and substitution risk.</p>
-                </div>
-                <div class="dim-card py-6 pl-8 max-md:pl-0">
-                    <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-sea/60 mb-3">Motivator &middot; 1.0x weight &middot; <span class="text-t4">Equities only</span></div>
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-2">Leadership</h3>
-                    <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Executive track record, talent quality, culture signals, and insider activity.</p>
+                <div class="grid grid-cols-3 max-md:grid-cols-1">
+                    <!-- Row 1: Hygiene — Sentiment, Risk (universal), Finance (equity-only) -->
+                    <div class="dim-card py-6 pr-8 max-md:pr-0">
+                        <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-copper/60 mb-3">Hygiene &middot; 1.5x weight</div>
+                        <h3 class="text-[0.95rem] font-medium text-heading mb-2">Sentiment</h3>
+                        <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Community discussion across Reddit, Hacker News, and financial media weighted by engagement and recency. Adapted per asset class.</p>
+                    </div>
+                    <div class="dim-card py-6 px-8 max-md:px-0">
+                        <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-copper/60 mb-3">Hygiene &middot; 1.5x weight</div>
+                        <h3 class="text-[0.95rem] font-medium text-heading mb-2">Risk</h3>
+                        <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Regulatory exposure, geopolitical concentration, competitive threats, and litigation. For crypto: protocol vulnerabilities and exchange counterparty risk. For commodities: supply concentration.</p>
+                    </div>
+                    <div class="dim-card py-6 pl-8 max-md:pl-0" data-equity-only>
+                        <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-copper/60 mb-3">Hygiene &middot; 1.5x weight &middot; <span class="text-t4">Equities only</span></div>
+                        <h3 class="text-[0.95rem] font-medium text-heading mb-2">Finance</h3>
+                        <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Margins, growth, cash flow, and leverage benchmarked against sector peers.</p>
+                    </div>
+                    <!-- Row 2: Motivators — Valuation, Product (universal), People (equity-only) -->
+                    <div class="dim-card py-6 pr-8 max-md:pr-0">
+                        <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-sea/60 mb-3">Motivator &middot; 1.0x weight</div>
+                        <h3 class="text-[0.95rem] font-medium text-heading mb-2">Valuation</h3>
+                        <p class="text-[0.8rem] font-light text-t3 leading-relaxed">For equities: Graham, P/E, DDM, and P/S fair-value models. For crypto and commodities: network value, on-chain metrics, or supply-demand models adapted to the asset.</p>
+                    </div>
+                    <div class="dim-card py-6 px-8 max-md:px-0">
+                        <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-sea/60 mb-3">Motivator &middot; 1.0x weight</div>
+                        <h3 class="text-[0.95rem] font-medium text-heading mb-2">Product</h3>
+                        <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Competitive moat, growth loops, and vulnerability to disruption. For crypto: developer ecosystem, protocol adoption, and composability. For commodities: supply-demand dynamics.</p>
+                    </div>
+                    <div class="dim-card py-6 pl-8 max-md:pl-0" data-equity-only>
+                        <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-sea/60 mb-3">Motivator &middot; 1.0x weight &middot; <span class="text-t4">Equities only</span></div>
+                        <h3 class="text-[0.95rem] font-medium text-heading mb-2">People</h3>
+                        <p class="text-[0.8rem] font-light text-t3 leading-relaxed">Executive track record, talent quality, culture signals, and insider activity.</p>
+                    </div>
                 </div>
             </div>
 
@@ -232,27 +372,27 @@
     <!-- Beyond the score -->
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 reveal">
-            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-14">Beyond the score</div>
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-14">Beyond the Score</div>
             <div class="grid grid-cols-3 gap-14 max-md:grid-cols-1 max-md:gap-10">
                 <div class="feature-accent">
                     <h3 class="text-[0.95rem] font-medium text-heading mb-3">Target prices</h3>
                     <p class="text-[0.8rem] font-light text-t3 leading-relaxed">
-                        AI-generated 1-year price forecasts with explicit rationale, key drivers,
-                        and material risks. Not a number &mdash; a thesis.
+                        1-year price forecasts with explicit rationale, key drivers,
+                        and material risks. A thesis, not a point estimate.
                     </p>
                 </div>
                 <div class="feature-accent">
                     <h3 class="text-[0.95rem] font-medium text-heading mb-3">Rankings</h3>
                     <p class="text-[0.8rem] font-light text-t3 leading-relaxed">
-                        A live leaderboard of assets ranked by composite score, filterable by
+                        Assets ranked by composite score, filterable by
                         asset class. Verdict, upside, and daily performance at a glance.
                     </p>
                 </div>
                 <div class="feature-accent">
-                    <h3 class="text-[0.95rem] font-medium text-heading mb-3">Your thesis, reflected</h3>
+                    <h3 class="text-[0.95rem] font-medium text-heading mb-3">Personalisation</h3>
                     <p class="text-[0.8rem] font-light text-t3 leading-relaxed">
-                        Add personal notes and price targets. The AI revises the entire assessment
-                        in light of your conviction &mdash; your context shapes the output.
+                        Add personal notes and price targets. The AI re-evaluates
+                        the assessment in light of your conviction &mdash; your context shapes the output.
                     </p>
                 </div>
             </div>
@@ -271,7 +411,7 @@
                 <div>
                     <h3 class="text-[0.95rem] font-medium text-heading mb-2.5">Market Data</h3>
                     <p class="text-[0.82rem] font-light text-t3 leading-[1.7]">
-                        Real-time and historical OHLCV price data plus fundamentals &mdash; P/E, EPS, market cap,
+                        Historical and intraday OHLCV price data plus fundamentals &mdash; P/E, EPS, market cap,
                         dividend yield, profit margins, revenue growth, and 52-week range. Covers equities,
                         crypto, commodities, and currency pairs.
                     </p>
@@ -281,9 +421,9 @@
                 <div>
                     <h3 class="text-[0.95rem] font-medium text-heading mb-2.5">Social Sentiment</h3>
                     <p class="text-[0.82rem] font-light text-t3 leading-[1.7]">
-                        Posts and top comments from 15 financial subreddits &mdash; r/wallstreetbets, r/stocks,
-                        r/investing, r/cryptocurrency, r/SecurityAnalysis, and more &mdash; plus top stories
-                        from Hacker News. Scores, vote ratios, and comment volume provide raw sentiment signal.
+                        Posts and top comments from financial subreddits &mdash; r/wallstreetbets, r/stocks,
+                        r/investing, r/cryptocurrency, r/SecurityAnalysis, and others &mdash; plus top stories
+                        from Hacker News. Scores, vote ratios, and comment volume form raw sentiment signal.
                     </p>
                     <div class="mt-3 text-[0.6rem] text-t4 tracking-wide">Reddit every 2h &middot; Hacker News every 4h</div>
                 </div>
@@ -301,11 +441,11 @@
                 <div>
                     <h3 class="text-[0.95rem] font-medium text-heading mb-2.5">Vector Embeddings</h3>
                     <p class="text-[0.82rem] font-light text-t3 leading-[1.7]">
-                        All social and news content is embedded into 2048-dimensional vectors and indexed
-                        in pgvector. This enables semantic similarity retrieval &mdash; surfacing thematically
-                        related discussions even when the ticker is never explicitly mentioned.
+                        All social and news content is embedded into high-dimensional vectors and indexed
+                        for semantic retrieval &mdash; surfacing thematically related discussions
+                        even when the ticker is never explicitly mentioned.
                     </p>
-                    <div class="mt-3 text-[0.6rem] text-t4 tracking-wide">Embedded on ingest &middot; Indexed for sub-second retrieval</div>
+                    <div class="mt-3 text-[0.6rem] text-t4 tracking-wide">Embedded on ingest &middot; Sub-second retrieval</div>
                 </div>
             </div>
         </section>
@@ -322,10 +462,9 @@
             <div class="grid grid-cols-2 gap-20 max-md:grid-cols-1 max-md:gap-12">
                 <div>
                     <p class="text-[0.85rem] font-light text-t2 leading-[1.7] mb-10">
-                        Raw data does not produce conviction. Our AI analyst agents &mdash; powered by
-                        LLMs via BytePlus ModelArk &mdash; process each data layer independently, then
-                        synthesise across sources. The result is a structured assessment grounded in
-                        multiple signals, not a single heuristic.
+                        Raw data does not produce conviction. Specialised AI agents process each
+                        data layer independently, then synthesise across sources. The result is a
+                        structured assessment grounded in multiple signals, not a single heuristic.
                     </p>
 
                     <div class="space-y-7">
@@ -350,24 +489,24 @@
                             <h4 class="text-[0.85rem] font-medium text-heading mb-1.5">Specialist agents</h4>
                             <p class="text-[0.78rem] font-light text-t3 leading-[1.65]">
                                 Up to six independent AI agents examine distinct dimensions &mdash; four for
-                                crypto, commodities, and currencies; all six for equities. Each agent is
-                                tuned to the asset class and produces a weighted score with explicit reasoning.
+                                crypto, commodities, and currencies; all six for equities. Each produces
+                                a scored assessment with explicit reasoning.
                             </p>
                         </div>
                         <div class="pipeline-step">
                             <div class="pipeline-dot"></div>
                             <h4 class="text-[0.85rem] font-medium text-heading mb-1.5">Composite scoring</h4>
                             <p class="text-[0.78rem] font-light text-t3 leading-[1.65]">
-                                Hygiene factors carry 1.5x weight; motivators carry 1.0x. For non-equity
-                                assets with fewer sections, scores are scaled to the same 0&ndash;30 range
-                                so verdict thresholds remain consistent across all asset classes.
+                                Hygiene factors carry 1.5&times; weight; motivators carry 1.0&times;. For non-equity
+                                assets with fewer dimensions, scores are normalised to the same 0&ndash;30 range
+                                so verdict thresholds remain consistent across asset classes.
                             </p>
                         </div>
                         <div class="pipeline-step">
                             <div class="pipeline-dot"></div>
-                            <h4 class="text-[0.85rem] font-medium text-heading mb-1.5">Target price and thesis</h4>
+                            <h4 class="text-[0.85rem] font-medium text-heading mb-1.5">Overall assessment</h4>
                             <p class="text-[0.78rem] font-light text-t3 leading-[1.65]">
-                                An overall assessment agent synthesises all scored dimensions into a 1-year
+                                A synthesis agent consolidates all scored dimensions into a 1-year
                                 price forecast with rationale, key drivers, and material risks.
                             </p>
                         </div>
@@ -399,7 +538,7 @@
                             </div>
                             <div>
                                 <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[0.75rem] font-medium text-t2">News Intelligence</span>
+                                    <span class="text-[0.75rem] font-medium text-t2">Financial News</span>
                                     <span class="text-[0.6rem] text-t4">25%</span>
                                 </div>
                                 <div class="h-1 bg-surface/[0.04] rounded-full overflow-hidden">
@@ -424,28 +563,28 @@
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <span class="text-[0.75rem] font-medium text-t2">Strong Buy</span>
-                                <span class="text-[0.6rem] text-t4 tracking-wide">27 &ndash; 30</span>
+                                <span class="text-[0.6rem] text-t4 tracking-wide">26 &ndash; 30</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-[0.75rem] font-medium text-t2">Buy</span>
-                                <span class="text-[0.6rem] text-t4 tracking-wide">24 &ndash; 26</span>
+                                <span class="text-[0.6rem] text-t4 tracking-wide">22 &ndash; 25</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-[0.75rem] font-medium text-t2">Hold</span>
-                                <span class="text-[0.6rem] text-t4 tracking-wide">15 &ndash; 23</span>
+                                <span class="text-[0.6rem] text-t4 tracking-wide">17 &ndash; 21</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-[0.75rem] font-medium text-t2">Sell</span>
-                                <span class="text-[0.6rem] text-t4 tracking-wide">11 &ndash; 14</span>
+                                <span class="text-[0.6rem] text-t4 tracking-wide">13 &ndash; 16</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-[0.75rem] font-medium text-t2">Strong Sell</span>
-                                <span class="text-[0.6rem] text-t4 tracking-wide">0 &ndash; 10</span>
+                                <span class="text-[0.6rem] text-t4 tracking-wide">0 &ndash; 12</span>
                             </div>
                         </div>
                         <div class="mt-5 pt-4 border-t border-surface/[0.04]">
                             <p class="text-[0.65rem] font-light text-t4 leading-relaxed">
-                                Deterministic mapping. No subjective override. The score produces the verdict.
+                                Deterministic mapping. The score produces the verdict.
                             </p>
                         </div>
                     </div>
@@ -460,14 +599,13 @@
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-20 reveal">
             <div class="sec-num mb-3">III</div>
-            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-12">Convergence Requirement</div>
+            <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-12">Convergence</div>
 
             <div class="max-w-[680px] mb-12">
                 <p class="text-[0.85rem] font-light text-t2 leading-[1.7]">
-                    Signals require agreement across independent layers before they are surfaced.
+                    Signals require agreement across independent layers before they produce a directional verdict.
                     A bullish Reddit thread alone does not produce a Buy. A price drop without
-                    deteriorating fundamentals does not produce a Sell. Divergence between layers
-                    defaults to Hold. We would rather miss a move than recommend one we cannot substantiate.
+                    deteriorating fundamentals does not produce a Sell. Divergence defaults to Hold.
                 </p>
             </div>
 
@@ -478,7 +616,7 @@
                         <span class="font-serif text-[1.3rem] text-heading">Buy</span>
                     </div>
                     <p class="text-[0.78rem] font-light text-t3 leading-[1.65]">
-                        Bullish social sentiment <em class="text-t2">and</em> positive price momentum
+                        Constructive sentiment <em class="text-t2">and</em> positive price momentum
                         <em class="text-t2">and</em> fundamentals support the valuation
                         <em class="text-t2">and</em> news impact is neutral-to-positive.
                     </p>
@@ -489,8 +627,8 @@
                         <span class="font-serif text-[1.3rem] text-heading">Sell</span>
                     </div>
                     <p class="text-[0.78rem] font-light text-t3 leading-[1.65]">
-                        Bearish sentiment rising <em class="text-t2">and</em> price breakdown or
-                        declining momentum <em class="text-t2">and</em> fundamentals deteriorating
+                        Deteriorating sentiment <em class="text-t2">and</em> price breakdown or
+                        declining momentum <em class="text-t2">and</em> weakening fundamentals
                         <em class="text-t2">and</em> news carries negative impact.
                     </p>
                 </div>
@@ -500,8 +638,8 @@
                         <span class="font-serif text-[1.3rem] text-heading">Hold</span>
                     </div>
                     <p class="text-[0.78rem] font-light text-t3 leading-[1.65]">
-                        Mixed or insufficient signals. Social sentiment divided, price range-bound,
-                        fundamentals stable but unexceptional. The default state &mdash; action requires convergence.
+                        Mixed or insufficient signals. Sentiment divided, price range-bound,
+                        fundamentals stable. The default state &mdash; conviction requires convergence.
                     </p>
                 </div>
             </div>
@@ -518,25 +656,25 @@
 
             <div class="grid grid-cols-3 gap-14 max-md:grid-cols-1 max-md:gap-10">
                 <div>
-                    <h3 class="font-serif text-[1.6rem] leading-none text-sea-light mb-4">Open sources</h3>
+                    <h3 class="font-serif text-[1.6rem] leading-none text-sea-light mb-4">Public data</h3>
                     <p class="text-[0.82rem] font-light text-t3 leading-[1.7]">
-                        Every data source is publicly accessible. We do not rely on proprietary feeds
-                        or insider information. You can verify what we see &mdash; we simply process it
-                        faster and more systematically.
+                        Every data source is publicly accessible. No proprietary feeds,
+                        no insider information. The inputs are verifiable &mdash; the value is in
+                        the synthesis.
                     </p>
                 </div>
                 <div>
                     <h3 class="font-serif text-[1.6rem] leading-none text-copper mb-4">Auditable reasoning</h3>
                     <p class="text-[0.82rem] font-light text-t3 leading-[1.7]">
                         Every score includes explicit reasoning. Strengths, concerns, bull cases,
-                        bear cases, and risk factors are surfaced alongside the number. The analysis
-                        is structured and traceable, not a black box.
+                        bear cases, and risk factors are surfaced alongside the number.
+                        Structured and traceable.
                     </p>
                 </div>
                 <div>
                     <h3 class="font-serif text-[1.6rem] leading-none text-copper-light mb-4">Conservative default</h3>
                     <p class="text-[0.82rem] font-light text-t3 leading-[1.7]">
-                        When signals diverge, the system defaults to Hold. We optimise for avoiding
+                        When signals diverge, the system defaults to Hold. Optimised for avoiding
                         false conviction over capturing every opportunity. Precision over recall.
                     </p>
                 </div>
@@ -550,8 +688,8 @@
     <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
         <section class="py-24 text-center reveal">
             <p class="font-serif text-[clamp(1.6rem,3.5vw,2.6rem)] font-normal leading-snug text-t2 max-w-[700px] mx-auto">
-                <strong class="text-copper-light font-normal">Public data. Independent signals. AI synthesis.</strong><br>
-                We analyse the trends so you can act on them.
+                Public data. Independent signals.<br>
+                <strong class="text-copper-light font-normal">Structured conviction.</strong>
             </p>
         </section>
     </div>
@@ -566,5 +704,111 @@
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.15 });
     els.forEach(el => observer.observe(el));
+</script>
+
+<!-- Methodology frame morph -->
+<script>
+(function() {
+    var grid = document.getElementById('rcGrid');
+    var frame = document.getElementById('rcFrame');
+    var slider = document.getElementById('rcSlider');
+    var pills = document.querySelectorAll('[data-rc-class]');
+    var eqCards = document.querySelectorAll('[data-equity-only]');
+    var countEl = document.getElementById('rcDimCount');
+    var currentClass = 'equity';
+
+    function positionSlider(pill) {
+        if (!slider || !pill) return;
+        var track = pill.parentElement;
+        var trackRect = track.getBoundingClientRect();
+        var pillRect = pill.getBoundingClientRect();
+        slider.style.left = (pillRect.left - trackRect.left) + 'px';
+        slider.style.width = pillRect.width + 'px';
+    }
+
+    function positionFrame(isEquity) {
+        if (!grid || !frame) return;
+        var universalCards = grid.querySelectorAll('.dim-card:not([data-equity-only])');
+        if (!universalCards.length) return;
+
+        var gridRect = grid.getBoundingClientRect();
+        var pad = 12;
+
+        if (isEquity) {
+            frame.style.top = -pad + 'px';
+            frame.style.left = -pad + 'px';
+            frame.style.width = (gridRect.width + pad * 2) + 'px';
+            frame.style.height = (gridRect.height + pad * 2) + 'px';
+        } else {
+            var firstRect = universalCards[0].getBoundingClientRect();
+            var lastRect = universalCards[universalCards.length - 1].getBoundingClientRect();
+            var t = firstRect.top - gridRect.top;
+            var l = firstRect.left - gridRect.left;
+            var r = lastRect.right - gridRect.left;
+            var b = lastRect.bottom - gridRect.top;
+
+            frame.style.top = (t - pad) + 'px';
+            frame.style.left = (l - pad) + 'px';
+            frame.style.width = (r - l + pad * 2) + 'px';
+            frame.style.height = (b - t + pad * 2) + 'px';
+        }
+    }
+
+    function setClass(cls) {
+        var isEq = cls === 'equity';
+        var activePill;
+
+        pills.forEach(function(p) {
+            var match = p.dataset.rcClass === cls;
+            p.classList.toggle('active', match);
+            if (match) activePill = p;
+        });
+
+        eqCards.forEach(function(c) {
+            c.classList.toggle('dimmed', !isEq);
+        });
+
+        if (countEl) {
+            countEl.textContent = isEq ? '6 of 6 dimensions' : '4 of 6 dimensions';
+        }
+
+        positionSlider(activePill);
+        positionFrame(isEq);
+    }
+
+    // Init after layout settles
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() { setClass(currentClass); });
+    });
+
+    // Recalc on resize
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            var active = document.querySelector('.rc-class-pill.active');
+            if (active) setClass(active.dataset.rcClass);
+        }, 100);
+    });
+
+    // Hover previews + click to lock
+    pills.forEach(function(pill) {
+        pill.addEventListener('mouseenter', function() {
+            setClass(pill.dataset.rcClass);
+        });
+        pill.addEventListener('click', function() {
+            currentClass = pill.dataset.rcClass;
+            setClass(currentClass);
+        });
+    });
+
+    // Reset on leave
+    var methodEl = document.getElementById('rcMethodology');
+    if (methodEl) {
+        methodEl.addEventListener('mouseleave', function() {
+            setClass(currentClass);
+        });
+    }
+})();
 </script>
 {% endblock %}
