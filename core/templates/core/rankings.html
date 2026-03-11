@@ -155,11 +155,7 @@
                 <div class="text-right">
                     {% if asset.latest_close %}
                     <span class="text-xs text-heading tabular-nums">${{ asset.latest_close|floatformat:2 }}</span>
-                    {% if asset.daily_change != None %}
-                    <div class="text-[0.55rem] tabular-nums {% if asset.daily_change > 0 %}text-emerald-400{% elif asset.daily_change < 0 %}text-red-400{% else %}text-t4{% endif %}">
-                        {% if asset.daily_change > 0 %}+{% endif %}{{ asset.daily_change|floatformat:2 }}%
-                    </div>
-                    {% endif %}
+                    {% include "core/components/price_change.html" with value=asset.daily_change decimals=2 class="text-[0.55rem] tabular-nums" %}
                     {% else %}
                     <span class="text-xs text-t4">&mdash;</span>
                     {% endif %}
@@ -177,9 +173,7 @@
                 {# Upside #}
                 <div class="text-right">
                     {% if asset.upside != None %}
-                    <span class="text-xs font-medium tabular-nums {% if asset.upside > 0 %}text-emerald-400{% elif asset.upside < 0 %}text-red-400{% else %}text-t3{% endif %}">
-                        {% if asset.upside > 0 %}+{% endif %}{{ asset.upside|floatformat:1 }}%
-                    </span>
+                    {% include "core/components/price_change.html" with value=asset.upside decimals=1 class="text-xs font-medium tabular-nums" %}
                     {% else %}
                     <span class="text-xs text-t4">&mdash;</span>
                     {% endif %}

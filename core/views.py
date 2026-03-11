@@ -14,6 +14,7 @@ from django.db.models import (
     Count,
     F,
     IntegerField,
+    Max,
     OuterRef,
     Q,
     Subquery,
@@ -128,6 +129,7 @@ from core.app_behaviour import (
     RSI_PERIOD,
     SEARCH_MAX_RESULTS,
     SEARCH_MIN_QUERY_LENGTH,
+    SEARCH_RECENTS_LIMIT,
     TRENDING_BANNER_COUNT,
     TRENDING_CACHE_TTL,
     TRENDING_PERIOD_H,
@@ -199,16 +201,26 @@ def pwa_manifest(request):
 
 
 async def home(request):
-    return render(
-        request,
-        "core/home.html",
-        {
-            "asset_count": await _cached("home:asset_count", Asset.objects.count),
-            "post_count": await _cached("home:post_count", total_post_count),
-            "digest_refresh_interval": DIGEST_REFRESH_INTERVAL,
-            "digest_date": timezone.now(),
-        },
-    )
+    context = {
+        "asset_count": await _cached("home:asset_count", Asset.objects.count),
+        "post_count": await _cached("home:post_count", total_post_count),
+        "digest_refresh_interval": DIGEST_REFRESH_INTERVAL,
+        "digest_date": timezone.now(),
+    }
+
+    # Recent tickers for the search pills (authenticated users)
+    if request.user.is_authenticated:
+        recent_tickers = [
+            ticker
+            async for ticker in Asset.objects.filter(asset_views__user=request.user)
+            .annotate(last_viewed=Max("asset_views__viewed_at"))
+            .order_by("-last_viewed")
+            .values_list("ticker", flat=True)[:SEARCH_RECENTS_LIMIT]
+        ]
+        if recent_tickers:
+            context["recent_tickers"] = recent_tickers
+
+    return render(request, "core/home.html", context)
 
 
 async def rankings(request):
@@ -1811,6 +1823,51 @@ async def save_note(request, ticker):
 async def asset_search(request):
     query = request.GET.get("q", "").strip()
     if len(query) < SEARCH_MIN_QUERY_LENGTH:
+        # Empty query — show recently viewed assets for authenticated users
+        if request.user.is_authenticated:
+            latest_close_sq = (
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
+                .order_by("-timestamp")
+                .values("close")[:1]
+            )
+            prev_close_sq = (
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
+                .order_by("-timestamp")
+                .values("close")[1:2]
+            )
+            assets = [
+                a
+                async for a in Asset.objects.filter(
+                    asset_views__user=request.user, is_active=True
+                )
+                .annotate(
+                    last_viewed=Max("asset_views__viewed_at"),
+                    latest_close=Subquery(latest_close_sq),
+                    prev_close=Subquery(prev_close_sq),
+                )
+                .order_by("-last_viewed")[:SEARCH_RECENTS_LIMIT]
+            ]
+            if assets:
+                sparkline_map = await fetch_sparkline_map([a.id for a in assets])
+                results = []
+                for asset in assets:
+                    closes = sparkline_map.get(asset.id, [])
+                    change_pct = pct_change(asset.latest_close, asset.prev_close)
+                    results.append(
+                        {
+                            "asset": asset,
+                            "latest_close": asset.latest_close,
+                            "price_change_pct": round(change_pct, 2)
+                            if change_pct is not None
+                            else None,
+                            "sparkline_svg": build_sparkline_svg(closes),
+                        }
+                    )
+                return render(
+                    request,
+                    "core/partials/search_results.html",
+                    {"results": results, "is_recents": True},
+                )
         return render(request, "core/partials/search_results.html", {"results": []})
 
     latest_close_sq = (

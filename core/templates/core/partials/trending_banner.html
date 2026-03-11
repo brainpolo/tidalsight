@@ -29,12 +29,7 @@
                         {% if item.sparkline_svg %}
                         <span class="opacity-60 group-hover:opacity-100 transition-opacity">{{ item.sparkline_svg }}</span>
                         {% endif %}
-                        {% if item.price_change_pct != None %}
-                        <span class="text-[0.55rem] font-semibold tabular-nums
-                            {% if item.price_change_pct >= 0 %}text-green-500{% else %}text-red-500{% endif %}">
-                            {% if item.price_change_pct >= 0 %}+{% endif %}{{ item.price_change_pct }}%
-                        </span>
-                        {% endif %}
+                        {% include "core/components/price_change.html" with value=item.price_change_pct decimals=2 class="text-[0.55rem] font-semibold tabular-nums" %}
                     </a>
                     <div class="w-px h-3 bg-surface/[0.04] shrink-0"></div>
                     {% endfor %}

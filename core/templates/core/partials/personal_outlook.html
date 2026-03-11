@@ -70,16 +70,7 @@
 <div hx-get="{% url 'core:personal_outlook' %}"
      hx-trigger="load delay:5s"
      hx-swap="innerHTML">
-    <div class="space-y-2.5">
-        <div class="h-4 w-5/6 bg-surface/[0.03] rounded-sm animate-pulse"></div>
-        <div class="h-4 w-2/3 bg-surface/[0.03] rounded-sm animate-pulse" style="animation-delay: 100ms;"></div>
-        <div class="mt-5 space-y-3">
-            <div class="h-3 w-full bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 200ms;"></div>
-            <div class="h-3 w-11/12 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
-            <div class="h-3 w-4/5 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
-        </div>
-        <div class="mt-5 text-[0.6rem] text-t4 tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Generating your outlook...</div>
-    </div>
+    {% include "core/components/skeleton_loader.html" with variant="digest" message="Generating your outlook..." %}
 </div>
 
 {% else %}

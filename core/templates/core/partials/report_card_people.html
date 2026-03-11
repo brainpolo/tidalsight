@@ -15,9 +15,7 @@
             {% endfor %}
         </div>
     </div>
-    <div class="h-7 w-16 bg-surface/[0.06] skel-bar mb-2"></div>
-    <div class="h-3 w-full bg-surface/[0.04] skel-bar mb-1.5"></div>
-    <div class="h-3 w-3/4 bg-surface/[0.04] skel-bar"></div>
+    {% include "core/components/skeleton_loader.html" with variant="card" %}
 </div>
 
 {% elif people %}

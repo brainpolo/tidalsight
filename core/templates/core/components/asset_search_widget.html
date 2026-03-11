@@ -29,6 +29,9 @@
         position: relative;
         width: 260px;
     }
+    @media (max-width: 639px) {
+        .search-compact-wrap { width: 100%; }
+    }
     .search-compact {
         position: relative;
         display: flex;
@@ -36,22 +39,20 @@
         gap: 8px;
         padding: 7px 12px;
         border-radius: 4px;
-        border: 1px solid color-mix(in srgb, var(--ts-surface) 8%, transparent);
+        border: none;
         background: color-mix(in srgb, var(--ts-surface) 3%, transparent);
-        transition: border-color 0.2s, background 0.2s, border-radius 0.15s;
+        transition: background 0.2s, border-radius 0.15s;
         width: 100%;
     }
     .search-compact:hover {
-        border-color: color-mix(in srgb, var(--ts-surface) 14%, transparent);
+        background: color-mix(in srgb, var(--ts-surface) 5%, transparent);
     }
     .search-compact:focus-within {
-        border-color: color-mix(in srgb, var(--ts-surface) 16%, transparent);
-        background: color-mix(in srgb, var(--ts-surface) 5%, transparent);
+        background: color-mix(in srgb, var(--ts-surface) 6%, transparent);
     }
     /* When results are showing, square off bottom corners to connect */
     .search-compact-wrap.has-results .search-compact {
         border-radius: 4px 4px 0 0;
-        border-bottom-color: color-mix(in srgb, var(--ts-surface) 4%, transparent);
     }
     .search-compact:focus-within .search-kbd {
         display: none;
@@ -96,6 +97,14 @@
     .search-compact-results:empty {
         display: none;
     }
+    .search-compact-results .search-result-change,
+    .search-compact-results .search-result-name {
+        display: none;
+    }
+    .search-compact-results .search-result-right svg {
+        width: 40px;
+        height: 12px;
+    }
     .search-compact-results .search-results-list {
         border-radius: 0 0 4px 4px;
         border-top: none;
@@ -134,11 +143,17 @@
     </form>
 
     <div class="search-tickers">
+        {% if recent_tickers %}
+        {% for ticker in recent_tickers %}
+        <button type="button" class="search-ticker" data-ticker="{{ ticker }}">{{ ticker }}</button>
+        {% endfor %}
+        {% else %}
         <button type="button" class="search-ticker" data-ticker="AAPL">AAPL</button>
         <button type="button" class="search-ticker" data-ticker="BTC-USD">BTC-USD</button>
         <button type="button" class="search-ticker" data-ticker="MSFT">MSFT</button>
         <button type="button" class="search-ticker" data-ticker="GC=F">GC=F</button>
         <button type="button" class="search-ticker" data-ticker="EURUSD=X">EUR/USD</button>
+        {% endif %}
     </div>
 </div>
 
@@ -348,6 +363,33 @@
         color: var(--ts-t3, #5c5750);
         flex-shrink: 0;
     }
+    .search-compact-results .search-result-item:hover .search-result-ticker,
+    .search-compact-results .search-result-item:hover .search-result-badge {
+        display: none;
+    }
+    .search-compact-results .search-result-item:hover .search-result-name {
+        display: inline;
+    }
+    /* Mobile: no hover, so always show name instead of ticker+badge */
+    @media (hover: none) {
+        .search-compact-results .search-result-ticker,
+        .search-compact-results .search-result-badge {
+            display: none;
+        }
+        .search-compact-results .search-result-name {
+            display: inline;
+        }
+    }
+    .search-result-new {
+        font-size: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ts-t4, #8a8680);
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 10%, transparent);
+        border-radius: 2px;
+        padding: 2px 6px;
+    }
     .search-divider {
         height: 1px;
         background: var(--ts-surface, rgba(255,255,255,0.06));
@@ -372,8 +414,14 @@
         font-weight: 600;
         font-variant-numeric: tabular-nums;
     }
-    .search-result-change.up { color: var(--color-green-500, #22c55e); }
-    .search-result-change.down { color: var(--color-red-500, #ef4444); }
+    .search-section-label {
+        font-size: 0.55rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ts-t4);
+        padding: 8px 12px 2px;
+    }
 </style>
 
 <script>
@@ -409,6 +457,13 @@
             const pos = this.selectionStart;
             this.value = this.value.toUpperCase();
             this.setSelectionRange(pos, pos);
+        });
+
+        // Show recents on focus when input is empty
+        input.addEventListener('focus', function() {
+            if (!this.value.trim() && !resultsEl.innerHTML.trim()) {
+                htmx.ajax('GET', this.getAttribute('hx-get'), {target: '#searchResults', swap: 'innerHTML'});
+            }
         });
 
         document.addEventListener('keydown', function(e) {

@@ -1,5 +1,8 @@
 {% if results or yahoo_suggestions %}
 <div class="search-results-list">
+    {% if is_recents %}
+    <div class="search-section-label">Recent</div>
+    {% endif %}
     {% for r in results %}
     <div role="option">
         <a href="{% url 'core:asset_detail' r.asset.ticker %}" class="search-result-item" data-ticker="{{ r.asset.ticker }}">
@@ -9,14 +12,16 @@
                 <span class="search-result-badge search-result-badge--{{ r.asset.asset_class }}">{{ r.asset.get_asset_class_display }}</span>
             </div>
             <div class="search-result-right">
-                {{ r.sparkline_svg }}
                 {% if r.latest_close %}
+                {{ r.sparkline_svg }}
                 <span class="search-result-price">${{ r.latest_close|floatformat:2 }}</span>
-                {% endif %}
                 {% if r.price_change_pct != None %}
-                <span class="search-result-change {% if r.price_change_pct >= 0 %}up{% else %}down{% endif %}">
-                    {% if r.price_change_pct >= 0 %}+{% endif %}{{ r.price_change_pct|floatformat:2 }}%
+                <span class="search-result-change">
+                    {% include "core/components/price_change.html" with value=r.price_change_pct decimals=2 class="text-[0.55rem] font-semibold tabular-nums" %}
                 </span>
+                {% endif %}
+                {% else %}
+                <span class="search-result-new">New</span>
                 {% endif %}
             </div>
         </a>

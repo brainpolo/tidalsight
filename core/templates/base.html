@@ -52,6 +52,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 
+    <style>
+        @keyframes skelFade {
+            0%, 100% { opacity: 0.45; }
+            50%      { opacity: 0.15; }
+        }
+        .skel-bar {
+            border-radius: 2px;
+            background: color-mix(in srgb, var(--ts-surface) 14%, transparent) !important;
+            animation: skelFade 2s ease-in-out infinite;
+        }
+    </style>
+
     {% block head %}{% endblock %}
 </head>
 <body class="bg-page text-t1 font-sans antialiased overflow-x-hidden pt-7 sm:pt-8" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

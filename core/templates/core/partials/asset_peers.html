@@ -6,7 +6,7 @@
         <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 shrink-0">Peers</span>
         <div class="flex items-center gap-2 overflow-hidden">
             {% for _ in "12345" %}
-            <div class="h-4 w-16 bg-surface/[0.04] rounded-sm skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+            <div class="h-4 w-16 rounded-sm skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
             {% endfor %}
         </div>
     </div>
@@ -29,9 +29,7 @@
                 {% if peer.latest_close is not None %}
                 <div class="flex items-baseline gap-1 mt-0.5">
                     <span class="text-[0.55rem] tabular-nums text-t2">${{ peer.latest_close|floatformat:2 }}</span>
-                    {% if peer.price_change_pct is not None %}
-                    <span class="text-[0.5rem] font-semibold tabular-nums {% if peer.price_change_pct >= 0 %}text-emerald-400/70{% else %}text-red-400/70{% endif %}">{% if peer.price_change_pct >= 0 %}+{% endif %}{{ peer.price_change_pct }}%</span>
-                    {% endif %}
+                    {% include "core/components/price_change.html" with value=peer.price_change_pct decimals=2 class="text-[0.5rem] font-semibold tabular-nums opacity-70" %}
                 </div>
                 {% endif %}
             </a>

@@ -62,7 +62,7 @@ OUTLOOK_LOCK_TTL = 60 * 3  # 3 minutes
 DESCRIPTION_FRESHNESS_DAYS = 90  # 3 months — how often to regenerate
 DESCRIPTION_LOCK_TTL = 300  # 5 minutes
 
-MAX_AGENT_TURNS = 25
+MAX_AGENT_TURNS = 100
 
 
 # ── Cache keys ──────────────────────────────────────────────────────

@@ -43,9 +43,8 @@
                 <span class="text-[0.75rem] font-semibold text-heading group-hover:text-copper-light transition-colors">{{ item.asset.ticker }}</span>
             </div>
             {% if item.price_change_pct != None %}
-            <div class="text-[0.55rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm
-                {% if item.price_change_pct >= 0 %}bg-green-500/[0.08] text-green-500{% else %}bg-red-500/[0.08] text-red-500{% endif %}">
-                {% if item.price_change_pct >= 0 %}+{% endif %}{{ item.price_change_pct|floatformat:2 }}%
+            <div class="px-1.5 py-0.5 rounded-sm {% if item.price_change_pct >= 0 %}bg-green-500/[0.08]{% else %}bg-red-500/[0.08]{% endif %}">
+                {% include "core/components/price_change.html" with value=item.price_change_pct decimals=2 class="text-[0.55rem] font-semibold tabular-nums" %}
             </div>
             {% endif %}
         </div>

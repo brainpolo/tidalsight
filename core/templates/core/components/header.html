@@ -1,12 +1,12 @@
 {% load static %}
 <div id="siteHeader" class="sticky top-7 sm:top-8 z-40 bg-page/80 backdrop-blur-md border-b border-transparent transition-[border-color] duration-300">
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10">
-    <header class="flex items-center justify-between py-1.5 gap-4 sm:gap-10">
-        <div class="flex items-center gap-4 sm:gap-6 min-w-0">
+    <header class="flex items-center justify-between pt-2 pb-1.5 gap-4 sm:gap-10">
+        <div class="flex items-center gap-4 sm:gap-6 min-w-0 flex-1">
             <a href="{% url 'core:home' %}" class="flex items-center font-serif text-xl sm:text-2xl text-t1 tracking-tight hover:text-copper-light transition-colors shrink-0">
-                <img src="{% static 'favicon.webp' %}" alt="" class="size-9 sm:size-10 -mr-0.5">TidalSight
+                <img src="{% static 'favicon.webp' %}" alt="" class="size-9 sm:size-10 -mr-0.5">{% if show_search %}<span class="hidden sm:inline">TidalSight</span>{% else %}TidalSight{% endif %}
             </a>
-            {% if show_search %}<div class="hidden sm:block">{% include "core/components/asset_search_widget.html" with compact=True %}</div>{% endif %}
+            {% if show_search %}<div class="flex-1 min-w-0">{% include "core/components/asset_search_widget.html" with compact=True %}</div>{% endif %}
         </div>
 
         {# Desktop nav #}
@@ -81,11 +81,6 @@
     <nav id="mobileMenu" class="md:hidden grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out border-t border-transparent">
         <div class="overflow-hidden">
             <div class="pb-5 pt-3">
-                {% if show_search %}
-                <div class="pb-3 mb-3 border-b border-surface/[0.04]">
-                    {% include "core/components/asset_search_widget.html" with compact=True %}
-                </div>
-                {% endif %}
                 <div class="flex flex-col">
                     <a href="{% url 'core:strategy' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t3 active:text-t2 transition-colors py-3"><i data-lucide="compass" class="size-4"></i> Strategy</a>
                     <a href="{% url 'core:rankings' %}" class="flex items-center gap-2.5 text-[0.8rem] font-medium tracking-[0.04em] text-t3 active:text-t2 transition-colors py-3"><i data-lucide="trophy" class="size-4"></i> Rankings</a>

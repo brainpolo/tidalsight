@@ -1,0 +1,1 @@
+{% if value != None %}<span class="{{ class|default:'text-[0.6rem] font-semibold tabular-nums' }} {% if value >= 0 %}text-green-500{% else %}text-red-500{% endif %}">{% if value >= 0 %}&#9650;{% else %}&#9660;{% endif %}&nbsp;{{ value|floatformat:decimals }}%</span>{% endif %}
