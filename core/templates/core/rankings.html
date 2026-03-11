@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Rankings — TidalSight{% endblock %}
+{% block title %}Market Rankings — TidalSight{% endblock %}
 
 {% block head %}
 <style>
@@ -61,7 +61,7 @@
     {# ── Header ── #}
     <section class="pt-10 sm:pt-16 pb-6 sm:pb-10">
         <div class="mb-2">
-            <h1 class="font-serif text-3xl sm:text-4xl text-heading tracking-tight">Rankings</h1>
+            <h1 class="font-serif text-3xl sm:text-4xl text-heading tracking-tight">Market Rankings</h1>
             <p class="text-[0.7rem] sm:text-xs text-t3 mt-2 max-w-md leading-relaxed">
                 Our AI analysis produces composite ratings evaluating current and relevant factors such as sentiment, risk, valuation, and product.
                 See our <a href="{% url 'core:strategy' %}" class="text-copper hover:text-copper-light transition-colors">strategy</a> for more information.
@@ -97,27 +97,26 @@
     {# ── Score distribution ── #}
     {% if score_buckets %}
     <div class="mb-8 border border-surface/[0.04] rounded-sm p-4 sm:p-6 lg:p-8">
-        <div class="mb-4 sm:mb-6">
-            <span class="text-xs font-semibold tracking-[0.14em] uppercase text-t3">Rating Distribution</span>
-        </div>
         {# Verdict region labels #}
         <div class="flex mb-2">
-            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-red-500/50 pl-0.5"><span class="hidden sm:inline">Strong </span>Sell{% if verdict_zone_pcts.ss %} <span class="font-normal text-[0.45rem] sm:text-[0.5rem] opacity-70">{{ verdict_zone_pcts.ss }}%</span>{% endif %}</div>
-            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-red-400/40 pl-0.5">Sell{% if verdict_zone_pcts.s %} <span class="font-normal text-[0.45rem] sm:text-[0.5rem] opacity-70">{{ verdict_zone_pcts.s }}%</span>{% endif %}</div>
-            <div class="flex-[5] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-t3/50 pl-0.5">Hold{% if verdict_zone_pcts.h %} <span class="font-normal text-[0.45rem] sm:text-[0.5rem] opacity-70">{{ verdict_zone_pcts.h }}%</span>{% endif %}</div>
-            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-emerald-400/40 pl-0.5">Buy{% if verdict_zone_pcts.b %} <span class="font-normal text-[0.45rem] sm:text-[0.5rem] opacity-70">{{ verdict_zone_pcts.b }}%</span>{% endif %}</div>
-            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-emerald-500/50 pl-0.5"><span class="hidden sm:inline">Strong </span>Buy{% if verdict_zone_pcts.sb %} <span class="font-normal text-[0.45rem] sm:text-[0.5rem] opacity-70">{{ verdict_zone_pcts.sb }}%</span>{% endif %}</div>
+            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-red-500/50 pl-0.5"><span class="hidden sm:inline">Strong </span>Sell <span class="font-normal text-[0.5rem] sm:text-[0.55rem] opacity-70" data-zone-pct="ss">{% if verdict_zone_pcts.ss %}{{ verdict_zone_pcts.ss }}%{% endif %}</span></div>
+            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-red-400/40 pl-0.5">Sell <span class="font-normal text-[0.5rem] sm:text-[0.55rem] opacity-70" data-zone-pct="s">{% if verdict_zone_pcts.s %}{{ verdict_zone_pcts.s }}%{% endif %}</span></div>
+            <div class="flex-[5] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-t3/50 pl-0.5">Hold <span class="font-normal text-[0.5rem] sm:text-[0.55rem] opacity-70" data-zone-pct="h">{% if verdict_zone_pcts.h %}{{ verdict_zone_pcts.h }}%{% endif %}</span></div>
+            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-emerald-400/40 pl-0.5">Buy <span class="font-normal text-[0.5rem] sm:text-[0.55rem] opacity-70" data-zone-pct="b">{% if verdict_zone_pcts.b %}{{ verdict_zone_pcts.b }}%{% endif %}</span></div>
+            <div class="flex-[3] text-[0.5rem] sm:text-[0.6rem] font-semibold tracking-[0.08em] sm:tracking-[0.1em] uppercase text-emerald-500/50 pl-0.5"><span class="hidden sm:inline">Strong </span>Buy <span class="font-normal text-[0.5rem] sm:text-[0.55rem] opacity-70" data-zone-pct="sb">{% if verdict_zone_pcts.sb %}{{ verdict_zone_pcts.sb }}%{% endif %}</span></div>
         </div>
         {# Bars #}
         <div class="flex items-end gap-px h-[120px] sm:h-[160px]">
             {% for b in score_buckets %}
-            <div class="flex-1 h-full flex items-end group relative{% if b.score == 14 or b.score == 17 or b.score == 22 or b.score == 25 %} border-l border-dashed border-surface/[0.10]{% endif %}">
-                <div class="w-full rounded-t-[1px] transition-colors duration-150
+            <div class="flex-1 h-full flex items-end group relative{% if b.score == 14 or b.score == 17 or b.score == 22 or b.score == 25 %} border-l border-dashed border-surface/[0.10]{% endif %}"
+                 data-bar-score="{{ b.score }}" data-bar-css="{{ b.css }}" data-bar-verdict="{{ b.verdict }}" data-bar-total="{{ b.assets|length }}">
+                <div class="w-full rounded-t-[1px] transition-all duration-300
                     {% if b.css == 'sb' %}bg-emerald-500/50 group-hover:bg-emerald-500/80
                     {% elif b.css == 'b' %}bg-emerald-500/30 group-hover:bg-emerald-500/60
                     {% elif b.css == 'h' %}bg-surface/[0.12] group-hover:bg-surface/[0.25]
                     {% elif b.css == 's' %}bg-red-500/30 group-hover:bg-red-500/60
                     {% else %}bg-red-500/50 group-hover:bg-red-500/80{% endif %}"
+                    data-bar-fill
                     style="height: {% if b.assets %}{% widthratio b.assets|length max_bucket_count 100 %}%{% else %}0{% endif %}; min-height: {% if b.assets %}3px{% else %}0{% endif %};">
                 </div>
                 {# Hover tooltip #}
@@ -127,19 +126,17 @@
                     px-3 py-2.5 min-w-[120px] whitespace-nowrap pointer-events-none">
                     <div class="flex items-center justify-center gap-2 mb-1">
                         <span class="font-serif text-base font-semibold text-heading tabular-nums">{{ b.score }}</span>
-                        <span class="text-[0.65rem] text-t3 tabular-nums">{{ b.bar_pct }}%</span>
+                        <span class="text-[0.65rem] text-t3 tabular-nums" data-tip-pct>{{ b.bar_pct }}%</span>
                     </div>
-                    <div class="text-[0.55rem] text-t3 text-center mb-1.5">{{ b.verdict }} &middot; {{ b.assets|length }} asset{{ b.assets|length|pluralize }}</div>
-                    <div class="border-t border-surface/[0.06] pt-1.5 space-y-0.5">
-                        {% for a in b.assets|slice:":5" %}
-                        <div class="flex items-center justify-between gap-3">
+                    <div class="text-[0.55rem] text-t3 text-center mb-1.5" data-tip-summary>{{ b.verdict }} &middot; {{ b.assets|length }} asset{{ b.assets|length|pluralize }}</div>
+                    <div class="border-t border-surface/[0.06] pt-1.5 space-y-0.5" data-tip-assets>
+                        {% for a in b.assets %}
+                        <div class="flex items-center justify-between gap-3" data-asset-class="{{ a.asset_class }}"{% if forloop.counter > 5 %} style="display:none" data-overflow{% endif %}>
                             <span class="text-[0.6rem] font-medium text-t3">{{ a.ticker }}</span>
                             {% if a.latest_close %}<span class="text-[0.55rem] tabular-nums text-t4">${{ a.latest_close|floatformat:2 }}</span>{% endif %}
                         </div>
                         {% endfor %}
-                        {% if b.assets|length > 5 %}
-                        <div class="text-[0.55rem] text-t4 pt-0.5">+{{ b.assets|length|add:"-5" }} more</div>
-                        {% endif %}
+                        <div class="text-[0.55rem] text-t4 pt-0.5" data-tip-more{% if b.assets|length <= 5 %} style="display:none"{% endif %}>+{{ b.assets|length|add:"-5" }} more</div>
                     </div>
                 </div>
                 {% endif %}
@@ -181,6 +178,7 @@
         <a href="{% url 'core:asset_detail' asset.ticker %}"
            class="rank-row {% if asset.rank <= 3 %}rank-podium rank-{{ asset.rank }} {% endif %}group block relative border-b border-surface/[0.04] transition-colors duration-200 hover:bg-surface/[0.02]"
            data-asset-class="{{ asset.asset_class }}"
+           data-score="{{ asset.market_score }}"
            style="animation-delay: {{ asset.rank|add:"-1" }}00ms">
 
             {# ── Desktop row ── #}
@@ -311,6 +309,90 @@
 (function() {
     var tabs = document.querySelectorAll('#filterTabs .filter-tab');
     var rows = document.querySelectorAll('#rankingsList > a');
+    var bars = document.querySelectorAll('[data-bar-score]');
+
+    function updateChart(filter) {
+        /* Count assets per bucket for this filter */
+        var counts = {};
+        var totalFiltered = 0;
+        rows.forEach(function(row) {
+            if (filter !== 'all' && row.dataset.assetClass !== filter) return;
+            var score = row.dataset.score;
+            counts[score] = (counts[score] || 0) + 1;
+            totalFiltered++;
+        });
+
+        var maxCount = 0;
+        bars.forEach(function(bar) {
+            var c = counts[bar.dataset.barScore] || 0;
+            if (c > maxCount) maxCount = c;
+        });
+        if (!maxCount) maxCount = 1;
+
+        /* Zone counts keyed by css class */
+        var zoneCounts = {ss: 0, s: 0, h: 0, b: 0, sb: 0};
+
+        bars.forEach(function(bar) {
+            var score = bar.dataset.barScore;
+            var css = bar.dataset.barCss;
+            var c = counts[score] || 0;
+            var fill = bar.querySelector('[data-bar-fill]');
+            var pct = c ? Math.round(c / maxCount * 100) : 0;
+
+            fill.style.height = c ? pct + '%' : '0';
+            fill.style.minHeight = c ? '3px' : '0';
+
+            zoneCounts[css] += c;
+
+            /* Update tooltip */
+            var tip = bar.querySelector('.dist-tooltip');
+            if (!tip) return;
+
+            var tipPct = tip.querySelector('[data-tip-pct]');
+            var tipSummary = tip.querySelector('[data-tip-summary]');
+            var tipMore = tip.querySelector('[data-tip-more]');
+            var tipAssets = tip.querySelector('[data-tip-assets]');
+
+            var barPct = totalFiltered ? (c / totalFiltered * 100).toFixed(1) : '0';
+            if (tipPct) tipPct.textContent = barPct + '%';
+            if (tipSummary) tipSummary.textContent = bar.dataset.barVerdict + ' \u00B7 ' + c + ' asset' + (c !== 1 ? 's' : '');
+
+            /* Show/hide asset entries based on filter */
+            if (tipAssets) {
+                var entries = tipAssets.querySelectorAll('[data-asset-class]');
+                var shown = 0;
+                entries.forEach(function(entry) {
+                    var match = filter === 'all' || entry.dataset.assetClass === filter;
+                    if (match && shown < 5) {
+                        entry.style.display = '';
+                        shown++;
+                    } else {
+                        entry.style.display = 'none';
+                    }
+                });
+                var overflow = c - shown;
+                if (tipMore) {
+                    tipMore.style.display = overflow > 0 ? '' : 'none';
+                    tipMore.textContent = '+' + overflow + ' more';
+                }
+            }
+
+            /* Hide/restore tooltip based on filtered count */
+            if (c === 0) {
+                tip.style.display = 'none';
+            } else {
+                tip.style.display = '';
+                tip.classList.add('hidden');
+            }
+        });
+
+        /* Update zone percentages */
+        document.querySelectorAll('[data-zone-pct]').forEach(function(el) {
+            var zone = el.dataset.zonePct;
+            var zp = totalFiltered ? Math.round(zoneCounts[zone] / totalFiltered * 100) : 0;
+            el.textContent = zp ? zp + '%' : '';
+        });
+    }
 
     tabs.forEach(function(tab) {
         tab.addEventListener('click', function() {
@@ -330,6 +412,8 @@
                     });
                 }
             });
+
+            updateChart(filter);
         });
     });
 
@@ -346,7 +430,6 @@
         bar.addEventListener('click', function(e) {
             e.stopPropagation();
             var wasVisible = !tip.classList.contains('hidden');
-            // Close all tooltips first
             distBars.forEach(function(t) { t.classList.add('hidden'); });
             if (!wasVisible) tip.classList.remove('hidden');
         });
