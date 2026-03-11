@@ -35,6 +35,12 @@ _EQUITY_MOTIVATORS = ("valuation", "product", "people")
 _NON_EQUITY_HYGIENE = ("sentiment", "risk")
 _NON_EQUITY_MOTIVATORS = ("valuation", "product")
 
+# Intrinsic: exclude sentiment (hygiene) and valuation (motivator)
+_EQUITY_INTRINSIC_HYGIENE = ("finance", "risk")
+_EQUITY_INTRINSIC_MOTIVATORS = ("product", "people")
+_NON_EQUITY_INTRINSIC_HYGIENE = ("risk",)
+_NON_EQUITY_INTRINSIC_MOTIVATORS = ("product",)
+
 
 def sections_for_asset(asset_class: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Return (hygiene, motivators) section keys for the given asset class."""
@@ -53,6 +59,27 @@ def compute_weighted_score(
 ) -> int:
     """Compute weighted total: hygiene x 1.5, motivators x 1.0, scaled to 30."""
     hygiene, motivators = sections_for_asset(asset_class)
+    raw: float = 0.0
+    for key in hygiene:
+        raw += sections.get(key, {}).get("score", 0) * HYGIENE_WEIGHT
+    for key in motivators:
+        raw += sections.get(key, {}).get("score", 0) * MOTIVATOR_WEIGHT
+    max_raw: float = (
+        len(hygiene) * 4 * HYGIENE_WEIGHT + len(motivators) * 4 * MOTIVATOR_WEIGHT
+    )
+    return round(raw * (SCORE_SCALE / max_raw))
+
+
+def compute_intrinsic_score(
+    sections: dict[str, dict], asset_class: str = "equity"
+) -> int:
+    """Compute intrinsic score: finance + risk + product + people, scaled to 30."""
+    if asset_class == "equity":
+        hygiene = _EQUITY_INTRINSIC_HYGIENE
+        motivators = _EQUITY_INTRINSIC_MOTIVATORS
+    else:
+        hygiene = _NON_EQUITY_INTRINSIC_HYGIENE
+        motivators = _NON_EQUITY_INTRINSIC_MOTIVATORS
     raw: float = 0.0
     for key in hygiene:
         raw += sections.get(key, {}).get("score", 0) * HYGIENE_WEIGHT
@@ -207,10 +234,14 @@ def _generate_assessment(
         cache.set(data_key, data, OVERALL_ASSESSMENT_DATA_TTL)
 
         if persist_to_db:
+            intrinsic = compute_intrinsic_score(sections, asset.asset_class)
+            now = timezone.now()
             Asset.objects.filter(pk=asset.pk).update(
-                report_card_score=total_score,
+                market_score=total_score,
+                intrinsic_score=intrinsic,
                 target_price=assessment.target_price,
-                report_card_updated_at=timezone.now(),
+                market_score_updated_at=now,
+                intrinsic_score_updated_at=now,
             )
 
         return data

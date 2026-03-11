@@ -60,6 +60,7 @@ from analyst.managers.overall_assessment_manager import (
     _user_cache_keys as overall_user_cache_keys,
 )
 from analyst.managers.overall_assessment_manager import (
+    compute_intrinsic_score,
     compute_verdict,
     compute_weighted_score,
     expected_section_count,
@@ -171,6 +172,34 @@ async def _cached(key: str, compute, ttl: int = HOME_COUNTS_CACHE_TTL):
     return value
 
 
+async def _backfill_intrinsic_score(asset):
+    """Compute and persist intrinsic score from cached section data if missing."""
+    if asset.market_score > 0 and asset.intrinsic_score == 0:
+        sections = {}
+        for name, keys_fn in [
+            ("finance", finance_cache_keys),
+            ("risk", risk_cache_keys),
+        ]:
+            cached = await cache.aget(keys_fn(asset.ticker)[0])
+            if cached and "score" in cached:
+                sections[name] = cached
+        for name, keys_fn in [
+            ("product", product_base_cache_keys),
+            ("people", people_base_cache_keys),
+        ]:
+            cached = await cache.aget(keys_fn(asset.ticker)[0])
+            if cached and "score" in cached:
+                sections[name] = cached
+        if sections:
+            score = compute_intrinsic_score(sections, asset.asset_class)
+            if score > 0:
+                asset.intrinsic_score = score
+                await Asset.objects.filter(pk=asset.pk).aupdate(
+                    intrinsic_score=score,
+                    intrinsic_score_updated_at=timezone.now(),
+                )
+
+
 @cache_page(60 * 60 * 24)
 def pwa_manifest(request):
     return JsonResponse(
@@ -260,7 +289,7 @@ async def rankings(request):
 
     ranked = [
         a
-        async for a in Asset.objects.filter(is_active=True, report_card_score__gt=0)
+        async for a in Asset.objects.filter(is_active=True, market_score__gt=0)
         .annotate(
             latest_close=Subquery(
                 PriceHistory.objects.filter(asset=OuterRef("pk"))
@@ -273,7 +302,7 @@ async def rankings(request):
                 .values("close")[1:2]
             ),
         )
-        .order_by("-report_card_score", "ticker")
+        .order_by("-market_score", "ticker")
     ]
 
     if view == "yours" and is_authenticated:
@@ -300,17 +329,21 @@ async def rankings(request):
             for ticker, cached in zip(cache_tasks.keys(), results, strict=True):
                 if cached and "score" in cached:
                     asset = ticker_asset_map[ticker]
-                    asset.report_card_score = cached["score"]
+                    asset.market_score = cached["score"]
                     if cached.get("target_price") is not None:
                         asset.target_price = cached["target_price"]
                     asset.is_personalized = True
 
             # Re-sort after overlaying personalized scores
-            ranked.sort(key=lambda a: (-a.report_card_score, a.ticker))
+            ranked.sort(key=lambda a: (-a.market_score, a.ticker))
+
+    # Backfill intrinsic scores for assets that don't have one yet
+    for asset in ranked:
+        await _backfill_intrinsic_score(asset)
 
     for i, asset in enumerate(ranked, 1):
         asset.rank = i
-        asset.verdict = compute_verdict(asset.report_card_score)
+        asset.verdict = compute_verdict(asset.market_score)
         asset.daily_change = pct_change(asset.latest_close, asset.prev_close)
         if not hasattr(asset, "is_personalized"):
             asset.is_personalized = False
@@ -323,19 +356,37 @@ async def rankings(request):
         else:
             asset.upside = None
 
-    # Build score distribution - scores 8-30 (full range)
+    # Build score distribution
+    total_rated = len(ranked)
     score_buckets = []
-    for s in range(8, 31):
-        bucket_assets = [a for a in ranked if a.report_card_score == s]
+    for s in range(11, 28):
+        bucket_assets = [a for a in ranked if a.market_score == s]
         verdict, css = "Strong Buy", "sb"
         for threshold, label, css_class in VERDICT_RANGES:
             if s <= threshold:
                 verdict, css = label, css_class
                 break
+        bar_pct = round(len(bucket_assets) / total_rated * 100, 1) if total_rated else 0
         score_buckets.append(
-            {"score": s, "assets": bucket_assets, "verdict": verdict, "css": css}
+            {
+                "score": s,
+                "assets": bucket_assets,
+                "verdict": verdict,
+                "css": css,
+                "bar_pct": bar_pct,
+            }
         )
     max_bucket_count = max((len(b["assets"]) for b in score_buckets), default=1) or 1
+
+    # Verdict zone percentages
+    verdict_zone_pcts = {}
+    for _threshold, _label, css_class in VERDICT_RANGES:
+        zone_count = sum(
+            len(b["assets"]) for b in score_buckets if b["css"] == css_class
+        )
+        verdict_zone_pcts[css_class] = (
+            round(zone_count / total_rated * 100) if total_rated else 0
+        )
 
     return render(
         request,
@@ -345,6 +396,84 @@ async def rankings(request):
             "active_view": view,
             "score_buckets": score_buckets,
             "max_bucket_count": max_bucket_count,
+            "verdict_zone_pcts": verdict_zone_pcts,
+        },
+    )
+
+
+async def intrinsic_rankings(request):
+    """Intrinsic rankings: assets ranked by intrinsic score (finance, risk, product, people)."""
+    ranked = [
+        a
+        async for a in Asset.objects.filter(is_active=True, market_score__gt=0)
+        .annotate(
+            latest_close=Subquery(
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
+                .order_by("-timestamp")
+                .values("close")[:1]
+            ),
+            prev_close=Subquery(
+                PriceHistory.objects.filter(asset=OuterRef("pk"))
+                .order_by("-timestamp")
+                .values("close")[1:2]
+            ),
+        )
+        .order_by("-intrinsic_score", "ticker")
+    ]
+
+    # Backfill intrinsic scores for assets that don't have one yet
+    for asset in ranked:
+        await _backfill_intrinsic_score(asset)
+
+    # Re-sort after backfill (some scores may have changed from 0)
+    ranked.sort(key=lambda a: (-a.intrinsic_score, a.ticker))
+    # Remove assets still without intrinsic score
+    ranked = [a for a in ranked if a.intrinsic_score > 0]
+
+    for i, asset in enumerate(ranked, 1):
+        asset.rank = i
+        asset.verdict = compute_verdict(asset.intrinsic_score)
+        asset.daily_change = pct_change(asset.latest_close, asset.prev_close)
+
+    # Build score distribution
+    total_rated = len(ranked)
+    score_buckets = []
+    for s in range(11, 28):
+        bucket_assets = [a for a in ranked if a.intrinsic_score == s]
+        verdict, css = "Strong Buy", "sb"
+        for threshold, label, css_class in VERDICT_RANGES:
+            if s <= threshold:
+                verdict, css = label, css_class
+                break
+        bar_pct = round(len(bucket_assets) / total_rated * 100, 1) if total_rated else 0
+        score_buckets.append(
+            {
+                "score": s,
+                "assets": bucket_assets,
+                "verdict": verdict,
+                "css": css,
+                "bar_pct": bar_pct,
+            }
+        )
+    max_bucket_count = max((len(b["assets"]) for b in score_buckets), default=1) or 1
+
+    verdict_zone_pcts = {}
+    for _threshold, _label, css_class in VERDICT_RANGES:
+        zone_count = sum(
+            len(b["assets"]) for b in score_buckets if b["css"] == css_class
+        )
+        verdict_zone_pcts[css_class] = (
+            round(zone_count / total_rated * 100) if total_rated else 0
+        )
+
+    return render(
+        request,
+        "core/intrinsic_rankings.html",
+        {
+            "ranked_assets": ranked,
+            "score_buckets": score_buckets,
+            "max_bucket_count": max_bucket_count,
+            "verdict_zone_pcts": verdict_zone_pcts,
         },
     )
 
@@ -605,8 +734,8 @@ async def asset_detail(request, ticker):
             "report_section_poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
             "user_has_notes": bool(user_note or price_target is not None),
             "expected_section_count": expected_section_count(asset.asset_class),
-            "verdict": compute_verdict(asset.report_card_score)
-            if asset.report_card_score
+            "verdict": compute_verdict(asset.market_score)
+            if asset.market_score
             else None,
         },
     )
@@ -1418,6 +1547,8 @@ async def report_card_overall(request, ticker):
 
     total_score = compute_weighted_score(sections, asset.asset_class)
     verdict = compute_verdict(total_score)
+    intrinsic_score = compute_intrinsic_score(sections, asset.asset_class)
+    intrinsic_verdict = compute_verdict(intrinsic_score)
 
     # Check overall cache — use user key if revisions exist, base otherwise
     has_revisions = any(
@@ -1441,6 +1572,8 @@ async def report_card_overall(request, ticker):
                 "ticker": ticker,
                 "report_card_total": total_score,
                 "verdict": verdict,
+                "intrinsic_score": intrinsic_score,
+                "intrinsic_verdict": intrinsic_verdict,
                 "view_mode": view_mode,
             },
         )
@@ -1457,6 +1590,8 @@ async def report_card_overall(request, ticker):
             "poll_interval": REPORT_SECTION_POLL_INTERVAL_S,
             "report_card_total": total_score,
             "verdict": verdict,
+            "intrinsic_score": intrinsic_score,
+            "intrinsic_verdict": intrinsic_verdict,
             "view_mode": view_mode,
         },
     )

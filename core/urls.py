@@ -15,6 +15,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("strategy/", views.strategy, name="strategy"),
     path("rankings/", views.rankings, name="rankings"),
+    path("intrinsic/", views.intrinsic_rankings, name="intrinsic_rankings"),
     path("watchlist/", views.home_watchlist, name="home_watchlist"),
     path("search/", views.asset_search, name="asset_search"),
     path("assets/<str:ticker>/", views.asset_detail, name="asset_detail"),

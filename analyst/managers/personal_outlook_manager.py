@@ -49,7 +49,7 @@ def _fetch_watchlist_data(user_id: int) -> tuple[dict | None, list[dict]]:
             "asset__ticker",
             "asset__name",
             "asset__asset_class",
-            "asset__report_card_score",
+            "asset__market_score",
             "asset__target_price",
         )
     ):
@@ -62,9 +62,9 @@ def _fetch_watchlist_data(user_id: int) -> tuple[dict | None, list[dict]]:
             "ticker": asset.ticker,
             "name": asset.name,
             "asset_class": asset.get_asset_class_display(),
-            "score": asset.report_card_score,
-            "verdict": compute_verdict(asset.report_card_score)
-            if asset.report_card_score
+            "score": asset.market_score,
+            "verdict": compute_verdict(asset.market_score)
+            if asset.market_score
             else None,
             "target_price": float(asset.target_price) if asset.target_price else None,
             "key_drivers": [],

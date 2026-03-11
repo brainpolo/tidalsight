@@ -1,5 +1,6 @@
 {% if loading %}
 <div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]"
+     data-rc-section="sentiment"
      hx-get="{% url 'core:report_card_sentiment' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="load delay:{{ poll_interval }}s, pollReportCardSentiment from:body delay:{{ poll_interval }}s"
      hx-swap="outerHTML">
@@ -19,7 +20,7 @@
 
 {% elif sentiment %}
 <!-- Scored card -->
-<div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]" data-section="sentiment">
+<div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]" data-section="sentiment" data-rc-section="sentiment">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="message-circle" class="size-3.5 text-t4"></i>
@@ -73,7 +74,7 @@
 
 {% else %}
 <!-- Unavailable / placeholder -->
-<div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]">
+<div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]" data-rc-section="sentiment">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="message-circle" class="size-3.5 text-t4"></i>

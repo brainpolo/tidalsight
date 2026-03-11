@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Rankings — TidalSight{% endblock %}
+{% block title %}Intrinsic Rankings — TidalSight{% endblock %}
 
 {% block head %}
 <style>
@@ -11,8 +11,6 @@
     @keyframes rank-enter {
         to { opacity: 1; transform: none; }
     }
-
-    /* Score bar fill */
     .score-fill {
         transform-origin: left;
         transform: scaleX(0);
@@ -21,8 +19,6 @@
     @keyframes fill-bar {
         to { transform: scaleX(1); }
     }
-
-    /* Podium glow for top 3 */
     .rank-podium { position: relative; }
     .rank-podium::before {
         content: '';
@@ -36,17 +32,8 @@
     .rank-1::before { background: linear-gradient(90deg, rgba(200, 121, 65, 0.06), transparent 60%); }
     .rank-2::before { background: linear-gradient(90deg, rgba(200, 121, 65, 0.03), transparent 50%); }
     .rank-3::before { background: linear-gradient(90deg, rgba(200, 121, 65, 0.02), transparent 40%); }
-
-    /* Filter tabs */
-    .filter-tab {
-        transition: color 0.2s, border-color 0.2s;
-    }
-    .filter-tab.active {
-        color: var(--ts-heading);
-        border-color: var(--color-copper);
-    }
-
-    /* Distribution tooltips: hover on desktop */
+    .filter-tab { transition: color 0.2s, border-color 0.2s; }
+    .filter-tab.active { color: var(--ts-heading); border-color: var(--color-copper); }
     @media (hover: hover) {
         .group:hover > .dist-tooltip { display: block; }
     }
@@ -61,10 +48,10 @@
     {# ── Header ── #}
     <section class="pt-10 sm:pt-16 pb-6 sm:pb-10">
         <div class="mb-2">
-            <h1 class="font-serif text-3xl sm:text-4xl text-heading tracking-tight">Rankings</h1>
+            <h1 class="font-serif text-3xl sm:text-4xl text-heading tracking-tight">Intrinsic Rankings</h1>
             <p class="text-[0.7rem] sm:text-xs text-t3 mt-2 max-w-md leading-relaxed">
-                Our AI analysis produces composite ratings evaluating current and relevant factors such as sentiment, risk, valuation, and product.
-                See our <a href="{% url 'core:strategy' %}" class="text-copper hover:text-copper-light transition-colors">strategy</a> for more information.
+                Business quality stripped of market noise. Scored on finance, risk, product, and people &mdash; excluding sentiment and valuation.
+                See our <a href="{% url 'core:strategy' %}" class="text-copper hover:text-copper-light transition-colors">strategy</a> for methodology.
             </p>
             <p class="text-[0.55rem] sm:text-[0.6rem] text-t4 mt-1.5">Only assets that have been fully analysed will have ratings.</p>
         </div>
@@ -73,17 +60,9 @@
 
     {# ── Rankings type tabs ── #}
     <div class="flex items-center gap-4 mb-5">
-        <a href="{% url 'core:intrinsic_rankings' %}" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 text-t3 border-transparent hover:text-t2 transition-colors">Intrinsic</a>
-        <a href="{% url 'core:rankings' %}" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 text-heading border-copper transition-colors">Market</a>
+        <a href="{% url 'core:intrinsic_rankings' %}" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 text-heading border-copper transition-colors">Intrinsic</a>
+        <a href="{% url 'core:rankings' %}" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 text-t3 border-transparent hover:text-t2 transition-colors">Market</a>
     </div>
-
-    {# ── View tabs (authenticated only) ── #}
-    {% if user.is_authenticated %}
-    <div class="flex items-center gap-4 mb-5">
-        <a href="?view=public" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 transition-colors {% if active_view == 'public' %}text-heading border-copper{% else %}text-t3 border-transparent hover:text-t2{% endif %}">Public</a>
-        <a href="?view=yours" class="text-[0.6rem] font-semibold tracking-[0.12em] uppercase pb-1 border-b-2 transition-colors {% if active_view == 'yours' %}text-heading border-copper{% else %}text-t3 border-transparent hover:text-t2{% endif %}">Yours</a>
-    </div>
-    {% endif %}
 
     {# ── Filter tabs ── #}
     <div class="flex items-center gap-1 mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0" id="filterTabs">
@@ -98,7 +77,7 @@
     {% if score_buckets %}
     <div class="mb-8 border border-surface/[0.04] rounded-sm p-4 sm:p-6 lg:p-8">
         <div class="mb-4 sm:mb-6">
-            <span class="text-xs font-semibold tracking-[0.14em] uppercase text-t3">Rating Distribution</span>
+            <span class="text-xs font-semibold tracking-[0.14em] uppercase text-t3">Intrinsic Rating Distribution</span>
         </div>
         {# Verdict region labels #}
         <div class="flex mb-2">
@@ -165,14 +144,12 @@
     </div>
 
     {# ── Column headers (desktop) ── #}
-    <div class="rank-thead hidden lg:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-6 pt-5 pb-6 sticky top-[calc(2rem+48px)] z-10 bg-page">
+    <div class="rank-thead hidden lg:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem] gap-x-4 items-center px-6 pt-5 pb-6 sticky top-[calc(2rem+48px)] z-10 bg-page">
         <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4">#</span>
         <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4">Asset</span>
         <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Score</span>
         <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Verdict</span>
         <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Price</span>
-        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Target</span>
-        <span class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t4 text-right">Upside</span>
     </div>
 
     {# ── Ranked list ── #}
@@ -184,7 +161,7 @@
            style="animation-delay: {{ asset.rank|add:"-1" }}00ms">
 
             {# ── Desktop row ── #}
-            <div class="hidden lg:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem_5.5rem_5.5rem] gap-x-4 items-center px-6 py-4">
+            <div class="hidden lg:grid grid-cols-[3rem_1fr_5.5rem_6rem_6rem] gap-x-4 items-center px-6 py-4">
 
                 {# Rank #}
                 <div class="flex items-center">
@@ -206,7 +183,6 @@
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-heading group-hover:text-copper transition-colors">{{ asset.ticker }}</span>
                             <span class="text-[0.5rem] font-semibold tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-sm bg-surface/[0.04] text-t4">{{ asset.get_asset_class_display }}</span>
-                            {% if asset.is_personalized %}<span class="text-[0.45rem] font-semibold tracking-[0.08em] uppercase px-1 py-0.5 rounded-sm bg-copper/10 text-copper">Personalised</span>{% endif %}
                         </div>
                         <span class="text-[0.6rem] text-t3 truncate block">{{ asset.name }}</span>
                     </div>
@@ -216,10 +192,10 @@
                 <div class="text-right">
                     <div class="flex items-center justify-end gap-2">
                         <div class="w-12 h-1 rounded-full bg-surface/[0.06] overflow-hidden">
-                            <div class="score-fill h-full rounded-full {% if asset.market_score >= 24 %}bg-emerald-400{% elif asset.market_score >= 15 %}bg-copper{% else %}bg-red-400{% endif %}"
-                                 style="width: {% widthratio asset.market_score 30 100 %}%; animation-delay: {{ asset.rank|add:"-1" }}50ms"></div>
+                            <div class="score-fill h-full rounded-full {% if asset.intrinsic_score >= 24 %}bg-emerald-400{% elif asset.intrinsic_score >= 15 %}bg-copper{% else %}bg-red-400{% endif %}"
+                                 style="width: {% widthratio asset.intrinsic_score 30 100 %}%; animation-delay: {{ asset.rank|add:"-1" }}50ms"></div>
                         </div>
-                        <span class="font-serif text-sm text-heading tabular-nums">{{ asset.market_score }}<span class="text-[0.5rem] text-t4 ml-px">/30</span></span>
+                        <span class="font-serif text-sm text-heading tabular-nums">{{ asset.intrinsic_score }}<span class="text-[0.5rem] text-t4 ml-px">/30</span></span>
                     </div>
                 </div>
 
@@ -232,24 +208,6 @@
                 <div class="text-right">
                     {% if asset.latest_close %}
                     <span class="text-xs text-heading tabular-nums">${{ asset.latest_close|floatformat:2 }}</span>
-                    {% else %}
-                    <span class="text-xs text-t4">&mdash;</span>
-                    {% endif %}
-                </div>
-
-                {# Target #}
-                <div class="text-right">
-                    {% if asset.target_price %}
-                    <span class="text-xs text-t2 tabular-nums">${{ asset.target_price|floatformat:2 }}</span>
-                    {% else %}
-                    <span class="text-xs text-t4">&mdash;</span>
-                    {% endif %}
-                </div>
-
-                {# Upside #}
-                <div class="text-right">
-                    {% if asset.upside != None %}
-                    {% include "core/components/price_change.html" with value=asset.upside decimals=1 class="text-xs font-medium tabular-nums" %}
                     {% else %}
                     <span class="text-xs text-t4">&mdash;</span>
                     {% endif %}
@@ -277,14 +235,13 @@
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-semibold text-heading">{{ asset.ticker }}</span>
                         {% include "core/components/verdict_badge.html" with verdict=asset.verdict size="xs" %}
-                        {% if asset.is_personalized %}<span class="text-[0.4rem] font-semibold tracking-[0.06em] uppercase px-1 py-px rounded-sm bg-copper/10 text-copper">Personalised</span>{% endif %}
                     </div>
                     <span class="text-[0.55rem] text-t3 truncate block">{{ asset.name }}</span>
                 </div>
 
                 {# Score + price #}
                 <div class="text-right shrink-0">
-                    <div class="font-serif text-sm text-heading tabular-nums">{{ asset.market_score }}<span class="text-[0.5rem] text-t4">/30</span></div>
+                    <div class="font-serif text-sm text-heading tabular-nums">{{ asset.intrinsic_score }}<span class="text-[0.5rem] text-t4">/30</span></div>
                     {% if asset.latest_close %}
                     <div class="text-[0.55rem] text-t3 tabular-nums">${{ asset.latest_close|floatformat:2 }}</div>
                     {% endif %}
@@ -294,8 +251,8 @@
     {% empty %}
         <div class="py-20 text-center">
             <i data-lucide="bar-chart-3" class="size-8 text-t4 mx-auto mb-4"></i>
-            <p class="text-sm text-t3">No ranked assets yet.</p>
-            <p class="text-[0.65rem] text-t4 mt-1">Report card scores are generated as assets are analysed.</p>
+            <p class="text-sm text-t3">No intrinsic rankings yet.</p>
+            <p class="text-[0.65rem] text-t4 mt-1">Intrinsic scores are generated when report cards complete.</p>
         </div>
     {% endfor %}
     </div>
@@ -333,20 +290,17 @@
         });
     });
 
-    /* Cap animation delay for long lists */
     rows.forEach(function(row, i) {
         var delay = Math.min(i * 30, 600);
         row.style.animationDelay = delay + 'ms';
     });
 
-    /* Distribution bar tap-to-toggle on mobile */
     var distBars = document.querySelectorAll('.dist-tooltip');
     distBars.forEach(function(tip) {
         var bar = tip.parentElement;
         bar.addEventListener('click', function(e) {
             e.stopPropagation();
             var wasVisible = !tip.classList.contains('hidden');
-            // Close all tooltips first
             distBars.forEach(function(t) { t.classList.add('hidden'); });
             if (!wasVisible) tip.classList.remove('hidden');
         });

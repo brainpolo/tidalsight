@@ -23,7 +23,7 @@ class AssetSitemap(Sitemap):
         return Asset.objects.filter(is_active=True).order_by("ticker")
 
     def lastmod(self, obj):
-        return obj.report_card_updated_at
+        return obj.market_score_updated_at
 
     def location(self, obj):
         return reverse("core:asset_detail", kwargs={"ticker": obj.ticker})

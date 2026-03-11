@@ -54,6 +54,56 @@
         transform: none;
     }
 
+    /* Market/Intrinsic pill toggle */
+    .score-pill-track {
+        position: relative;
+        display: inline-flex;
+        gap: 2px;
+        padding: 3px;
+        border-radius: 4px;
+        background: color-mix(in srgb, var(--ts-surface) 4%, transparent);
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 6%, transparent);
+    }
+    .score-pill {
+        position: relative;
+        z-index: 1;
+        font-size: 0.55rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 2px;
+        cursor: pointer;
+        color: var(--ts-t4);
+        background: none;
+        border: none;
+        transition: color 0.2s;
+    }
+    .score-pill:hover { color: var(--ts-t2); }
+    .score-pill.active { color: var(--ts-t1); }
+    .score-pill-slider {
+        position: absolute;
+        top: 3px; bottom: 3px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--ts-surface) 8%, transparent);
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 8%, transparent);
+        transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                    width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Dimmed report card sections (intrinsic mode) */
+    [data-rc-section] {
+        transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-rc-section].rc-dimmed {
+        opacity: 0.06;
+        transform: scale(0.98) translateY(2px);
+        filter: grayscale(1);
+        pointer-events: none;
+    }
+
 </style>
 {% endblock %}
 
@@ -673,6 +723,19 @@
                 <span class="text-[0.6rem] text-t3">Analysis in progress — scores will appear as they complete</span>
             </div>
 
+            <div class="flex items-center justify-between mb-4">
+                <div id="rcSummaryScore" class="flex items-center gap-2.5 opacity-0 transition-opacity duration-500">
+                    <span class="font-serif text-2xl text-heading tabular-nums" data-summary-score>&mdash;</span>
+                    <span class="text-[0.6rem] text-t3 font-sans">/ 30</span>
+                    <span data-summary-verdict></span>
+                </div>
+                <div class="score-pill-track" id="scoreModeToggle">
+                    <div class="score-pill-slider" id="scoreModeSlider"></div>
+                    <button type="button" class="score-pill" data-score-mode="intrinsic">Intrinsic</button>
+                    <button type="button" class="score-pill active" data-score-mode="market">Market</button>
+                </div>
+            </div>
+
             <!-- Hygiene Factors -->
             <div class="rc-tile mb-6 rounded-lg border border-surface/[0.04] overflow-hidden">
                 <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-surface/[0.015] border-b border-surface/[0.04]">
@@ -691,18 +754,18 @@
                 </div>
                 {% endif %}
 
-                <!-- 2. Sentiment (HTMX partial) -->
-                <div hx-get="{% url 'core:report_card_sentiment' asset.ticker %}"
-                     hx-trigger="load"
-                     hx-swap="outerHTML">
-                    {% include "core/partials/report_card_sentiment.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
-                </div>
-
-                <!-- 3. Risk -->
+                <!-- 2. Risk -->
                 <div hx-get="{% url 'core:report_card_risk' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
                     {% include "core/partials/report_card_risk.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                </div>
+
+                <!-- 3. Sentiment (HTMX partial, dimmed in intrinsic) -->
+                <div hx-get="{% url 'core:report_card_sentiment' asset.ticker %}"
+                     hx-trigger="load"
+                     hx-swap="outerHTML">
+                    {% include "core/partials/report_card_sentiment.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
                 </div>
@@ -717,12 +780,14 @@
                 </div>
                 <div id="rc-motivators" class="grid grid-cols-1 sm:grid-cols-2 {% if asset.asset_class == 'equity' %}lg:grid-cols-3{% endif %} gap-px bg-copper/[0.01] overflow-hidden [&>*]:flex [&>*]:flex-col [&>*]:min-w-0 [&_p]:break-words">
 
-                <!-- 4. Valuation / Fair Value -->
-                <div hx-get="{% url 'core:report_card_valuation' asset.ticker %}"
+                {% if asset.asset_class == "equity" %}
+                <!-- 4. People (equity only) -->
+                <div hx-get="{% url 'core:report_card_people' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
-                    {% include "core/partials/report_card_valuation.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                    {% include "core/partials/report_card_people.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
+                {% endif %}
 
                 <!-- 5. Product -->
                 <div hx-get="{% url 'core:report_card_product' asset.ticker %}"
@@ -731,14 +796,12 @@
                     {% include "core/partials/report_card_product.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
 
-                {% if asset.asset_class == "equity" %}
-                <!-- 6. People (equity only) -->
-                <div hx-get="{% url 'core:report_card_people' asset.ticker %}"
+                <!-- 6. Valuation (dimmed in intrinsic) -->
+                <div hx-get="{% url 'core:report_card_valuation' asset.ticker %}"
                      hx-trigger="load"
                      hx-swap="outerHTML">
-                    {% include "core/partials/report_card_people.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
+                    {% include "core/partials/report_card_valuation.html" with loading=True ticker=asset.ticker poll_interval=report_section_poll_interval %}
                 </div>
-                {% endif %}
                 </div>
             </div>
 
@@ -989,11 +1052,11 @@ function switchReportView(btn, view) {
 
     // Re-fetch motivator sections with view param
     const sections = [
-        {url: '{% url "core:report_card_valuation" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(1)'},
-        {url: '{% url "core:report_card_product" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(2)'},
         {% if asset.asset_class == "equity" %}
-        {url: '{% url "core:report_card_people" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(3)'},
+        {url: '{% url "core:report_card_people" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child(1)'},
         {% endif %}
+        {url: '{% url "core:report_card_product" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child({% if asset.asset_class == "equity" %}2{% else %}1{% endif %})'},
+        {url: '{% url "core:report_card_valuation" asset.ticker %}' + qs, sel: '#rc-motivators > :nth-child({% if asset.asset_class == "equity" %}3{% else %}2{% endif %})'},
     ];
 
     sections.forEach(function(s) {
@@ -1107,6 +1170,85 @@ function switchReportView(btn, view) {
         target.querySelectorAll && target.querySelectorAll('.reveal-section').forEach(function(el) {
             revealObs.observe(el);
         });
+    });
+})();
+</script>
+
+<script>
+/* Market / Intrinsic score mode toggle */
+(function() {
+    var track = document.getElementById('scoreModeToggle');
+    if (!track) return;
+    var slider = document.getElementById('scoreModeSlider');
+    var pills = track.querySelectorAll('.score-pill');
+
+    function positionSlider(active) {
+        slider.style.left = active.offsetLeft + 'px';
+        slider.style.width = active.offsetWidth + 'px';
+    }
+    positionSlider(track.querySelector('.score-pill.active'));
+
+    var summary = document.getElementById('rcSummaryScore');
+    var summaryScoreEl = summary.querySelector('[data-summary-score]');
+    var summaryVerdictEl = summary.querySelector('[data-summary-verdict]');
+
+    function verdictHtml(verdict, size) {
+        var isBuy = verdict === 'Strong Buy' || verdict === 'Buy';
+        var isSell = verdict === 'Strong Sell' || verdict === 'Sell';
+        var cls = isBuy ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/15'
+                 : isSell ? 'bg-red-500/10 text-red-400 border-red-500/15'
+                 : 'bg-surface/[0.08] text-t2 border-surface/[0.06]';
+        if (size === 'sm') return '<span class="text-[0.55rem] font-semibold tracking-[0.06em] uppercase px-2 py-0.5 rounded-sm border ' + cls + '">' + verdict + '</span>';
+        return '<span class="text-sm font-semibold tracking-[0.06em] uppercase px-3 py-1 rounded-sm border ' + cls + '">' + verdict + '</span>';
+    }
+
+    function syncFromOverall() {
+        var overall = document.getElementById('rc-overall-wrap');
+        if (!overall || !overall.dataset.marketScore) return;
+        var isIntrinsic = track.querySelector('.score-pill.active').dataset.scoreMode === 'intrinsic';
+        var score = isIntrinsic ? overall.dataset.intrinsicScore : overall.dataset.marketScore;
+        var verdict = isIntrinsic ? overall.dataset.intrinsicVerdict : overall.dataset.marketVerdict;
+
+        // Update inline summary
+        summaryScoreEl.textContent = score;
+        summaryVerdictEl.innerHTML = verdictHtml(verdict, 'sm');
+        summary.style.opacity = '1';
+
+        // Update overall card
+        var sv = overall.querySelector('[data-score-value]');
+        if (sv) sv.textContent = score;
+        var vb = overall.querySelector('[data-verdict-badge]');
+        if (vb) vb.innerHTML = verdictHtml(verdict);
+        var lbl = overall.querySelector('#scoreTypeLabel');
+        if (lbl) lbl.textContent = isIntrinsic ? 'Intrinsic' : 'Market';
+    }
+
+    pills.forEach(function(pill) {
+        pill.addEventListener('click', function() {
+            var isIntrinsic = this.dataset.scoreMode === 'intrinsic';
+
+            pills.forEach(function(p) { p.classList.remove('active'); });
+            this.classList.add('active');
+            positionSlider(this);
+
+            // Dim sentiment + valuation sections
+            document.querySelectorAll('[data-rc-section="sentiment"], [data-rc-section="valuation"]').forEach(function(el) {
+                el.classList.toggle('rc-dimmed', isIntrinsic);
+            });
+
+            syncFromOverall();
+        });
+    });
+
+    // Re-apply state after HTMX swaps (partials replace outerHTML)
+    document.body.addEventListener('htmx:afterSettle', function() {
+        var active = track.querySelector('.score-pill.active');
+        if (active && active.dataset.scoreMode === 'intrinsic') {
+            document.querySelectorAll('[data-rc-section="sentiment"], [data-rc-section="valuation"]').forEach(function(el) {
+                el.classList.add('rc-dimmed');
+            });
+        }
+        syncFromOverall();
     });
 })();
 </script>

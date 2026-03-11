@@ -1,6 +1,7 @@
 {% if loading %}
 <!-- Loading skeleton — self-polls until agent finishes -->
 <div class="p-5 sm:p-6"
+     data-rc-section="valuation"
      hx-get="{% url 'core:report_card_valuation' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="load delay:{{ poll_interval }}s"
      hx-swap="outerHTML">
@@ -20,7 +21,7 @@
 
 {% elif valuation %}
 <!-- Scored card -->
-<div class="p-5 sm:p-6" data-section="valuation">
+<div class="p-5 sm:p-6" data-section="valuation" data-rc-section="valuation">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="scale" class="size-3.5 text-t4"></i>
@@ -91,7 +92,7 @@
 
 {% else %}
 <!-- Unavailable / placeholder -->
-<div class="p-5 sm:p-6">
+<div class="p-5 sm:p-6" data-rc-section="valuation">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
             <i data-lucide="scale" class="size-3.5 text-t4"></i>

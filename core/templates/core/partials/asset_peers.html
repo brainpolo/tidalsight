@@ -47,19 +47,19 @@
             <span class="text-surface/[0.12] text-[0.5rem]">&middot;</span>
             {% endif %}
             {% endfor %}
+            {% if user.is_staff %}
+            <span class="shrink-0 self-center pl-1">
+                <button hx-post="{% url 'core:regenerate_peers' ticker %}"
+                        hx-target="#peers-container"
+                        hx-swap="innerHTML"
+                        hx-confirm="Regenerate peers?"
+                        class="text-t4 hover:text-copper transition-colors cursor-pointer"
+                        title="Regenerate peers">
+                    <i data-lucide="refresh-cw" class="size-3"></i>
+                </button>
+            </span>
+            {% endif %}
         </div>
-        {% if user.is_staff %}
-        <span class="shrink-0 self-stretch flex items-center">
-            <button hx-post="{% url 'core:regenerate_peers' ticker %}"
-                    hx-target="#peers-container"
-                    hx-swap="innerHTML"
-                    hx-confirm="Regenerate peers?"
-                    class="text-t4 hover:text-copper transition-colors cursor-pointer"
-                    title="Regenerate peers">
-                <i data-lucide="refresh-cw" class="size-3"></i>
-            </button>
-        </span>
-        {% endif %}
     </div>
 </div>
 {% endif %}
