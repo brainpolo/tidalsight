@@ -1,0 +1,9 @@
+{% load formatting %}
+{% if website %}
+<img src="https://www.google.com/s2/favicons?domain={{ website|domain }}&sz={{ sz|default:'64' }}"
+     alt="" class="{{ class }}" loading="lazy">
+{% else %}
+<div class="{{ class }} rounded-sm bg-surface/[0.08] flex items-center justify-center">
+    <span class="text-t4 font-semibold" style="font-size: 0.55em;">{{ ticker|default:""|slice:":2" }}</span>
+</div>
+{% endif %}

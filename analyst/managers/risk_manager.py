@@ -1,24 +1,21 @@
-import asyncio
 import logging
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.provider import get_model_provider
 from analyst.agents.risk_agent import (
     RiskAssessment,
     risk_agent,
 )
 from analyst.app_behaviour import (
-    MAX_AGENT_TURNS,
     RISK_DATA_TTL,
     RISK_FRESHNESS_TTL,
     RISK_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import agent_grounding, compute_label
+from analyst.grounding import compute_label
+from analyst.runner import run_agent
 from analyst.utils import asset_label
 from scraper.models import Asset
 
@@ -34,20 +31,8 @@ def _cache_keys(ticker: str) -> tuple[str, str, str]:
 
 
 def _run_agent(label: str) -> RiskAssessment:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
     prompt = f"Assess the external risk profile for {label}."
-    result = asyncio.run(
-        Runner.run(
-            risk_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(risk_agent, prompt)
 
 
 def get_risk(asset: Asset) -> dict | None:
@@ -76,9 +61,9 @@ def get_risk(asset: Asset) -> dict | None:
 
         cache.set(data_key, data, RISK_DATA_TTL)
         cache.set(fresh_key, True, RISK_FRESHNESS_TTL)
-        cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate external risk for %s", asset.ticker)
-        cache.delete(lock_key)
         return existing
+    finally:
+        cache.delete(lock_key)

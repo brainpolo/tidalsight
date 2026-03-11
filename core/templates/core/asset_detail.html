@@ -31,6 +31,30 @@
     .asset-banner { pointer-events: none; }
     .asset-banner.visible { pointer-events: auto; }
     .asset-banner.visible .banner-bar { opacity: 1; transform: translateY(0); }
+
+    /* Scroll-reveal for deep dive sections */
+    .reveal-section {
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-section.visible {
+        opacity: 1;
+        transform: none;
+    }
+
+    /* Report card tile entrance */
+    .rc-tile {
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rc-tile.visible {
+        opacity: 1;
+        transform: none;
+    }
 </style>
 {% endblock %}
 
@@ -44,10 +68,7 @@
     <div id="assetBanner" class="asset-banner fixed top-[calc(1.75rem+55px)] sm:top-[calc(2rem+59px)] left-0 right-0 z-30">
         <div class="max-w-[1120px] mx-auto px-4 sm:px-10 {% if request.user.is_authenticated %}xl:pr-[calc(240px+2rem+2.5rem)]{% endif %}">
             <div class="banner-bar py-1 sm:py-1.5 flex items-center justify-center gap-2 sm:gap-3 bg-page/90 backdrop-blur-md border-b border-surface/[0.06] opacity-0 -translate-y-2 transition-all duration-200 ease-out">
-                {% if asset.website %}
-                <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz=32"
-                     alt="" class="size-4 sm:size-5 rounded-sm shrink-0" loading="lazy">
-                {% endif %}
+                {% include "core/components/asset_favicon.html" with website=asset.website ticker=asset.ticker class="size-4 sm:size-5 shrink-0" sz=32 %}
                 <span class="font-serif text-[0.8rem] sm:text-[0.9rem] text-t1 truncate">{{ asset.name }}</span>
                 <span class="text-[0.5rem] font-semibold tracking-[0.1em] uppercase text-t4 shrink-0 hidden sm:inline">{{ asset.ticker }}</span>
                 {% include "core/components/verdict_badge.html" with verdict=verdict size="sm" %}
@@ -67,10 +88,7 @@
                 <div class="shrink-0 w-full lg:min-w-[300px] lg:max-w-[420px] lg:w-auto">
                     <!-- Identity row -->
                     <div id="assetIdentity" class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
-                        {% if asset.website %}
-                        <img src="https://www.google.com/s2/favicons?domain={{ asset.website|domain }}&sz={{ favicon_size }}"
-                             alt="" class="size-7 sm:size-8 rounded-md self-start mt-0.5" loading="lazy">
-                        {% endif %}
+                        {% include "core/components/asset_favicon.html" with website=asset.website ticker=asset.ticker class="size-7 sm:size-8 self-start mt-0.5" sz=favicon_size %}
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
                                 <h1 class="font-serif text-[clamp(1.25rem,4vw,2.1rem)] leading-tight tracking-tight text-t1">{{ asset.name }}</h1>
@@ -643,7 +661,7 @@
             </div>
 
             <!-- Hygiene Factors -->
-            <div class="mb-6 rounded-lg border border-surface/[0.04] overflow-hidden">
+            <div class="rc-tile mb-6 rounded-lg border border-surface/[0.04] overflow-hidden">
                 <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-surface/[0.015] border-b border-surface/[0.04]">
                     <i data-lucide="shield-check" class="size-3.5 text-t4"></i>
                     <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-t3">Hygiene Factors</span>
@@ -678,7 +696,7 @@
             </div>
 
             <!-- Motivators -->
-            <div class="mb-0 rounded-lg border border-copper/[0.08] overflow-hidden">
+            <div class="rc-tile mb-0 rounded-lg border border-copper/[0.08] overflow-hidden" style="transition-delay: 120ms">
                 <div class="flex items-center gap-3 px-5 sm:px-6 pt-4 pb-3 bg-copper/[0.02] border-b border-copper/[0.06]">
                     <i data-lucide="flame" class="size-3.5 text-copper/70"></i>
                     <span class="text-[0.65rem] font-semibold tracking-[0.12em] uppercase text-copper/80">Motivators</span>
@@ -720,13 +738,13 @@
     <div class="h-px bg-surface/[0.04]"></div>
 
     <!-- Deep Dive heading -->
-        <div class="flex items-center gap-3 pt-6 sm:pt-10">
+        <div class="reveal-section flex items-center gap-3 pt-6 sm:pt-10">
             <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">Deep Dive &mdash; {{ asset.ticker }}</div>
             <div class="flex-1 h-px bg-surface/[0.04]"></div>
         </div>
 
     <!-- Fundamentals (HTMX partial) -->
-    <div hx-get="{% url 'core:asset_fundamentals' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+    <div class="reveal-section" hx-get="{% url 'core:asset_fundamentals' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
             <section class="py-6 sm:py-10">
                 <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Fundamentals</div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px">
@@ -742,14 +760,14 @@
     </div>
 
     <!-- Sentiment Analysis (HTMX partial) -->
-    <div id="sentiment-container"
+    <div class="reveal-section" id="sentiment-container"
          hx-get="{% url 'core:asset_sentiment' asset.ticker %}"
          hx-trigger="load, retrySentiment from:body delay:6s"
          hx-swap="innerHTML">
     </div>
 
     <!-- Mentioned In (HTMX partial) -->
-    <div hx-get="{% url 'core:asset_community' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
+    <div class="reveal-section" hx-get="{% url 'core:asset_community' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML">
             <section class="py-6 sm:py-10">
                 <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3 mb-4 sm:mb-6">Mentioned In</div>
                 <div class="space-y-px">
@@ -765,7 +783,7 @@
     </div>
 
     <!-- Recent Prices (HTMX partial — waits for header to finish syncing prices) -->
-    <div hx-get="{% url 'core:asset_prices' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML"></div>
+    <div class="reveal-section" hx-get="{% url 'core:asset_prices' asset.ticker %}" hx-trigger="load" hx-swap="innerHTML"></div>
 
         </div><!-- /main content column -->
 
@@ -1059,6 +1077,34 @@ function switchReportView(btn, view) {
     ctx.strokeStyle = isUp ? '#22c55e' : '#ef4444';
     ctx.lineWidth = 1.2;
     ctx.stroke();
+})();
+</script>
+
+<script>
+(function() {
+    var revealObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting) {
+                e.target.classList.add('visible');
+                revealObs.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal-section, .rc-tile').forEach(function(el) {
+        revealObs.observe(el);
+    });
+
+    // Also observe dynamically swapped HTMX content
+    document.body.addEventListener('htmx:afterSettle', function(e) {
+        var target = e.detail.elt;
+        if (target && target.classList && target.classList.contains('reveal-section')) {
+            revealObs.observe(target);
+        }
+        target.querySelectorAll && target.querySelectorAll('.reveal-section').forEach(function(el) {
+            revealObs.observe(el);
+        });
+    });
 })();
 </script>
 {% endblock %}

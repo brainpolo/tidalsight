@@ -1,14 +1,11 @@
-import asyncio
 import logging
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 
 from analyst.agents.peer_discovery import PeerDiscovery, peer_discovery_agent
-from analyst.agents.provider import get_model_provider
-from analyst.app_behaviour import MAX_AGENT_TURNS, PEER_SYNC_LOCK_TTL, PEER_TARGET_COUNT
-from analyst.grounding import agent_grounding
+from analyst.app_behaviour import PEER_SYNC_LOCK_TTL, PEER_TARGET_COUNT
+from analyst.runner import run_agent
 from analyst.utils import asset_label
 from scraper.managers.asset_manager import get_or_create_asset
 from scraper.models import Asset
@@ -31,19 +28,7 @@ def sync_peers(asset: Asset) -> list[Asset]:
             f"{asset_label(asset)}."
         )
 
-        config = RunConfig(
-            model_provider=get_model_provider(),
-            tracing_disabled=True,
-        )
-        result = asyncio.run(
-            Runner.run(
-                peer_discovery_agent,
-                input=prompt + agent_grounding(),
-                run_config=config,
-                max_turns=MAX_AGENT_TURNS,
-            )
-        )
-        discovery: PeerDiscovery = result.final_output
+        discovery: PeerDiscovery = run_agent(peer_discovery_agent, prompt)
 
         valid_peers = []
         for ticker in discovery.tickers:

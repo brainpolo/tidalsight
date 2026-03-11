@@ -1,11 +1,12 @@
 import asyncio
 import json
 import logging
-from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from typing import NamedTuple
 
 from asgiref.sync import sync_to_async
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import (
@@ -127,7 +128,6 @@ from core.app_behaviour import (
     RSI_PERIOD,
     SEARCH_MAX_RESULTS,
     SEARCH_MIN_QUERY_LENGTH,
-    SPARKLINE_DATA_POINTS,
     TRENDING_BANNER_COUNT,
     TRENDING_CACHE_TTL,
     TRENDING_PERIOD_H,
@@ -145,7 +145,7 @@ from core.managers.user_manager import (
 from core.managers.valuation_manager import compute_rsi, compute_valuations
 from core.models import UserAsset
 from core.sparkline import build_sparkline_svg
-from core.utils import pct_change, total_post_count
+from core.utils import fetch_sparkline_map, pct_change, total_post_count
 from scraper.clients.yfinance_client import search_tickers
 from scraper.managers.asset_manager import get_or_create_asset
 from scraper.models import Asset, AssetView, PriceHistory
@@ -165,6 +165,37 @@ async def _cached(key: str, compute, ttl: int = HOME_COUNTS_CACHE_TTL):
         value = await sync_to_async(compute)()
         await cache.aset(key, value, ttl)
     return value
+
+
+@cache_page(60 * 60 * 24)
+def pwa_manifest(request):
+    return JsonResponse(
+        {
+            "name": "TidalSight",
+            "short_name": "TidalSight",
+            "description": (
+                "Continuous intelligence from multi-agent AI"
+                " across every major asset class."
+            ),
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#0d0c0a",
+            "theme_color": "#0d0c0a",
+            "icons": [
+                {
+                    "src": staticfiles_storage.url("favicon.webp"),
+                    "sizes": "192x192",
+                    "type": "image/webp",
+                },
+                {
+                    "src": staticfiles_storage.url("icon-512.png"),
+                    "sizes": "512x512",
+                    "type": "image/png",
+                },
+            ],
+        },
+        content_type="application/manifest+json",
+    )
 
 
 async def home(request):
@@ -286,23 +317,7 @@ async def home_watchlist(request):
         .order_by("ticker")
     ]
 
-    asset_ids = [a.id for a in watched]
-    sparkline_map = defaultdict(list)
-
-    if asset_ids:
-        sparkline_qs = (
-            PriceHistory.objects.filter(asset_id__in=asset_ids)
-            .annotate(date=TruncDate("timestamp"))
-            .order_by("asset_id", "-date", "-timestamp")
-            .distinct("asset_id", "date")
-            .values_list("asset_id", "close", "date")
-        )
-        async for asset_id, close, _date in sparkline_qs:
-            if len(sparkline_map[asset_id]) < SPARKLINE_DATA_POINTS:
-                sparkline_map[asset_id].append(float(close))
-
-        for asset_id in sparkline_map:
-            sparkline_map[asset_id].reverse()
+    sparkline_map = await fetch_sparkline_map([a.id for a in watched])
 
     items = []
     for asset in watched:
@@ -327,15 +342,15 @@ async def strategy(request):
 
 
 async def market_digest(request):
-    digest = await sync_to_async(cache.get)(DIGEST_DATA_KEY)
+    digest = await cache.aget(DIGEST_DATA_KEY)
 
     if digest:
         if digest.get("generated_at"):
             digest["generated_at"] = datetime.fromisoformat(digest["generated_at"])
         # If not fresh and no task running, kick off background regeneration
-        is_fresh = await sync_to_async(cache.get)(DIGEST_FRESH_KEY)
+        is_fresh = await cache.aget(DIGEST_FRESH_KEY)
         if not is_fresh:
-            is_locked = await sync_to_async(cache.get)(DIGEST_LOCK_KEY)
+            is_locked = await cache.aget(DIGEST_LOCK_KEY)
             if not is_locked:
                 from analyst.tasks import generate_market_digest
 
@@ -343,7 +358,7 @@ async def market_digest(request):
         return render(request, "core/partials/market_digest.html", {"digest": digest})
 
     # No cached data — fire task if not already running, return polling skeleton
-    is_locked = await sync_to_async(cache.get)(DIGEST_LOCK_KEY)
+    is_locked = await cache.aget(DIGEST_LOCK_KEY)
     if not is_locked:
         from analyst.tasks import generate_market_digest
 
@@ -363,15 +378,15 @@ async def personal_outlook(request):
         )
 
     data_key, fresh_key, lock_key = outlook_cache_keys(user_id)
-    outlook = await sync_to_async(cache.get)(data_key)
+    outlook = await cache.aget(data_key)
 
     if outlook:
         if outlook.get("generated_at"):
             outlook["generated_at"] = datetime.fromisoformat(outlook["generated_at"])
         # If not fresh and no task already running, kick off background regeneration
-        is_fresh = await sync_to_async(cache.get)(fresh_key)
+        is_fresh = await cache.aget(fresh_key)
         if not is_fresh:
-            is_locked = await sync_to_async(cache.get)(lock_key)
+            is_locked = await cache.aget(lock_key)
             if not is_locked:
                 from analyst.tasks import generate_personal_outlook
 
@@ -381,7 +396,7 @@ async def personal_outlook(request):
         )
 
     # No cached data — fire task only if not already running, return polling skeleton
-    is_locked = await sync_to_async(cache.get)(lock_key)
+    is_locked = await cache.aget(lock_key)
     if not is_locked:
         from analyst.tasks import generate_personal_outlook
 
@@ -425,21 +440,7 @@ async def trending_banner(request):
         .order_by("-recent_views")[:TRENDING_BANNER_COUNT]
     ]
 
-    asset_ids = [a.id for a in assets]
-    sparkline_map = defaultdict(list)
-    if asset_ids:
-        sparkline_qs = (
-            PriceHistory.objects.filter(asset_id__in=asset_ids)
-            .annotate(date=TruncDate("timestamp"))
-            .order_by("asset_id", "-date", "-timestamp")
-            .distinct("asset_id", "date")
-            .values_list("asset_id", "close", "date")
-        )
-        async for asset_id, close, _date in sparkline_qs:
-            if len(sparkline_map[asset_id]) < SPARKLINE_DATA_POINTS:
-                sparkline_map[asset_id].append(float(close))
-        for asset_id in sparkline_map:
-            sparkline_map[asset_id].reverse()
+    sparkline_map = await fetch_sparkline_map([a.id for a in assets])
 
     items = []
     for asset in assets:
@@ -708,21 +709,7 @@ async def asset_peers(request, ticker):
         )
     ]
 
-    peer_ids = [p.id for p in peers]
-    sparkline_map = defaultdict(list)
-    if peer_ids:
-        sparkline_qs = (
-            PriceHistory.objects.filter(asset_id__in=peer_ids)
-            .annotate(date=TruncDate("timestamp"))
-            .order_by("asset_id", "-date", "-timestamp")
-            .distinct("asset_id", "date")
-            .values_list("asset_id", "close", "date")
-        )
-        async for asset_id, close, _date in sparkline_qs:
-            if len(sparkline_map[asset_id]) < SPARKLINE_DATA_POINTS:
-                sparkline_map[asset_id].append(float(close))
-        for asset_id in sparkline_map:
-            sparkline_map[asset_id].reverse()
+    sparkline_map = await fetch_sparkline_map([p.id for p in peers])
 
     peer_data = []
     for peer in peers:
@@ -923,6 +910,25 @@ async def report_card_risk(request, ticker):
     )
 
 
+class _UserContext(NamedTuple):
+    user_id: int
+    note: str
+    price_target: float | None
+
+
+async def _get_user_context(request, asset) -> _UserContext:
+    """Return user context for the current user + asset."""
+    if not request.user.is_authenticated:
+        return _UserContext(0, "", None)
+    user_asset = await UserAsset.objects.filter(
+        user=request.user, asset=asset
+    ).afirst()
+    if not user_asset:
+        return _UserContext(0, "", None)
+    price_target = float(user_asset.price_target) if user_asset.price_target is not None else None
+    return _UserContext(request.user.id, user_asset.note, price_target)
+
+
 async def report_card_valuation(request, ticker):
     """Partial: report card valuation score. Runs agent in background if not cached."""
     ticker = ticker.upper()
@@ -934,18 +940,7 @@ async def report_card_valuation(request, ticker):
             {"unavailable": True},
         )
 
-    user_id = 0
-    user_note = ""
-    price_target = None
-    if request.user.is_authenticated:
-        user_asset = await UserAsset.objects.filter(
-            user=request.user, asset=asset
-        ).afirst()
-        if user_asset:
-            user_id = request.user.id
-            user_note = user_asset.note
-            if user_asset.price_target is not None:
-                price_target = float(user_asset.price_target)
+    user_id, user_note, price_target = await _get_user_context(request, asset)
 
     view_mode = request.GET.get("view", "")
     force_base = view_mode == "base"
@@ -1047,18 +1042,7 @@ async def report_card_product(request, ticker):
             {"unavailable": True},
         )
 
-    user_id = 0
-    user_note = ""
-    price_target = None
-    if request.user.is_authenticated:
-        user_asset = await UserAsset.objects.filter(
-            user=request.user, asset=asset
-        ).afirst()
-        if user_asset:
-            user_id = request.user.id
-            user_note = user_asset.note
-            if user_asset.price_target is not None:
-                price_target = float(user_asset.price_target)
+    user_id, user_note, price_target = await _get_user_context(request, asset)
 
     view_mode = request.GET.get("view", "")
     force_base = view_mode == "base"
@@ -1147,18 +1131,7 @@ async def report_card_people(request, ticker):
             {"unavailable": True},
         )
 
-    user_id = 0
-    user_note = ""
-    price_target = None
-    if request.user.is_authenticated:
-        user_asset = await UserAsset.objects.filter(
-            user=request.user, asset=asset
-        ).afirst()
-        if user_asset:
-            user_id = request.user.id
-            user_note = user_asset.note
-            if user_asset.price_target is not None:
-                price_target = float(user_asset.price_target)
+    user_id, user_note, price_target = await _get_user_context(request, asset)
 
     view_mode = request.GET.get("view", "")
     force_base = view_mode == "base"
@@ -1870,24 +1843,7 @@ async def asset_search(request):
         .order_by("relevance", "ticker")[:SEARCH_MAX_RESULTS]
     ]
 
-    # Batch-fetch sparkline data for all matched assets in one query
-    asset_ids = [a.id for a in assets]
-    sparkline_map = defaultdict(list)
-
-    if asset_ids:
-        sparkline_qs = (
-            PriceHistory.objects.filter(asset_id__in=asset_ids)
-            .annotate(date=TruncDate("timestamp"))
-            .order_by("asset_id", "-date", "-timestamp")
-            .distinct("asset_id", "date")
-            .values_list("asset_id", "close", "date")
-        )
-        async for asset_id, close, _date in sparkline_qs:
-            if len(sparkline_map[asset_id]) < SPARKLINE_DATA_POINTS:
-                sparkline_map[asset_id].append(float(close))
-
-        for asset_id in sparkline_map:
-            sparkline_map[asset_id].reverse()
+    sparkline_map = await fetch_sparkline_map([a.id for a in assets])
 
     results = []
     for asset in assets:

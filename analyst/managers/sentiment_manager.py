@@ -1,17 +1,13 @@
-import asyncio
 import hashlib
 import logging
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.utils import timezone
 
-from analyst.agents.provider import get_model_provider
 from analyst.agents.sentiment_agent import SentimentAnalysis, sentiment_agent
 from analyst.app_behaviour import (
-    MAX_AGENT_TURNS,
     REDDIT_COMMENT_BODY_TRUNCATION,
     REDDIT_POST_BODY_TRUNCATION,
     SENTIMENT_DATA_TTL,
@@ -22,7 +18,8 @@ from analyst.app_behaviour import (
     SENTIMENT_REDDIT_COMMENTS_PER_POST,
     cache_key,
 )
-from analyst.grounding import agent_grounding, compute_label
+from analyst.grounding import compute_label
+from analyst.runner import run_agent
 from analyst.utils import asset_label
 from scraper.models import (
     Asset,
@@ -126,19 +123,7 @@ def _build_prompt(
 
 
 def _run_agent(prompt: str) -> SentimentAnalysis:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
-    result = asyncio.run(
-        Runner.run(
-            sentiment_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(sentiment_agent, prompt)
 
 
 def get_sentiment(asset: Asset) -> dict | None:
@@ -161,7 +146,6 @@ def get_sentiment(asset: Asset) -> dict | None:
 
         if total < 5:
             logger.info("Not enough posts for %s sentiment (%d)", asset.ticker, total)
-            cache.delete(lock_key)
             return None
 
         fingerprint = _source_fingerprint(reddit_posts, hn_posts, news_articles)
@@ -171,7 +155,6 @@ def get_sentiment(asset: Asset) -> dict | None:
                 "Sentiment sources unchanged for %s, refreshing TTL", asset.ticker
             )
             cache.set(fresh_key, True, SENTIMENT_FRESHNESS_TTL)
-            cache.delete(lock_key)
             return existing
 
         prompt = _build_prompt(asset, reddit_posts, hn_posts, news_articles)
@@ -185,9 +168,9 @@ def get_sentiment(asset: Asset) -> dict | None:
 
         cache.set(data_key, data, SENTIMENT_DATA_TTL)
         cache.set(fresh_key, True, SENTIMENT_FRESHNESS_TTL)
-        cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate sentiment for %s", asset.ticker)
-        cache.delete(lock_key)
         return existing
+    finally:
+        cache.delete(lock_key)

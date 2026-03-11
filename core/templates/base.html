@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TidalSight{% endblock %}</title>
     <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{% static 'icon-512.png' %}">
+    <link rel="manifest" href="{% url 'core:pwa_manifest' %}">
+    <meta name="theme-color" content="#0d0c0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- Theme: apply before paint to prevent flash -->
     <script>

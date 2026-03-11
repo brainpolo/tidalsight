@@ -124,6 +124,7 @@
 
                 {# Asset info #}
                 <div class="flex items-center gap-3 min-w-0">
+                    {% include "core/components/asset_favicon.html" with website=asset.website ticker=asset.ticker class="size-5 shrink-0" sz=64 %}
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-heading group-hover:text-copper transition-colors">{{ asset.ticker }}</span>
@@ -197,6 +198,7 @@
                 </div>
 
                 {# Asset + score #}
+                {% include "core/components/asset_favicon.html" with website=asset.website ticker=asset.ticker class="size-4 shrink-0" sz=64 %}
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-semibold text-heading">{{ asset.ticker }}</span>

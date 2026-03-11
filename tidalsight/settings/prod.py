@@ -6,8 +6,11 @@ import os
 
 from tidalsight.settings.base import *  # noqa: F403
 
-ALLOWED_HOSTS: list[str] = ["tidalsight.com", "healthcheck.railway.app"]
-CSRF_TRUSTED_ORIGINS: list[str] = ["https://tidalsight.com"]
+PRODUCTION_DOMAIN: str = "tidalsight.com"
+HEALTHCHECK_DOMAIN: str = "healthcheck.railway.app"
+
+ALLOWED_HOSTS: list[str] = [PRODUCTION_DOMAIN, HEALTHCHECK_DOMAIN]
+CSRF_TRUSTED_ORIGINS: list[str] = [f"https://{PRODUCTION_DOMAIN}"]
 
 # Database — Railway provides these env vars when you add a PostgreSQL service
 DATABASES = {

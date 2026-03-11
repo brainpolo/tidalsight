@@ -1,24 +1,19 @@
-import asyncio
 import hashlib
 import logging
 from collections import Counter
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 from openai import APIStatusError
 
 from analyst.agents.personal_outlook import PersonalOutlook, personal_outlook_agent
-from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
-    MAX_AGENT_TURNS,
     OUTLOOK_DATA_TTL,
     OUTLOOK_FRESHNESS_TTL,
     OUTLOOK_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import agent_grounding
 from analyst.managers.digest_manager import DIGEST_DATA_KEY
 from analyst.managers.overall_assessment_manager import (
     _base_cache_keys as overall_base_cache_keys,
@@ -26,6 +21,7 @@ from analyst.managers.overall_assessment_manager import (
 from analyst.managers.overall_assessment_manager import (
     compute_verdict,
 )
+from analyst.runner import run_agent
 from core.models import UserAsset
 
 logger = logging.getLogger(__name__)
@@ -168,19 +164,7 @@ def _source_fingerprint(digest: dict | None, summaries: list[dict]) -> str:
 
 
 def _run_agent(prompt: str) -> PersonalOutlook:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
-    result = asyncio.run(
-        Runner.run(
-            personal_outlook_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(personal_outlook_agent, prompt)
 
 
 def get_personal_outlook(user_id: int) -> dict | None:
@@ -198,51 +182,50 @@ def get_personal_outlook(user_id: int) -> dict | None:
         )
         return existing
 
-    digest, summaries = _fetch_watchlist_data(user_id)
-    if not summaries:
-        logger.info("No watchlist items for user %s, skipping outlook", user_id)
-        cache.delete(lock_key)
-        return None
-
-    fingerprint = _source_fingerprint(digest, summaries)
-    if existing and existing.get("source_hash") == fingerprint:
-        logger.debug("Outlook sources unchanged for user %s, refreshing TTL", user_id)
-        cache.set(fresh_key, True, OUTLOOK_FRESHNESS_TTL)
-        cache.delete(lock_key)
-        return existing
-
-    prompt = _build_prompt(digest, summaries)
-    logger.info(
-        "Generating personal outlook for user %s (%d assets)...",
-        user_id,
-        len(summaries),
-    )
-
     try:
-        outlook = _run_agent(prompt)
-    except (
-        ConnectionError,
-        RuntimeError,
-        ValueError,
-        TimeoutError,
-        ModelBehaviorError,
-        APIStatusError,
-    ):
-        logger.exception(
-            "Failed to generate personal outlook for user %s. Prompt (%d chars):\n%s",
+        digest, summaries = _fetch_watchlist_data(user_id)
+        if not summaries:
+            logger.info("No watchlist items for user %s, skipping outlook", user_id)
+            return None
+
+        fingerprint = _source_fingerprint(digest, summaries)
+        if existing and existing.get("source_hash") == fingerprint:
+            logger.debug("Outlook sources unchanged for user %s, refreshing TTL", user_id)
+            cache.set(fresh_key, True, OUTLOOK_FRESHNESS_TTL)
+            return existing
+
+        prompt = _build_prompt(digest, summaries)
+        logger.info(
+            "Generating personal outlook for user %s (%d assets)...",
             user_id,
-            len(prompt),
-            prompt[:2000],
+            len(summaries),
         )
+
+        try:
+            outlook = _run_agent(prompt)
+        except (
+            ConnectionError,
+            RuntimeError,
+            ValueError,
+            TimeoutError,
+            ModelBehaviorError,
+            APIStatusError,
+        ):
+            logger.exception(
+                "Failed to generate personal outlook for user %s. Prompt (%d chars):\n%s",
+                user_id,
+                len(prompt),
+                prompt[:2000],
+            )
+            return existing
+
+        data = outlook.model_dump()
+        data["source_hash"] = fingerprint
+        data["generated_at"] = timezone.now().isoformat()
+
+        cache.set(data_key, data, OUTLOOK_DATA_TTL)
+        cache.set(fresh_key, True, OUTLOOK_FRESHNESS_TTL)
+
+        return data
+    finally:
         cache.delete(lock_key)
-        return existing
-
-    data = outlook.model_dump()
-    data["source_hash"] = fingerprint
-    data["generated_at"] = timezone.now().isoformat()
-
-    cache.set(data_key, data, OUTLOOK_DATA_TTL)
-    cache.set(fresh_key, True, OUTLOOK_FRESHNESS_TTL)
-    cache.delete(lock_key)
-
-    return data

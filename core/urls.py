@@ -102,6 +102,7 @@ urlpatterns = [
     path("market-digest/", views.market_digest, name="market_digest"),
     path("personal-outlook/", views.personal_outlook, name="personal_outlook"),
     path("trending/", views.trending_banner, name="trending_banner"),
+    path("manifest.json", views.pwa_manifest, name="pwa_manifest"),
     # Auth
     path("sign-up/", views.sign_up, name="sign_up"),
     path("sign-in/", views.sign_in, name="sign_in"),

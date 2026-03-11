@@ -4,12 +4,44 @@
     <div class="h-px flex-1 bg-surface/[0.04]"></div>
 </div>
 
-<div class="grid grid-cols-2 xl:grid-cols-3 gap-2 max-h-[460px] overflow-y-auto scrollbar-hide">
+<style>
+    .wl-card {
+        position: relative;
+        border: 1px solid color-mix(in srgb, var(--ts-surface) 4%, transparent);
+        border-radius: 2px;
+        padding: 1rem;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                    border-color 0.35s ease,
+                    box-shadow 0.35s ease;
+    }
+    .wl-card:hover {
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, var(--ts-surface) 10%, transparent);
+        box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.25),
+                    0 0 0 1px color-mix(in srgb, var(--ts-surface) 6%, transparent);
+    }
+    /* Subtle top-edge glow on hover for positive change */
+    .wl-card--up:hover {
+        box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.25),
+                    0 -1px 8px -1px rgba(34, 197, 94, 0.06),
+                    0 0 0 1px color-mix(in srgb, var(--ts-surface) 6%, transparent);
+    }
+    .wl-card--down:hover {
+        box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.25),
+                    0 -1px 8px -1px rgba(239, 68, 68, 0.06),
+                    0 0 0 1px color-mix(in srgb, var(--ts-surface) 6%, transparent);
+    }
+</style>
+
+<div class="grid grid-cols-2 xl:grid-cols-3 gap-2 max-h-[460px] overflow-y-auto scrollbar-hide p-1">
     {% for item in items %}
     <a href="{% url 'core:asset_detail' item.asset.ticker %}"
-       class="group border border-surface/[0.04] rounded-sm p-4 transition-all duration-300 hover:bg-surface/[0.02] hover:border-surface/[0.08]">
+       class="group wl-card {% if item.price_change_pct != None %}{% if item.price_change_pct >= 0 %}wl-card--up{% else %}wl-card--down{% endif %}{% endif %}">
         <div class="flex items-center justify-between mb-2">
-            <div class="text-[0.75rem] font-semibold text-heading group-hover:text-t1 transition-colors">{{ item.asset.ticker }}</div>
+            <div class="flex items-center gap-1.5">
+                {% include "core/components/asset_favicon.html" with website=item.asset.website ticker=item.asset.ticker class="size-3.5 shrink-0" sz=32 %}
+                <span class="text-[0.75rem] font-semibold text-heading group-hover:text-copper-light transition-colors">{{ item.asset.ticker }}</span>
+            </div>
             {% if item.price_change_pct != None %}
             <div class="text-[0.55rem] font-semibold tabular-nums px-1.5 py-0.5 rounded-sm
                 {% if item.price_change_pct >= 0 %}bg-green-500/[0.08] text-green-500{% else %}bg-red-500/[0.08] text-red-500{% endif %}">
@@ -19,7 +51,7 @@
         </div>
         <div class="text-[0.55rem] text-t4 truncate mb-2">{{ item.asset.name }}</div>
         <div class="flex items-end justify-between gap-2">
-            <div class="opacity-50 group-hover:opacity-100 transition-opacity">
+            <div class="opacity-40 group-hover:opacity-100 transition-opacity duration-500">
                 {{ item.sparkline_svg }}
             </div>
             {% if item.latest_close %}
@@ -34,7 +66,9 @@
     <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Watchlist</div>
     <div class="h-px flex-1 bg-surface/[0.04]"></div>
 </div>
-<p class="text-[0.7rem] text-t4 leading-relaxed">
-    Star assets to track them here.
-</p>
+<div class="py-10 text-center">
+    <i data-lucide="star" class="size-6 text-t4/40 mx-auto mb-3"></i>
+    <p class="text-[0.7rem] text-t3 mb-1">No assets on your watchlist yet</p>
+    <p class="text-[0.6rem] text-t4 leading-relaxed">Star assets to track them here and receive personalised insights.</p>
+</div>
 {% endif %}

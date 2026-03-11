@@ -1,28 +1,24 @@
-import asyncio
 import hashlib
 import logging
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 from openai import APIStatusError
 
 from analyst.agents.market_digest import MarketDigest, market_digest_agent
-from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
     DIGEST_DATA_TTL,
     DIGEST_FRESHNESS_TTL,
     DIGEST_LOCK_TTL,
     HN_POSTS_FOR_DIGEST,
-    MAX_AGENT_TURNS,
     NEWS_ARTICLE_DESCRIPTION_TRUNCATION,
     NEWS_ARTICLES_FOR_DIGEST,
     REDDIT_POST_BODY_TRUNCATION,
     REDDIT_POSTS_FOR_DIGEST,
     cache_key,
 )
-from analyst.grounding import agent_grounding
+from analyst.runner import run_agent
 from scraper.models import HNPost, NewsArticle, RedditPost
 
 logger = logging.getLogger(__name__)
@@ -101,19 +97,7 @@ def _build_prompt(
 
 
 def _run_agent(prompt: str) -> MarketDigest:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
-    result = asyncio.run(
-        Runner.run(
-            market_digest_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(market_digest_agent, prompt)
 
 
 def get_market_digest() -> dict | None:
@@ -136,46 +120,45 @@ def get_market_digest() -> dict | None:
         logger.debug("Market digest generation already in progress, serving stale")
         return existing
 
-    reddit_posts, hn_posts, news_articles = _fetch_sources()
-    prompt = _build_prompt(reddit_posts, hn_posts, news_articles)
-    if not prompt:
-        logger.warning("No data from any source, skipping digest")
-        cache.delete(DIGEST_LOCK_KEY)
-        return existing
-
-    # Skip regeneration if sources haven't changed
-    fingerprint = _source_fingerprint(reddit_posts, hn_posts, news_articles)
-    if existing and existing.get("source_hash") == fingerprint:
-        logger.debug("Digest sources unchanged, refreshing TTL")
-        cache.set(DIGEST_FRESH_KEY, True, DIGEST_FRESHNESS_TTL)
-        cache.delete(DIGEST_LOCK_KEY)
-        return existing
-
-    logger.info("Generating market digest from %d posts...", prompt.count("\n") + 1)
-
     try:
-        digest = _run_agent(prompt)
-    except (
-        ConnectionError,
-        RuntimeError,
-        ValueError,
-        TimeoutError,
-        ModelBehaviorError,
-        APIStatusError,
-    ):
-        logger.exception(
-            "Failed to generate market digest. Prompt (%d chars):\n%s",
-            len(prompt),
-            prompt[:2000],
-        )
-        cache.delete(DIGEST_LOCK_KEY)
-        return existing
+        reddit_posts, hn_posts, news_articles = _fetch_sources()
+        prompt = _build_prompt(reddit_posts, hn_posts, news_articles)
+        if not prompt:
+            logger.warning("No data from any source, skipping digest")
+            return existing
 
-    data = digest.model_dump()
-    data["source_hash"] = fingerprint
-    data["generated_at"] = timezone.now().isoformat()
-    logger.info("Market digest generated, freshness TTL %ds", DIGEST_FRESHNESS_TTL)
-    cache.set(DIGEST_DATA_KEY, data, DIGEST_DATA_TTL)
-    cache.set(DIGEST_FRESH_KEY, True, DIGEST_FRESHNESS_TTL)
-    cache.delete(DIGEST_LOCK_KEY)
-    return data
+        # Skip regeneration if sources haven't changed
+        fingerprint = _source_fingerprint(reddit_posts, hn_posts, news_articles)
+        if existing and existing.get("source_hash") == fingerprint:
+            logger.debug("Digest sources unchanged, refreshing TTL")
+            cache.set(DIGEST_FRESH_KEY, True, DIGEST_FRESHNESS_TTL)
+            return existing
+
+        logger.info("Generating market digest from %d posts...", prompt.count("\n") + 1)
+
+        try:
+            digest = _run_agent(prompt)
+        except (
+            ConnectionError,
+            RuntimeError,
+            ValueError,
+            TimeoutError,
+            ModelBehaviorError,
+            APIStatusError,
+        ):
+            logger.exception(
+                "Failed to generate market digest. Prompt (%d chars):\n%s",
+                len(prompt),
+                prompt[:2000],
+            )
+            return existing
+
+        data = digest.model_dump()
+        data["source_hash"] = fingerprint
+        data["generated_at"] = timezone.now().isoformat()
+        logger.info("Market digest generated, freshness TTL %ds", DIGEST_FRESHNESS_TTL)
+        cache.set(DIGEST_DATA_KEY, data, DIGEST_DATA_TTL)
+        cache.set(DIGEST_FRESH_KEY, True, DIGEST_FRESHNESS_TTL)
+        return data
+    finally:
+        cache.delete(DIGEST_LOCK_KEY)

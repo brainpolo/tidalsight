@@ -1,8 +1,6 @@
-import asyncio
 import hashlib
 import logging
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
@@ -11,14 +9,13 @@ from analyst.agents.finance_agent import (
     FinanceAssessment,
     finance_agent,
 )
-from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
     FINANCE_DATA_TTL,
     FINANCE_LOCK_TTL,
-    MAX_AGENT_TURNS,
     cache_key,
 )
-from analyst.grounding import agent_grounding, compute_label
+from analyst.grounding import compute_label
+from analyst.runner import run_agent
 from analyst.utils import asset_label
 from core.templatetags.formatting import abbreviate
 from scraper.models import Asset, Fundamental
@@ -128,19 +125,7 @@ def _build_prompt(asset: Asset, fundamental: Fundamental) -> str:
 
 
 def _run_agent(prompt: str) -> FinanceAssessment:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
-    result = asyncio.run(
-        Runner.run(
-            finance_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(finance_agent, prompt)
 
 
 def get_finance(asset: Asset) -> dict | None:
@@ -182,7 +167,6 @@ def get_finance(asset: Asset) -> dict | None:
                 available,
                 asset.ticker,
             )
-            cache.delete(lock_key)
             return None
 
         prompt = _build_prompt(asset, fundamental)
@@ -199,9 +183,9 @@ def get_finance(asset: Asset) -> dict | None:
         data["generated_at"] = timezone.now().isoformat()
 
         cache.set(data_key, data, FINANCE_DATA_TTL)
-        cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate financial health for %s", asset.ticker)
-        cache.delete(lock_key)
         return existing
+    finally:
+        cache.delete(lock_key)

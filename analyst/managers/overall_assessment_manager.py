@@ -1,9 +1,7 @@
-import asyncio
 import hashlib
 import json
 import logging
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
@@ -12,14 +10,12 @@ from analyst.agents.overall_assessment_agent import (
     OverallAssessment,
     overall_assessment_agent,
 )
-from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
-    MAX_AGENT_TURNS,
     OVERALL_ASSESSMENT_DATA_TTL,
     OVERALL_ASSESSMENT_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import agent_grounding
+from analyst.runner import run_agent
 from analyst.utils import asset_label
 from scraper.models import Asset
 
@@ -181,19 +177,7 @@ def _append_list_field(lines: list[str], section: dict, field: str, label: str) 
 
 
 def _run_agent(prompt: str) -> OverallAssessment:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
-    result = asyncio.run(
-        Runner.run(
-            overall_assessment_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(overall_assessment_agent, prompt)
 
 
 def _generate_assessment(
@@ -230,7 +214,6 @@ def _generate_assessment(
         data["generated_at"] = timezone.now().isoformat()
 
         cache.set(data_key, data, OVERALL_ASSESSMENT_DATA_TTL)
-        cache.delete(lock_key)
 
         if persist_to_db:
             Asset.objects.filter(pk=asset.pk).update(
@@ -242,8 +225,9 @@ def _generate_assessment(
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate overall assessment for %s", asset.ticker)
-        cache.delete(lock_key)
         return existing
+    finally:
+        cache.delete(lock_key)
 
 
 def get_base_overall_assessment(

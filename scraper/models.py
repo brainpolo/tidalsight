@@ -37,7 +37,7 @@ from scraper.constants import (
 
 class Asset(models.Model):
     class AssetClass(models.TextChoices):
-        CRYPTO = "crypto", "Cryptocurrency"
+        CRYPTO = "crypto", "Crypto"
         EQUITY = "equity", "Equity"
         COMMODITY = "commodity", "Commodity"
         CURRENCY = "currency", "Currency"

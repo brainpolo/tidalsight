@@ -1,25 +1,22 @@
-import asyncio
 import hashlib
 import logging
 from datetime import datetime
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
-from analyst.agents.provider import get_model_provider
 from analyst.agents.valuation_agent import ValuationAssessment, valuation_agent
 from analyst.app_behaviour import (
-    MAX_AGENT_TURNS,
     REVISION_LOCK_TTL,
     VALUATION_DATA_TTL,
     VALUATION_FRESHNESS_TTL,
     VALUATION_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import agent_grounding, compute_label
+from analyst.grounding import compute_label
 from analyst.managers.revision_manager import revise_assessment
+from analyst.runner import run_agent
 from analyst.utils import asset_label
 from core.managers.valuation_manager import compute_rsi, compute_valuations
 from core.templatetags.formatting import abbreviate
@@ -151,19 +148,7 @@ def _build_prompt(
 
 
 def _run_agent(prompt: str) -> ValuationAssessment:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
-    result = asyncio.run(
-        Runner.run(
-            valuation_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(valuation_agent, prompt)
 
 
 def get_base_valuation(asset: Asset) -> dict | None:
@@ -208,12 +193,12 @@ def get_base_valuation(asset: Asset) -> dict | None:
         data["generated_at"] = timezone.now().isoformat()
 
         cache.set(data_key, data, VALUATION_DATA_TTL)
-        cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception("Failed to generate base valuation for %s", asset.ticker)
-        cache.delete(lock_key)
         return existing
+    finally:
+        cache.delete(lock_key)
 
 
 def get_valuation(
@@ -265,7 +250,6 @@ def get_valuation(
         revised["is_revised"] = True
 
         cache.set(rev_data_key, revised, VALUATION_DATA_TTL)
-        cache.delete(rev_lock_key)
         return revised
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception(
@@ -273,5 +257,6 @@ def get_valuation(
             asset.ticker,
             user_id,
         )
-        cache.delete(rev_lock_key)
         return existing_rev or base
+    finally:
+        cache.delete(rev_lock_key)

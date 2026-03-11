@@ -20,10 +20,7 @@
             <a href="{% url 'core:asset_detail' peer.asset.ticker %}"
                class="shrink-0 px-2.5 py-1.5 rounded-sm hover:bg-surface/[0.03] transition-colors group">
                 <div class="flex items-center gap-1.5">
-                    {% if peer.asset.website %}
-                    <img src="https://www.google.com/s2/favicons?domain={{ peer.asset.website|domain }}&sz=128"
-                         alt="" class="size-3.5 rounded-sm" loading="lazy">
-                    {% endif %}
+                    {% include "core/components/asset_favicon.html" with website=peer.asset.website ticker=peer.asset.ticker class="size-3.5 shrink-0" sz=128 %}
                     <span class="text-[0.6rem] font-semibold tracking-[0.08em] uppercase text-t3 group-hover:text-t1 transition-colors">{{ peer.asset.ticker }}</span>
                     {% if peer.sparkline_svg %}
                     <span class="ml-auto opacity-40 group-hover:opacity-70 transition-opacity">{{ peer.sparkline_svg }}</span>

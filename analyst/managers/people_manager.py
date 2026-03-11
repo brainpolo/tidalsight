@@ -1,25 +1,22 @@
-import asyncio
 import hashlib
 import logging
 from datetime import datetime
 
-from agents import RunConfig, Runner
 from agents.exceptions import ModelBehaviorError
 from django.core.cache import cache
 from django.utils import timezone
 
 from analyst.agents.people_agent import PeopleAssessment, people_agent
-from analyst.agents.provider import get_model_provider
 from analyst.app_behaviour import (
-    MAX_AGENT_TURNS,
     PEOPLE_DATA_TTL,
     PEOPLE_FRESHNESS_TTL,
     PEOPLE_LOCK_TTL,
     REVISION_LOCK_TTL,
     cache_key,
 )
-from analyst.grounding import agent_grounding, compute_label
+from analyst.grounding import compute_label
 from analyst.managers.revision_manager import revise_assessment
+from analyst.runner import run_agent
 from analyst.utils import asset_label
 from scraper.models import Asset
 
@@ -77,19 +74,7 @@ def _build_prompt(asset: Asset) -> str:
 
 
 def _run_agent(prompt: str) -> PeopleAssessment:
-    config = RunConfig(
-        model_provider=get_model_provider(),
-        tracing_disabled=True,
-    )
-    result = asyncio.run(
-        Runner.run(
-            people_agent,
-            input=prompt + agent_grounding(),
-            run_config=config,
-            max_turns=MAX_AGENT_TURNS,
-        )
-    )
-    return result.final_output
+    return run_agent(people_agent, prompt)
 
 
 def get_base_people(asset: Asset) -> dict | None:
@@ -119,14 +104,14 @@ def get_base_people(asset: Asset) -> dict | None:
         data["generated_at"] = timezone.now().isoformat()
 
         cache.set(data_key, data, PEOPLE_DATA_TTL)
-        cache.delete(lock_key)
         return data
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception(
             "Failed to generate base people assessment for %s", asset.ticker
         )
-        cache.delete(lock_key)
         return existing
+    finally:
+        cache.delete(lock_key)
 
 
 def get_people(
@@ -180,7 +165,6 @@ def get_people(
         revised["is_revised"] = True
 
         cache.set(rev_data_key, revised, PEOPLE_DATA_TTL)
-        cache.delete(rev_lock_key)
         return revised
     except ConnectionError, RuntimeError, ValueError, TimeoutError, ModelBehaviorError:
         logger.exception(
@@ -188,5 +172,6 @@ def get_people(
             asset.ticker,
             user_id,
         )
-        cache.delete(rev_lock_key)
         return existing_rev or base
+    finally:
+        cache.delete(rev_lock_key)

@@ -16,8 +16,10 @@
         hx-trigger="input changed delay:250ms"
         hx-target="#searchResults"
         hx-swap="innerHTML"
+        hx-indicator="closest form"
     >
     <kbd class="search-kbd">&#8984;K</kbd>
+    <div class="search-loading-bar"></div>
 </form>
 <div id="searchResults" class="search-compact-results"></div>
 </div>
@@ -28,6 +30,7 @@
         width: 260px;
     }
     .search-compact {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -116,9 +119,11 @@
                     hx-trigger="input changed delay:250ms"
                     hx-target="#searchResults"
                     hx-swap="innerHTML"
+                    hx-indicator="closest .search-field"
                 >
                 <div id="searchResults" class="search-results-dropdown"></div>
             </div>
+            <div class="search-loading-bar"></div>
             <kbd class="search-kbd-full">&#8984;K</kbd>
             <button type="submit" class="search-submit" id="searchBtn">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -148,6 +153,11 @@
         align-items: center;
         border-bottom: 1px solid color-mix(in srgb, var(--ts-surface) 8%, transparent);
         transition: border-color 0.3s ease;
+        position: relative;
+    }
+    .search-field .search-loading-bar {
+        left: 0;
+        right: 0;
     }
 
     .search-field:focus-within {
@@ -234,6 +244,33 @@
 
 {# Shared dropdown styles #}
 <style>
+    /* Search loading indicator */
+    @keyframes searchShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+    }
+    .search-loading-bar {
+        position: absolute;
+        bottom: 0;
+        left: 8px;
+        right: 8px;
+        height: 1px;
+        overflow: hidden;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+    .htmx-request .search-loading-bar {
+        opacity: 1;
+    }
+    .search-loading-bar::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        width: 40%;
+        background: linear-gradient(90deg, transparent, var(--color-copper), transparent);
+        animation: searchShimmer 0.8s ease-in-out infinite;
+    }
+
     .search-input-wrapper {
         position: relative;
         flex: 1;

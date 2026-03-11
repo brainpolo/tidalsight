@@ -166,12 +166,12 @@
 
                 <div class="divider"></div>
 
-                {# Row 2: Market Brief (left) | Your Brief placeholder (right) #}
+                {# Row 2: The Wire (left) | Your Outlook (right) #}
                 <section class="py-16">
                     <div class="flex items-start gap-20 max-lg:flex-col max-lg:gap-14">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">The Wire — {{ digest_date|date:"j F Y, g:i A" }}</div>
                                 <div class="h-px flex-1 bg-surface/[0.04]"></div>
                             </div>
                             <div hx-get="{% url 'core:market_digest' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
@@ -189,7 +189,7 @@
                         </div>
                         <div class="flex-1 min-w-0 max-lg:w-full">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Your Brief</div>
+                                <div class="text-[0.6rem] font-semibold tracking-[0.14em] uppercase text-t3">Your Outlook</div>
                                 <div class="h-px flex-1 bg-surface/[0.04]"></div>
                             </div>
                             <div hx-get="{% url 'core:personal_outlook' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
@@ -201,7 +201,7 @@
                                         <div class="h-3 w-11/12 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 300ms;"></div>
                                         <div class="h-3 w-4/5 bg-surface/[0.02] rounded-sm animate-pulse" style="animation-delay: 400ms;"></div>
                                     </div>
-                                    <div class="mt-5 text-[0.6rem] text-t4 tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Preparing your brief...</div>
+                                    <div class="mt-5 text-[0.6rem] text-t4 tracking-wide uppercase animate-pulse" style="animation-delay: 500ms;">Preparing your outlook...</div>
                                 </div>
                             </div>
                         </div>
@@ -241,7 +241,7 @@
                         <!-- Right: Market Digest -->
                         <div class="flex-1 min-w-0 max-lg:w-full">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">Market Brief as of {{ digest_date|date:"j F Y" }}</div>
+                                <div class="text-[0.65rem] font-semibold tracking-[0.14em] uppercase text-t3">The Wire — {{ digest_date|date:"j F Y, g:i A" }}</div>
                                 <div class="h-px flex-1 bg-surface/[0.04]"></div>
                             </div>
                             <div hx-get="{% url 'core:market_digest' %}" hx-trigger="load, every {{ digest_refresh_interval }}s" hx-swap="innerHTML">
