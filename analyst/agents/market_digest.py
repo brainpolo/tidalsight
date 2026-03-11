@@ -1,7 +1,7 @@
 from agents import Agent, ModelSettings
 from pydantic import BaseModel
 
-from analyst.agents.tools import search_web, validate_ticker
+from analyst.agents.tools import validate_ticker
 from analyst.llms import BYTEDANCE_SEED_2_0_LITE
 
 
@@ -42,11 +42,10 @@ market_digest_agent = Agent(
         "- Every sentence must earn its place — if it does not add insight, cut it.\n"
         "- Connect seemingly unrelated signals into a coherent narrative.\n"
         "- Before referencing any ticker, call validate_ticker to confirm it is real. "
-        "Never include unvalidated tickers.\n"
-        "- Use search_web to verify claims or research themes when needed."
+        "Never include unvalidated tickers."
     ),
     model=BYTEDANCE_SEED_2_0_LITE,
     model_settings=ModelSettings(temperature=0.4),
     output_type=MarketDigest,
-    tools=[validate_ticker, search_web],
+    tools=[validate_ticker],
 )

@@ -13,6 +13,7 @@ from analyst.agents.overall_assessment_agent import (
 from analyst.app_behaviour import (
     OVERALL_ASSESSMENT_DATA_TTL,
     OVERALL_ASSESSMENT_LOCK_TTL,
+    VERDICT_RANGES,
     cache_key,
 )
 from analyst.runner import run_agent
@@ -47,16 +48,6 @@ def expected_section_count(asset_class: str) -> int:
     return len(hygiene) + len(motivators)
 
 
-# Deterministic verdict ranges (weighted total out of 30)
-_VERDICT_RANGES = [
-    (12, "Strong Sell"),
-    (16, "Sell"),
-    (21, "Hold"),
-    (25, "Buy"),
-    (30, "Strong Buy"),
-]
-
-
 def compute_weighted_score(
     sections: dict[str, dict], asset_class: str = "equity"
 ) -> int:
@@ -75,7 +66,7 @@ def compute_weighted_score(
 
 def compute_verdict(total_score: int) -> str:
     """Map a weighted total score (0-30) to a deterministic recommendation."""
-    for threshold, label in _VERDICT_RANGES:
+    for threshold, label, _css in VERDICT_RANGES:
         if total_score <= threshold:
             return label
     return "Strong Buy"

@@ -34,6 +34,7 @@ from analyst.app_behaviour import (
     DESCRIPTION_FRESHNESS_DAYS,
     DIGEST_REFRESH_INTERVAL,
     SENTIMENT_MIN_POSTS,
+    VERDICT_RANGES,
 )
 from analyst.managers.digest_manager import (
     DIGEST_DATA_KEY,
@@ -322,25 +323,15 @@ async def rankings(request):
         else:
             asset.upside = None
 
-    # Build score distribution - scores 8-28 (realistic range)
+    # Build score distribution - scores 8-30 (full range)
     score_buckets = []
-    for s in range(8, 29):
+    for s in range(8, 31):
         bucket_assets = [a for a in ranked if a.report_card_score == s]
-        if s <= 12:
-            verdict = "Strong Sell"
-            css = "ss"
-        elif s <= 16:
-            verdict = "Sell"
-            css = "s"
-        elif s <= 21:
-            verdict = "Hold"
-            css = "h"
-        elif s <= 25:
-            verdict = "Buy"
-            css = "b"
-        else:
-            verdict = "Strong Buy"
-            css = "sb"
+        verdict, css = "Strong Buy", "sb"
+        for threshold, label, css_class in VERDICT_RANGES:
+            if s <= threshold:
+                verdict, css = label, css_class
+                break
         score_buckets.append(
             {"score": s, "assets": bucket_assets, "verdict": verdict, "css": css}
         )

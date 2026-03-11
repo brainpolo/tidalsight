@@ -1,6 +1,6 @@
 {% if loading %}
 <div class="p-5 sm:p-6 sm:border-l border-surface/[0.04]"
-     hx-get="{% url 'core:report_card_sentiment' ticker %}"
+     hx-get="{% url 'core:report_card_sentiment' ticker %}{% if view_mode %}?view={{ view_mode }}{% endif %}"
      hx-trigger="load delay:{{ poll_interval }}s, pollReportCardSentiment from:body delay:{{ poll_interval }}s"
      hx-swap="outerHTML">
     <div class="flex items-center justify-between mb-3">

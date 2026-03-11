@@ -64,6 +64,17 @@ DESCRIPTION_LOCK_TTL = 300  # 5 minutes
 
 MAX_AGENT_TURNS = 100
 
+# ── Verdict ranges (weighted total out of 30) ─────────────────────
+# Single source of truth — used by scoring engine and display code.
+# Each tuple: (upper_bound_inclusive, label, css_class)
+VERDICT_RANGES = [
+    (13, "Strong Sell", "ss"),
+    (16, "Sell", "s"),
+    (21, "Hold", "h"),
+    (24, "Buy", "b"),
+    (30, "Strong Buy", "sb"),
+]
+
 
 # ── Cache keys ──────────────────────────────────────────────────────
 
