@@ -4,20 +4,19 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0019_alter_asset_asset_class'),
+        ("scraper", "0019_alter_asset_asset_class"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='asset',
-            old_name='report_card_score',
-            new_name='market_score',
+            model_name="asset",
+            old_name="report_card_score",
+            new_name="market_score",
         ),
         migrations.RenameField(
-            model_name='asset',
-            old_name='report_card_updated_at',
-            new_name='market_score_updated_at',
+            model_name="asset",
+            old_name="report_card_updated_at",
+            new_name="market_score_updated_at",
         ),
     ]

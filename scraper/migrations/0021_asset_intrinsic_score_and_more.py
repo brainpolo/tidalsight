@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scraper', '0020_rename_report_card_score_asset_market_score_and_more'),
+        ("scraper", "0020_rename_report_card_score_asset_market_score_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='asset',
-            name='intrinsic_score',
+            model_name="asset",
+            name="intrinsic_score",
             field=models.PositiveSmallIntegerField(db_index=True, default=0),
         ),
         migrations.AddField(
-            model_name='asset',
-            name='intrinsic_score_updated_at',
+            model_name="asset",
+            name="intrinsic_score_updated_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]
