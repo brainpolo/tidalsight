@@ -188,7 +188,27 @@
 
                         window.chartPriceTarget = {{ price_target|default:"null" }};
 
-                        if (!initialData.length) return;
+                        if (!initialData.length) {
+                            // Prices not yet available — poll until they arrive
+                            var pollCount = 0;
+                            var pollTimer = setInterval(function() {
+                                pollCount++;
+                                if (pollCount > 30) { clearInterval(pollTimer); return; }
+                                fetch(chartDataUrl + '?range=1W')
+                                    .then(function(r) { return r.json(); })
+                                    .then(function(data) {
+                                        if (data && data.length) {
+                                            clearInterval(pollTimer);
+                                            rangeCache['1W'] = parseData(data);
+                                            setupChart();
+                                        }
+                                    })
+                                    .catch(function() {});
+                            }, 2000);
+                            return;
+                        }
+                        setupChart();
+                        function setupChart() {
 
                         const canvas = document.getElementById('priceChart');
                         const ctx = canvas.getContext('2d');
@@ -552,6 +572,7 @@
                             link.download = document.title.split('\u2014')[0].trim() + ' ' + currentRange + '.png';
                             link.href = canvas.toDataURL('image/png'); link.click();
                         });
+                    } // end setupChart
                     } // end initChart
                     })();
                     </script>

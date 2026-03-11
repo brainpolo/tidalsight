@@ -2,11 +2,21 @@
 
 {% if loading %}
 <div class="max-w-[1120px] mx-auto px-4 sm:px-10 pt-3 pb-1">
-    <div class="flex items-center gap-3">
-        <span class="text-[0.5rem] font-semibold tracking-[0.14em] uppercase text-t4 shrink-0">Peers</span>
-        <div class="flex items-center gap-2 overflow-hidden">
-            {% for _ in "12345" %}
-            <div class="h-4 w-16 rounded-sm skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+    <div class="flex items-start gap-3 overflow-x-auto scrollbar-hide justify-center">
+        <span class="text-[0.55rem] font-semibold tracking-[0.16em] uppercase text-t4 dark:text-t3/50 shrink-0 self-stretch flex items-center justify-center [writing-mode:vertical-lr] rotate-180 border-l border-surface/[0.08] pl-3">Peers</span>
+        <div class="flex items-start gap-4">
+            {% for _ in "123456" %}
+            <div class="px-2.5 py-1.5">
+                <div class="flex items-center gap-1.5">
+                    <div class="size-3.5 rounded-full skel-bar" style="animation-delay:{{ forloop.counter }}00ms"></div>
+                    <div class="h-3 w-10 rounded-sm skel-bar" style="animation-delay:{{ forloop.counter }}50ms"></div>
+                    <div class="h-2.5 w-12 rounded-sm skel-bar opacity-40" style="animation-delay:{{ forloop.counter }}80ms"></div>
+                </div>
+                <div class="flex items-center gap-1 mt-1">
+                    <div class="h-2.5 w-12 rounded-sm skel-bar" style="animation-delay:{{ forloop.counter }}20ms"></div>
+                    <div class="h-2.5 w-10 rounded-sm skel-bar" style="animation-delay:{{ forloop.counter }}60ms"></div>
+                </div>
+            </div>
             {% endfor %}
         </div>
     </div>
